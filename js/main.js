@@ -9,3 +9,4 @@ include('components/sliderbar.js');
 include('components/content.js');
 //include('components/folder.js');
 include('components/style.js');
+include('components/comments.js');

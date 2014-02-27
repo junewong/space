@@ -8,7 +8,7 @@
 function include(uri, prefix)
 {
 	prefix = prefix || 'js/';
-	var src = prefix + uri;
+	var src = /^http/.test(uri) ? uri : prefix + uri;
 	var sid = src.replace(/(\/|\.)/g, "_");
 	if (id(sid)) 
 		return; // if it had included.
