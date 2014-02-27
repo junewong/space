@@ -15,7 +15,9 @@ function include(uri, prefix)
 
 	if (!this._thisScript) {
 		// this script file node:
-		var scripts = document.getElementsByTagName('script');
+		var scripts = 
+			   document.getElementsByTagName('head')[0].getElementsByTagName('script') 
+			|| document.getElementsByTagName('script');
 		this._thisScript = scripts[scripts.length-1];
 	}
 
