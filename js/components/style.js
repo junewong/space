@@ -1,8 +1,9 @@
 // for bootstrap style:
 $(document).ready(function(){
 
-	$('h1').addClass('text-primary').addClass("page-header");
-	$('h2').addClass("page-header");
+	$('#contents h1').addClass('text-primary').addClass("page-header");
+	$('#contents h2').addClass("page-header");
+	$('#contents img').addClass("img-responsive");
 
 	$('#menu').bind('DOMNodeInserted', function(e) {
 		$('#menu > ul').addClass('list-group');
