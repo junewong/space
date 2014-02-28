@@ -3,7 +3,11 @@ $(document).ready(function(){
 
 	$('h1').addClass('text-primary').addClass("page-header");
 	$('h2').addClass("page-header");
-	$('#menu > ul').addClass('list-group');
-	$('#menu > ul > li').addClass('list-group-item');
-	$('#contents').scrollspy({target: '#menu'});
+
+	$('#menu').bind('DOMNodeInserted', function(e) {
+		$('#menu > ul').addClass('list-group');
+		$('#menu > ul > li').addClass('list-group-item');
+		$('#contents').scrollspy({target: '#menu'});
+	});
 });
+

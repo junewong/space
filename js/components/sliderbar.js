@@ -6,9 +6,11 @@ function moveMenuToRightBar()
 {
 	var from = className('toc', id('contents'))[0];
 	var to = id('menu');
-	if (from && from.innerHTML != '') {
-		to.innerHTML = from.innerHTML;
-		from.innerHTML = '';
+	if (from && from.childNodes.length > 0) {
+		while (from.firstChild) {
+			var node = from.removeChild(from.firstChild);
+			to.appendChild(node);
+		}
 	}
 }
 
