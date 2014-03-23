@@ -1,0 +1,456 @@
+<html>
+	<head>
+		<link rel="Stylesheet" type="text/css" href="css/style.css" />
+		<title>GCD多线程开发 -- June的学习空间</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Bootstrap -->
+		<link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+		<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+		<!--[if lt IE 9]>
+		<script src="http://cdn.bootcss.com/html5shiv/3.7.0/html5shiv.min.js">
+		</script>
+		<script src="http://cdn.bootcss.com/respond.js/1.3.0/respond.min.js">
+		</script>
+		<![endif]-->
+		<script src="http://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+
+		<script src="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/public.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<div class="navbar navbar-default navbar-inverse"  role="navigation">
+				<div class="row">
+					<div class="col-md-7 col-md-offset-1">
+						<h3><a href="index.html" style="color:white;">June的个人空间</a><small> 编程、读书、感悟</small></h3>
+
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div id="contents" class="col-md-7 col-md-offset-1">
+				
+<div class="toc">
+<ul>
+<li><a href="#toc_1">GCD多线程开发</a>
+<ul>
+<li><a href="#toc_1.1">概述</a>
+<li><a href="#toc_1.2">Dispatch Queues</a>
+<ul>
+<li><a href="#toc_1.2.1">后台执行</a>
+<li><a href="#toc_1.2.2">主线程执行</a>
+<li><a href="#toc_1.2.3">一次性执行</a>
+<li><a href="#toc_1.2.4">延迟1秒执行</a>
+</ul>
+<li><a href="#toc_1.3">Dispatch Objects</a>
+<ul>
+<li><a href="#toc_1.3.1">使用</a>
+<li><a href="#toc_1.3.2">计时器</a>
+</ul>
+<li><a href="#toc_1.4">并行处理</a>
+<ul>
+<li><a href="#toc_1.4.1">单线程处理</a>
+<li><a href="#toc_1.4.2">并行处理</a>
+<li><a href="#toc_1.4.3">dispatch group</a>
+</ul>
+<li><a href="#toc_1.5">信号量</a>
+<li><a href="#toc_1.6">应用技巧</a>
+<li><a href="#toc_1.7">TODO</a>
+<li><a href="#toc_1.8">参考资料</a>
+</ul>
+</ul>
+</div>
+
+<h1 id="toc_1">GCD多线程开发</h1>
+
+<h2 id="toc_1.1">概述</h2>
+<p>
+GCD（Grand Central Dispatch）是苹果在iOS4.0引入的多线程编程技术。可以替代之前的NSThread, NSOperation的做法。本身用纯C语言编写，轻量级、高性能。
+而且GCD采用block作为执行主体，可以利用block的很多优势。当然，如果需要也可以脱离block使用。
+用GCD的优势在于代码更为简洁，运行效率更高，也更有利于做平行计算。
+</p>
+
+<h2 id="toc_1.2">Dispatch Queues</h2>
+<p>
+Dispatch Queues是GCD的基本概念，可以接受任务，按并发或串行来执行。
+并发可以根据系统负载那样来合适地并发。
+</p>
+
+<p>
+一般有这三种：
+</p>
+<ol>
+<li>
+The main queue: 主线程中执行。使用dispatch_get_main_queue()来获得。这是串行队列。
+
+<li>
+Global queues: 并发队列。可以调用dispatch_get_global_queue函数活得。
+
+<li>
+用户队列: 用函数 dispatch_queue_create 创建的队列. 这些队列是串行的。
+
+</ol>
+
+<p>
+常用的就是下面几种使用方法：
+</p>
+
+<h3 id="toc_1.2.1">后台执行</h3>
+<pre>
+dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+	NSLog(@"run in background ...");
+
+});
+</pre>
+<p>
+其中第一个参数是是控制线程的优先级，GCD支持的优先级有：
+</p>
+<ol>
+<li>
+DISPATCH_QUEUE_PRIORITY_HIGH：高优先级
+
+<li>
+DISPATCH_QUEUE_PRIORITY_DEFAULT：默认优先级
+
+<li>
+DISPATCH_QUEUE_PRIORITY_LOW：低优先级
+
+<li>
+DISPATCH_QUEUE_PRIORITY_BACKGROUND：最低的优先级，可以用于最小避免IO操作对系统的影响。
+
+</ol>
+<p>
+第二个参数是为将来做考虑的，目前只需要写0。
+</p>
+
+<h3 id="toc_1.2.2">主线程执行</h3>
+<pre>
+dispatch_async(dispatch_get_main_queue(), ^{
+	NSLog(@"run in main ...");
+});
+</pre>
+
+<h3 id="toc_1.2.3">一次性执行</h3>
+<p>
+使用dispatch_once，这函数不仅意味着代码仅会被运行一次，而且还是线程安全的，可以不用@synchronized之类的来防止多个线程不同步的问题。这个很适合用来写单例。
+</p>
+<pre>
+static dispatch_once_t onceToken;
+dispatch_once(&amp;onceToken, ^{
+	NSLog(@"run once ...");
+});
+</pre>
+
+<h3 id="toc_1.2.4">延迟1秒执行</h3>
+<pre>
+double delayInSeconds = 1.0;
+dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+	NSLog(@"delay with %f", delayInSeconds);
+});
+</pre>
+<p>
+dispatch_time是用来创建一个dispatch_time_t数据结构，第一个参数可以传入DISPATCH_TIME_NOW或者DISPATCH_TIME_FOREVER，分别代表当前时间和无限大的时间。
+NSEC_PER_SEC代表一秒钟包含多少纳秒，NSEC_PER_MSEC代表一毫秒包含多少纳秒; 
+</p>
+
+<h2 id="toc_1.3">Dispatch Objects</h2>
+<h3 id="toc_1.3.1">使用</h3>
+<p>
+Dispatch Objects的作用就是用来监听一些特定的底层系统事件。目前GCD支持的事件类型有：
+</p>
+<ul>
+<li>
+计时器类型
+
+<li>
+Unix信号量通知
+
+<li>
+文件和socket的变化
+
+<li>
+进程状态的变化
+
+<li>
+Mach port事件
+
+<li>
+自定义dispatch sources
+
+</ul>
+
+<p>
+如使用内建事件读取标准输入：
+</p>
+<pre>
+dispatch_queue_t globalQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+// 创建一个内建事件，从标准输入读取数据
+dispatch_source_t stdinSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, STDIN_FILENO, 0, globalQueue);
+// 设置事件句柄
+dispatch_source_set_event_handler(stdinSource, ^{
+	char buf[1024];
+	// 读取标准输入
+	int len = read(STDIN_FILENO, buf, sizeof(buf));
+	if(len &gt; 0)
+		NSLog(@"Got data from stdin: %.*s", len, buf);
+});
+// dispatch source启动时默认状态是挂起的，创建完毕之后得主动恢复:
+dispatch_resume(stdinSource);
+</pre>
+<p>
+注意某些情况是需要dispatch_source_set_cancel_handler取消dispatch sources，以关闭文件描述符的。
+<em>（<span class="todo">TODO:</span>试验此类情况）</em>
+</p>
+
+<h3 id="toc_1.3.2">计时器</h3>
+<p>
+虽然有简单的NSTimer类可以定时或延时操作，但是NSTimer是必须要在run loop已经启用的情况下使用的，否则无效。但只有主线程是默认启动run loop的。
+我们不能保证自己写的方法不会被人在异步的情况下调用到，所以有时使用NSTimer不是很保险。那么用GCD有另外一套做法可以取代：
+</p>
+<pre>
+int interval = 2;
+// 这个参数告诉系统我们需要计时器触发的精准程度，0的话是努力保持最大精度；如果能接受误差为60秒，则改为60。
+int leeway = 0;
+
+dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+// 创建计时器
+dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+if (timer) {
+	dispatch_source_set_timer(timer, dispatch_walltime(DISPATCH_TIME_NOW, NSEC_PER_SEC * interval), interval * NSEC_PER_SEC, leeway);
+	dispatch_source_set_event_handler(timer, ^{
+		NSLog(@"dispatch timer ..");
+	});
+	// 恢复挂起
+	dispatch_resume(timer);
+}
+</pre>
+
+<h2 id="toc_1.4">并行处理</h2>
+
+<p>
+GCD用来做并行处理很容易。比如下面的例子，我创建一个小数组，每个数组中的每个对象都做了10000000次的乘法计算：
+</p>
+
+<h3 id="toc_1.4.1">单线程处理</h3>
+<pre>
+- (void)test
+{
+    NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
+
+    NSArray *array = [self createTestArray];
+    for (id obj in array) {
+        [self doSomethingWithObj:obj];
+    }
+
+    NSTimeInterval endTime = [[NSDate date] timeIntervalSince1970];
+    NSLog(@"cost time: %f", (endTime - startTime));
+}
+
+- (NSArray*)createTestArray
+{
+    NSMutableArray *array = [NSMutableArray array];
+    for (int i=0; i&lt;10; i++) {
+        [array addObject:@(i)];
+    }
+    return array;
+}
+
+- (void)doSomethingWithObj:(id)obj
+{
+    NSLog(@"print objc: %@", obj);
+    for (int i=0; i&lt;10000000; i++) {
+        int value = [(NSNumber*)obj intValue];
+        int result = value * value;
+        result++;
+    }
+}
+</pre>
+
+<p>
+结果：
+</p>
+<pre>
+cost time: 2.250432
+</pre>
+
+<h3 id="toc_1.4.2">并行处理</h3>
+<p>
+修改处理数组的函数为并发方式，这里用了dispatch_apply，不过注意这个是同步操作，会阻塞当前的线程。
+</p>
+<pre>
+- (void)test
+{
+    NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
+
+    NSArray *array = [self createTestArray];
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_apply([array count], queue, ^(size_t index){
+        [self doSomethingWithObj:[array objectAtIndex:index]];
+    });
+
+    NSTimeInterval endTime = [[NSDate date] timeIntervalSince1970];
+    NSLog(@"cost time: %f", (endTime - startTime));
+}
+</pre>
+
+<p>
+结果：
+</p>
+<pre>
+cost time: 0.660977
+</pre>
+<p>
+速度快了3.4倍！效果确实明显。
+</p>
+
+
+<h3 id="toc_1.4.3">dispatch group</h3>
+<p>
+上述的写法也可以用dispatch group来代替。dispatch group可以用来将多个block组成一组，等这些block都完成之后才触发其他操作。
+</p>
+<pre>
+- (void)test
+{
+    NSTimeInterval startTime = [[NSDate date] timeIntervalSince1970];
+    
+    NSArray *array = [self createTestArray];
+    
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    // 创建一个组：
+    dispatch_group_t group = dispatch_group_create();
+    for(id obj in array) {
+        // 每个对象都做异步操作
+        dispatch_group_async(group, queue, ^{
+            [self doSomethingWithObj:obj];
+        });
+    }
+    // 所有操作执行完之后才执行：
+    dispatch_group_notify(group, queue, ^{
+        [self doSomethingWithArray:array];
+        NSTimeInterval endTime = [[NSDate date] timeIntervalSince1970];
+        NSLog(@"cost time: %f", (endTime - startTime));
+    });
+}
+</pre>
+
+
+<h2 id="toc_1.5">信号量</h2>
+<p>
+信号量跟普通线程的信号量概念是一样的：
+</p>
+<pre>
+信号量是一个整形值并且具有一个初始计数值，并且支持两个操作：信号通知和等待。当一个信号量被信号通知，其计数会被增加。当一个线程在一个信号量上等待时，线程会被阻塞（如果有必要的话），直至计数器大于零，然后线程会减少这个计数。
+</pre>
+<p>
+对应的函数有：
+</p>
+<ol>
+<li>
+dispatch_semaphore_create：创建dispatch信号量
+
+<li>
+dispatch_semaphore_signal：信号通知
+
+<li>
+dispatch_semaphore_wait：信号等待
+
+</ol>
+
+<h2 id="toc_1.6">应用技巧</h2>
+<p>
+创建单例可以用来保证线程安全：
+</p>
+<pre>
+static Foo *sharedFoo;
++(Foo*)sharedFoo
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&amp;onceToken, ^{
+        sharedFoo = [[Foo alloc] init];
+    });
+    
+    return sharedFoo;
+}
+</pre>
+
+<p>
+不过我平时更爱使用这种方式来创建单例：
+</p>
+<pre>
+static Foo *sharedFoo = nil;
++ (void)initialize
+{
+    if (self == [Foo class]) {
+        sharedFoo = [[Foo alloc] init];
+        [sharedFoo loadUser];
+    }
+}
++ (Foo*)sharedFoo
+{
+    return sharedFoo;
+}
+</pre>
+
+<p>
+<strong>其他：</strong>
+另一个喜欢的技巧写在<a href="gcd_micro.html">GCD异步访问URL的宏</a>
+</p>
+
+<h2 id="toc_1.7">TODO</h2>
+<p>
+需补全知识点：
+</p>
+<ul>
+<li>
+Dispatch I/O
+
+<li>
+Dispatch Barriers
+
+<li>
+Dispatch Data Objects
+
+</ul>
+
+<h2 id="toc_1.8">参考资料</h2>
+<ul>
+<li>
+<a href="https://developer.apple.com/library/mac/documentation/performance/reference/gcd_libdispatch_ref/Reference/reference.html">Grand Central Dispatch (GCD) Reference</a>
+
+<li>
+<a href="https://developer.apple.com/library/mac/documentation/General/Conceptual/ConcurrencyProgrammingGuide/GCDWorkQueues/GCDWorkQueues.html#//apple_ref/doc/uid/TP40008091-CH103-SW1">Dispatch Sources</a>
+
+<li>
+<a href="http://mobile.51cto.com/iphone-403490.htm">iOS中多线程原理与runloop介绍</a>
+
+<li>
+man文档:
+<pre>
+man dispatch
+</pre>
+
+</ul>
+
+				</div>
+				<div class="col-md-3">
+					<div class="row">
+					</div>
+					<div id="menu" class="menu">
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<!-- Load comments -->
+				<div id="comments" class="col-md-7 col-md-offset-1">
+				</div>
+				<!--// Load comments -->
+			</div>
+			<div id="footer" class="navbar navbar-default">
+					<div class="copyright help text-center text-muted">©copyright by  space.junewong ## gmail.com</div>
+			</div>
+			</div>
+			</body>
+		</html>

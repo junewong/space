@@ -1,0 +1,393 @@
+<html>
+	<head>
+		<link rel="Stylesheet" type="text/css" href="css/style.css" />
+		<title>iOS的Run Loops机制 -- June的学习空间</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Bootstrap -->
+		<link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+		<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+		<!--[if lt IE 9]>
+		<script src="http://cdn.bootcss.com/html5shiv/3.7.0/html5shiv.min.js">
+		</script>
+		<script src="http://cdn.bootcss.com/respond.js/1.3.0/respond.min.js">
+		</script>
+		<![endif]-->
+		<script src="http://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+
+		<script src="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/public.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<div class="navbar navbar-default navbar-inverse"  role="navigation">
+				<div class="row">
+					<div class="col-md-7 col-md-offset-1">
+						<h3><a href="index.html" style="color:white;">June的个人空间</a><small> 编程、读书、感悟</small></h3>
+
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div id="contents" class="col-md-7 col-md-offset-1">
+				
+<div class="toc">
+<ul>
+<li><a href="#toc_1">iOS的Run Loops机制</a>
+<ul>
+<li><a href="#toc_1.1">概述</a>
+<li><a href="#toc_1.2">适用场景</a>
+<li><a href="#toc_1.3">结构</a>
+<ul>
+<li><a href="#toc_1.3.1">观察者</a>
+<li><a href="#toc_1.3.2">输入源（input source）</a>
+<li><a href="#toc_1.3.3">定时源</a>
+</ul>
+<li><a href="#toc_1.4">使用方式</a>
+<ul>
+<li><a href="#toc_1.4.1">启动方法</a>
+<li><a href="#toc_1.4.2">退出方法</a>
+<li><a href="#toc_1.4.3">启动模式</a>
+</ul>
+<li><a href="#toc_1.5">例子</a>
+<li><a href="#toc_1.6">参考资料</a>
+</ul>
+</ul>
+</div>
+
+<h1 id="toc_1">iOS的Run Loops机制</h1>
+
+<h2 id="toc_1.1">概述</h2>
+<p>
+Run loops是线程的基础部分。任何线程，包括主线程，都包含了一个run loop对象，Cocoa和Core Foundation层都有对应的Run Loop实现。
+</p>
+
+<p>
+Run loop对于线程的作用，就是用来控制当有事件需要处理的时候，让线程快速响应，而当没有工作的时候，线程改为休息。
+</p>
+
+<p>
+本质上Run loop是一个while死循环。不停地监听事件以及处理事件。我们可以自己写一个while循环来做到这点，但是苹果的封装显然会更好。比如可以有不同的运行模式、不同的接收源和定时源，不工作的时候休息等。
+</p>
+
+<p>
+在一个应用的主函数中：
+</p>
+<pre>
+int main(int argc, char * argv[])
+{
+	@autoreleasepool {
+		return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+	}
+}
+</pre>
+<p>
+UIApplicationMain()函数就会启动一个主线程，并且自动为它设置了一个Run loop对象。但除此之外，其他的线程需要明确去设置和启动。
+</p>
+
+<h2 id="toc_1.2">适用场景</h2>
+<p>
+只有创建一个附属线程的时候，才需要明确去运行一个run loop。而且是在确定需要的时候才去设置和启动它，否则就没必要了。例如，开一个线程去执行一个明确的长时间的任务，就没有必要。起用run loop主要还是为了跟创建的线程可以有更多的交互。
+</p>
+
+<p>
+而使用Run loop一个明显的好处就是，节约计算资源，同时也就节约用电了。因为在没有触发的时候线程是处于休眠状态的，不会消耗CPU资源。
+</p>
+
+<h2 id="toc_1.3">结构</h2>
+<p>
+一个Run loop可以接收的事件类型有两种，一种是输入源（input source），一种是时间源（time source）。前者是异步传递事件的，通常消息是来自其他线程或应用发送的；而后者是同步事件的，比如定时计划任务，或者定时重复的工作。
+</p>
+
+<p>
+<img src="https://developer.apple.com/library/ios/documentation/cocoa/Conceptual/Multithreading/Art/runloop.jpg" />
+<em>（图片来源于官方文档）</em>
+</p>
+
+<h3 id="toc_1.3.1">观察者</h3>
+<p>
+Run loop对象的循环过程中可以添加观察者对象。整个Run loop在运行过程中发生的事件具体如下：
+</p>
+
+<ol>
+<li>
+通知观察者run loop开始了；
+
+<li>
+通知观察者任何预设好的时间已经触发；
+
+<li>
+通知观察者任何接入端口的输入源准备被触发；
+
+<li>
+触发任何非端口方式接入的输入源；
+
+<li>
+如果有任何一个基于端口方式的输入源准备被触发，立即运行该时间，并且跳到第9步；
+
+<li>
+通知观察者线程准备休息；
+
+<li>
+让线程休息，直到以下任何一个事件发生：
+
+<ol>
+<li>
+任何一个基于端口的输入源有事件发生；
+
+<li>
+任何一个计时器触发；
+
+<li>
+该run loop设置的过期时间过时了；
+
+<li>
+该run loop被明确地唤醒；
+
+</ol>
+<li>
+通知观察者线程被唤醒；
+
+<li>
+运行待触发的事件：
+
+<ol>
+<li>
+如果一个用户自定义的计时器被触发，运行该计时器的事件，并重新运行run loop。跳转到第2步。
+
+<li>
+如果一个输入源被触发，传递该事件；
+
+<li>
+如果该run loop被明确唤醒并且没有超时，重新运行run loop循环。跳转到第2步；
+
+</ol>
+<li>
+通知观察者该run loop循环已经退出； 
+
+</ol>
+
+<h3 id="toc_1.3.2">输入源（input source）</h3>
+<p>
+输入源主要有三种：
+</p>
+
+<ul>
+<li>
+基于端口的输入源
+
+<li>
+自定义输入源
+
+<li>
+selector源
+
+</ul>
+
+<p>
+其中selector源就是常用的"performSelector..."方法。
+</p>
+
+<h3 id="toc_1.3.3">定时源</h3>
+
+<p>
+定时源其实就是常用的NSTimer，定时器类；其机制也是基于run loop运行的，只是在指定的间隔时间发送消息给需要处理的回调方法。
+</p>
+
+<p>
+两种方法：
+</p>
+<pre>
+NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:4.0 target:self selector:@selector(fireTimer:) userInfo:nil repeats:YES];
+[[NSRunLoop currentRunLoop] addTimer:timerforMode:NSDefaultRunLoopMode];
+</pre>
+<p>
+以及
+</p>
+<pre>
+[NSTimer scheduledTimerWithTimeInterval:10
+					target:self
+				   selector:@selector(fireTimer:)
+				   userInfo:nil
+				   repeats:YES];
+</pre>
+
+<p>
+不过需要注意的是，如果run loop没有监视跟定时源相关的模式，那么定时器将不会运行。如果定时器开始时，run loop正在处理前面的事件，那么它会等到run loop处理完了才开始。如果run loop不再运行，那么定时器也永远不再启动了。
+</p>
+
+<h2 id="toc_1.4">使用方式</h2>
+<h3 id="toc_1.4.1">启动方法</h3>
+<ul>
+<li>
+无条件启动；
+
+<li>
+设置超时时间启动，如runUntilDate方法；
+
+<li>
+指定某种模式下启动，如runMode:beforeDate:方法；
+
+</ul>
+
+<h3 id="toc_1.4.2">退出方法</h3>
+<ul>
+<li>
+启动时设定好设定超时时间；
+
+<li>
+显式的停止run loop（调用CFRunLoopStop函数）；
+
+</ul>
+
+<h3 id="toc_1.4.3">启动模式</h3>
+<p>
+可用模式有5种，一般常用的都是default：
+</p>
+<ul>
+<li>
+default
+
+<li>
+connection
+
+<li>
+modal
+
+<li>
+event tracking
+
+<li>
+common modes
+
+</ul>
+<p>
+（对应详情可参考官方文档说明）
+</p>
+
+<h2 id="toc_1.5">例子</h2>
+<p>
+在新线程中，注册一个run loop的观察者，监听每次循环过程的所有事件；
+同时启动一个定时器；从日志中可以看到整个run loop的过程，包括启动和结束、每次定时器唤醒时前后的事件、没有任务时进入休眠的状态。
+由此可以看出，Run loop能更加精细地跟整个线程的运行过程交互。
+</p>
+<pre>
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    // 在新线程中运行：
+    [self performSelectorInBackground:@selector(testRunloop) withObject:nil];
+}
+
+- (void)testRunloop
+{
+    // 获取当前线程的Run loop
+    NSRunLoop* myRunLoop = [NSRunLoop currentRunLoop];
+    
+    // 创建一个run loop观察者对象；观察事件为每次循环的所有活动；
+    CFRunLoopObserverContext  context = {0, (__bridge void *)(self), NULL, NULL, NULL};
+    CFRunLoopObserverRef  observer = CFRunLoopObserverCreate(kCFAllocatorDefault,
+                                                               kCFRunLoopAllActivities, YES, 0, &amp;myRunLoopObserver, &amp;context);
+    if (observer)
+    {
+        // 将Cocoa的NSRunLoop类型转换成Core Foundation的CFRunLoopRef类型
+        CFRunLoopRef cfLoop = [myRunLoop getCFRunLoop];
+        // 添加观察者对象到该run loop上
+        CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);
+    }
+
+    // 创建定时器，每0.1秒触发
+    [NSTimer scheduledTimerWithTimeInterval:0.1 target:self
+                                   selector:@selector(doFireTimer:) userInfo:nil repeats:YES];
+
+    //  重复启动run loop 5次：
+    NSInteger loopCount = 5;
+    do
+    {
+        // 启动run loop开始循环，直到指定的时间才结束，这里就是持续1秒；
+        // 当调用runUnitDate方法时，观察者检测到循环已经启动，开始根据循环的各个阶段的事件，调用上面注册的myRunLoopObserver回调函数。
+        [myRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
+        // 运行完之后，会再一次调用回调函数，状态是kCFRunLoopExit，表示循环结束。
+        
+        loopCount--;
+    }
+    while (loopCount);
+    
+    NSLog(@"The End.");
+}
+
+- (void)doFireTimer:(NSTimer*)timer
+{
+    NSLog(@"fire timer!");
+}
+
+// Run loop观察者的回调函数：
+void myRunLoopObserver(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info) {
+    switch (activity) {
+        case kCFRunLoopEntry:
+            NSLog(@"run loop entry");
+            break;
+        case kCFRunLoopBeforeTimers:
+            NSLog(@"run loop before timers");
+            break;
+        case kCFRunLoopBeforeSources:
+            NSLog(@"run loop before sources");
+            break;
+        case kCFRunLoopBeforeWaiting:
+            NSLog(@"run loop before waiting");
+            break;
+        case kCFRunLoopAfterWaiting:
+            NSLog(@"run loop after waiting");
+            break;
+        case kCFRunLoopExit:
+            NSLog(@"run loop exit");
+            break;
+        default:
+            break;
+    }
+}
+
+</pre>
+
+
+<h2 id="toc_1.6">参考资料</h2>
+<ul>
+<li>
+<a href="https://developer.apple.com/library/ios/documentation/cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html">Threading Programming Guide</a>：官方文档
+
+<li>
+<a href="https://developer.apple.com/library/ios/documentation/cocoa/Reference/Foundation/Classes/NSRunLoop_Class/Reference/Reference.html#//apple_ref/doc/uid/TP40003725">NSRunLoop Class Reference</a>
+
+<li>
+<a href="http://blog.csdn.net/wzzvictory/article/details/9237973">Objective-C之run loop详解</a>
+
+<li>
+<a href="http://blog.csdn.net/lingedeng/article/details/6868734">iphone——NSRunLoop概念</a> 
+
+<li>
+<a href="http://blog.csdn.net/lingedeng/article/details/6870692">iphone——使用run loop对象</a> 
+
+</ul>
+
+				</div>
+				<div class="col-md-3">
+					<div class="row">
+					</div>
+					<div id="menu" class="menu">
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<!-- Load comments -->
+				<div id="comments" class="col-md-7 col-md-offset-1">
+				</div>
+				<!--// Load comments -->
+			</div>
+			<div id="footer" class="navbar navbar-default">
+					<div class="copyright help text-center text-muted">©copyright by  space.junewong ## gmail.com</div>
+			</div>
+			</div>
+			</body>
+		</html>
