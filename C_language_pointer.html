@@ -42,6 +42,7 @@
 <li><a href="#toc_1.4">结构体指针</a>
 <li><a href="#toc_1.5">函数指针</a>
 <li><a href="#toc_1.6">不同环境的区别</a>
+<li><a href="#toc_1.7">试题</a>
 </ul>
 </ul>
 </div>
@@ -193,8 +194,59 @@ void *func1(int);
 另外，不论32位还是64位的机器，int类型都是相同的，4个字节，而long类型则会有所不同。
 </p>
 
+<h2 id="toc_1.7">试题</h2>
+<ul>
+<li>
+<strong>关于指针类型的题目</strong>
+<pre>
+问打印出来的结果是什么？
+#include &lt;stdio.h&gt;
+
+int main(int argc, const char *argv[])
+{
+    int a[] = {1, 2, 3, 4, 5}; 
+    int *p = (int*)(&amp;a + 1); 
+    printf("%d, %d\n", *(a+1), *(p-1));
+    return 0;
+}
+</pre>
+
+</ul>
+<p>
+我第一次接触到时候回答：
+</p>
+<pre>
+2, 1
+</pre>
+<p>
+实际上答案应该是：
+</p>
+<pre>
+2, 5
+</pre>
+<p>
+（不幸的是这还是一次面试中的题目。所以给面试官逮住不停追问，结果当然不怎么好了。）
+</p>
+
+<p>
+但这次为什么呢？第一个数好理解，a是数组名，是指向数组第一个元素的指针，第一个元素指针当然是int类型了，所以*(a+1)就是移动了sizeof(int)的长度，也就是4个字节。
+</p>
+
+<p>
+而第二个为什么是5呢？因为&amp;a的意思是对数组a取地址，也就是数组a类型的指针，这个类型的长度是数组的长度。那么(&amp;a + 1)就是往后移动了数组a的长度，也就是5个int类型的长度，sizeof(int) * 5。只是后面(int*)(&amp;a + 1)则是强制转换成了int类型指针罢了。
+</p>
+
+<p>
+所以这样子后面到了*(p-1)，就是往前移动了int类型的长度，即是4个字节。就变成指向最后一个数字“5”了。
+</p>
+
+<p>
+这里有一篇讲得更清晰，而且还讲到了二维数组的情况：
+<a href="http://segmentfault.com/q/1010000000303353">关于C语言指针的问题</a>
+</p>
+
 				</div>
-				<div class="col-md-2">
+				<div class="col-md-3">
 					<div class="row">
 					</div>
 					<div id="menu" class="menu">
