@@ -1,0 +1,570 @@
+<html>
+	<head>
+		<link rel="Stylesheet" type="text/css" href="css/style.css" />
+		<title>iOS框架结构 -- June的学习空间</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Bootstrap -->
+		<link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+		<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+		<!--[if lt IE 9]>
+		<script src="http://cdn.bootcss.com/html5shiv/3.7.0/html5shiv.min.js">
+		</script>
+		<script src="http://cdn.bootcss.com/respond.js/1.3.0/respond.min.js">
+		</script>
+		<![endif]-->
+		<script src="http://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+
+		<script src="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/public.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<div class="navbar navbar-default navbar-inverse"  role="navigation">
+				<div class="row">
+					<div class="col-md-7 col-md-offset-1">
+						<h3><a href="index.html" style="color:white;">June的个人空间</a><small> 编程、读书、感悟</small></h3>
+
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div id="contents" class="col-md-7 col-md-offset-1">
+				
+<p>
+toc
+</p>
+
+<h1 id="toc_1">iOS框架结构</h1>
+
+<h2 id="toc_1.1">整体概述</h2>
+<p>
+iOS的框架主要分下面几层：
+</p>
+<ul>
+<li>
+Cocoa Touch Layer
+
+<li>
+Media Layer
+
+<li>
+Core Services Layer
+
+<li>
+Core OS Layer
+
+</ul>
+
+<p>
+下面是每一层涉及的框架。先指出有几个关键的框架：
+</p>
+
+<h2 id="toc_1.2">CoreFoundation</h2>
+<h3 id="toc_1.2.1">结构</h3>
+<p>
+这个是iOS框架中从C到objc的关键。它提供了基于C实现的一套语言的接口库，是导出为objc基本框架的基础。最重要的一个事情就是它定义了一种抽象的数据格式，叫“对象（object）”，以及配套的一些函数。此外还有实现了其它一些对象模型。
+</p>
+
+<p>
+这些程序接口的设计都是为了易用性和复用行的。一般来说，core foundation可以：
+</p>
+<ul>
+<li>
+在多种框架中和库中可以分享代码和数据；
+
+<li>
+让一定程度上不依赖操作系统具有可能性；
+
+<li>
+支持国际化和unicode字符串；
+
+<li>
+提供通用API和其他有用的能力，包括插件化的架构、XML属性列表，偏好设置等；
+
+</ul>
+
+<p>
+换句话说，在OS X系统中，如果想在不同的框架和库中共享代码和数据，就可以用core foundation的对象作为数据类型，在各自接口中传递；
+</p>
+
+<p>
+Core foundation也提供了“toll-free bridging”，可以在Cocoa对象和Core foundation对象直接互相转换；
+</p>
+
+<p>
+比如国际化功能，主要是依附CFString来实现。CFString是16位的unicode字符串，它被设计成足够弹性，可以应付百万字节的数据，它的性能C实现的相差无几；
+</p>
+
+<p>
+<img src="https://developer.apple.com/library/ios/documentation/CoreFoundation/Conceptual/CFDesignConcepts/Art/opaquetypes_2x.png"  style="width:486;height:309" />
+<em>（图片来自官方文档）</em>
+</p>
+
+<h3 id="toc_1.2.2">内容成员</h3>
+<p>
+Core foundation的对象基本上都是“CF”作前缀的。
+</p>
+
+<p>
+所有数据类型可以见：<a href="https://developer.apple.com/library/ios/documentation/CoreFoundation/Reference/CoreFoundation_Collection/_index.html">Core Foundation Framework Reference</a>
+</p>
+
+<p>
+大致上有几种类型：
+</p>
+<ul>
+<li>
+基本数据类型：CFNumber、CFString、CFSet、CFArray、CFDictionary、CFNull等；
+
+<li>
+时间类型：CFDate、CFCalendar、CFTimezone等；
+
+<li>
+网络相关：CFSocket、CFURL、CFReadStream、CFWriteStream
+
+<li>
+国际化：CFLocate
+
+<li>
+runloop：CFRunLoop
+
+<li>
+其他一些对象：CFBundle、CFPropertyList等;
+
+<li>
+还有就是不少对应的工具函数，如：CFRangeMake等
+
+</ul>
+
+<h3 id="toc_1.2.3">__bridge关键字</h3>
+<p>
+__bridge关键字可以用来做类型的强制转换：
+</p>
+<ul>
+<li>
+__bridge： 转换Objective-C指针为Core Foundation类型，但不更换所有者,需要手工调用CFRetain让引用计数加一；
+
+<li>
+__bridge_retained或CFBridgingRetain： 转换Objective-C指针为Core Foundation类型，但更改所有者；这个需要明确调用CFRelease释放所有权；
+
+<li>
+__bridge_transfer或CFBridgingRelease： 修改非Objective-C指针为Objective-C 类型并且改为ARC方式。
+
+</ul>
+
+<h3 id="toc_1.2.4">小例子</h3>
+<p>
+大概风格如下：
+</p>
+<pre>
+    CFStringRef str1 = CFSTR("abcdefg");
+    CFStringRef str2 = CFSTR("bcdefgh");
+    
+    CFComparisonResult compare = CFStringCompare(str1, str2, kCFCompareCaseInsensitive );
+    if (compare == kCFCompareEqualTo) {
+        NSLog(@"compare equal!");
+    } else {
+        NSLog(@"compare not equal!");
+    }
+</pre>
+
+<h2 id="toc_1.3">UIKit</h2>
+<p>
+这个是最常见的各种UI控件的集合，全部都是基于Cocoa封装的，普通应用开发，做界面时大部分将会是跟这些类打交道。
+所有的类见文档：
+<a href="https://developer.apple.com/library/ios/documentation/uikit/reference/uikit_framework/_index.html">UIKit Framework Reference</a>
+</p>
+
+<p>
+大致包含这么几类：
+</p>
+<ul>
+<li>
+可视组件：包括表格、工具条、按钮、输入框、弹出框等等，它们都是UIView的子类；
+
+<li>
+图像相关：包括像UIImage、UIColor、贝塞尔曲线UIBezierPath等；
+
+<li>
+文本相关：UIFont、UITextRange、UITextChecker（拼写检查）等；
+
+<li>
+事件相关：UITouch、UIResponder（这个是UIView的基类）、UIEvent、各种手势类；
+
+<li>
+控制器类：UIViewController、UINavigationController、UISearchDisplayController等；
+
+<li>
+系统环境相关：UIScreen、UIDevice、UIApplication；
+
+<li>
+打印相关：UIPrintInfo、UIPrintPaper等；
+
+</ul>
+
+<p>
+各个类的关系图如下：
+<img src="https://developer.apple.com/library/ios/documentation/uikit/reference/UIKit_Framework/Art/uikit_classes.jpg" />
+<em>（图片来自官方文档）</em>
+</p>
+
+
+<p>
+下面是各层的所有框架列表：
+(<span class="todo">TODO:</span>未完待续)
+</p>
+
+<h2 id="toc_1.4">Cocoa Touch Layer</h2>
+
+<ul>
+<li>
+UIKit：常用的各种UI控件；
+
+</ul>
+
+<ul>
+<li>
+AddressBookUI
+
+</ul>
+
+<ul>
+<li>
+EventKitUI
+
+</ul>
+
+<ul>
+<li>
+GameKit
+
+</ul>
+
+<ul>
+<li>
+MapKit：底图服务控件；
+
+</ul>
+
+<ul>
+<li>
+MessageUI
+
+</ul>
+
+<ul>
+<li>
+Twitter
+
+</ul>
+
+<ul>
+<li>
+iAd
+
+</ul>
+
+
+<h2 id="toc_1.5">Media Layer</h2>
+<ul>
+<li>
+AVFoundation
+
+</ul>
+
+<ul>
+<li>
+AssetsLibrary
+
+</ul>
+
+<ul>
+<li>
+AudioToolbox
+
+</ul>
+
+<ul>
+<li>
+AudioUnit
+
+</ul>
+
+<ul>
+<li>
+CoreAudio
+
+</ul>
+
+<ul>
+<li>
+CoreGraphics
+
+</ul>
+
+<ul>
+<li>
+CoreImage
+
+</ul>
+
+<ul>
+<li>
+CoreMIDI
+
+</ul>
+
+<ul>
+<li>
+CoreText
+
+</ul>
+
+<ul>
+<li>
+CoreVideo
+
+</ul>
+
+<ul>
+<li>
+GLKit
+
+</ul>
+
+<ul>
+<li>
+GameController
+
+</ul>
+
+<ul>
+<li>
+ImageIO
+
+</ul>
+
+<ul>
+<li>
+MediaAccessibility
+
+</ul>
+
+<ul>
+<li>
+MediaPlayer
+
+</ul>
+
+<ul>
+<li>
+OpenAL
+
+</ul>
+
+<ul>
+<li>
+OpenGLES
+
+</ul>
+
+<ul>
+<li>
+QuartzCore
+
+</ul>
+
+<ul>
+<li>
+SpriteKit：iOS7新出的游戏小框架
+
+</ul>
+
+
+<h2 id="toc_1.6">Core Services Layer</h2>
+<ul>
+<li>
+Accounts
+
+</ul>
+
+<ul>
+<li>
+AdSupport
+
+</ul>
+
+<ul>
+<li>
+AddressBook
+
+</ul>
+
+<ul>
+<li>
+CFNetwork：对基于CFStream和CFSocoket的抽象，包括CFHttp和CFFtp；
+
+</ul>
+
+<ul>
+<li>
+CoreData：持久化框架；
+
+</ul>
+
+<ul>
+<li>
+CoreFoundation
+
+</ul>
+
+<ul>
+<li>
+CoreLocation
+
+</ul>
+
+<ul>
+<li>
+CoreMedia
+
+</ul>
+
+<ul>
+<li>
+CoreMotion
+
+</ul>
+
+<ul>
+<li>
+CoreTelephony
+
+</ul>
+
+<ul>
+<li>
+EventKit
+
+</ul>
+
+<ul>
+<li>
+Foundation
+
+</ul>
+
+<ul>
+<li>
+JavaScriptCore
+
+</ul>
+
+<ul>
+<li>
+MobileCoreServices
+
+</ul>
+
+<ul>
+<li>
+MultipeerConnectivity
+
+</ul>
+
+<ul>
+<li>
+NewsstandKit
+
+</ul>
+
+<ul>
+<li>
+PassKit
+
+</ul>
+
+<ul>
+<li>
+QuickLook
+
+</ul>
+
+<ul>
+<li>
+Social
+
+</ul>
+
+<ul>
+<li>
+StoreKit
+
+</ul>
+
+<ul>
+<li>
+SystemConfiguration
+
+</ul>
+
+<ul>
+<li>
+UIAutomation
+
+</ul>
+
+
+<h2 id="toc_1.7">Core OS Layer</h2>
+<ul>
+<li>
+Accelerate
+
+</ul>
+
+<ul>
+<li>
+CoreBluetooth
+
+</ul>
+
+<ul>
+<li>
+ExternalAccessory
+
+</ul>
+
+<ul>
+<li>
+Security
+
+</ul>
+
+<ul>
+<li>
+System
+
+</ul>
+
+				</div>
+				<div class="col-md-3">
+					<div class="row">
+					</div>
+					<div id="menu" class="menu">
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<!-- Load comments -->
+				<div id="comments" class="col-md-7 col-md-offset-1">
+				</div>
+				<!--// Load comments -->
+			</div>
+			<div id="footer" class="navbar navbar-default">
+					<div class="copyright help text-center text-muted">©copyright by  space.junewong ## gmail.com</div>
+			</div>
+			</div>
+			</body>
+		</html>
