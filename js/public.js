@@ -3,10 +3,13 @@
  * 
  * @param uri $uri 
  * @param prefix $prefix : default is 'js/';
+ * @param uri $callback : the callback function when loaded; 
  * @return void
  */
-function include(uri, prefix)
+
+function include(uri, prefix, callback)
 {
+	var isCss = /\.\bcss\b/i.test(uri); // js or css
 	prefix = prefix || 'js/';
 	var src = /^http/.test(uri) ? uri : prefix + uri;
 	var sid = src.replace(/(\/|\.)/g, "_");
@@ -21,11 +24,36 @@ function include(uri, prefix)
 		this._thisScript = scripts[scripts.length-1];
 	}
 
-	var script = document.createElement('script');
-	script.id = sid;
-	script.type = 'text/javascript';
-	script.src = src;
-	this._thisScript.parentNode.insertBefore(script, this._thisScript);
+	// create DOM:
+	var dom;
+	if (!isCss) {
+		var script = document.createElement('script');
+		script.id = sid;
+		script.type = 'text/javascript';
+		script.src = src;
+		dom = script;
+	} else {
+		var link = document.createElement('link');
+		link.id = sid;
+		link.rel = 'stylesheet';
+		link.href = src;
+		dom = link;
+	}
+
+	// callback if need:
+	if (callback) {
+		dom.onload = dom.onreadystatechange = function() {
+			if (!this.readyState || 'loaded' === this.readyState || 'complete' === this.readyState) {
+				alert("com: " + componentId + " callback:" + callback);///
+				callback();
+				this.onload = this.onreadystatechange = null;
+			}
+		}
+		// firefox:
+		dom.addEventListener('load', callback, false);
+	}
+
+	this._thisScript.parentNode.insertBefore(dom, this._thisScript);
 }
 
 function id(id) 
