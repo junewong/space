@@ -9,7 +9,7 @@ include('components/sliderbar.js');
 //include('components/content.js');
 //include('components/folder.js');
 include('components/style.js');
-include('http://highlightjs.org/static/styles/xcode.css');
+include('http://highlightjs.org/static/styles/railscasts.css');
 include('http://highlightjs.org/static/highlight.pack.js', '', function() {
 	$('#contents pre').each(function(i, e) {hljs.highlightBlock(e)});
 });
