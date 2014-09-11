@@ -1,0 +1,199 @@
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta charset="UTF-8">
+    <title>群鸟飞翔3D模拟</title>
+    <link rel='stylesheet' type='text/css' href='js/x3dom.css'/>
+    <link rel='stylesheet' type='text/css' href='css/boids.css'/>
+    <script type='text/javascript' src='js/log.js'> </script>
+    <script type='text/javascript' src='js/x3dom.js'> </script>
+    <script type='text/javascript' src='js/lib/Vector.js'> </script>
+    <script type='text/javascript' src='js/Util.js'> </script>
+    <script type='text/javascript' src='js/Movement.js'> </script>
+    <script type='text/javascript' src='js/Bird.js'> </script>
+</head>
+<style type="text/css" media="screen">
+	.cell {
+		float:left;
+	}
+
+	.options {
+		float:right;
+		padding-top:14px;
+		padding-right:10px;
+	}
+	.help {
+		padding-top:10px;
+		padding-left:20px;
+		color:gray;
+	}
+</style>
+<body>
+<div>
+	<div class="cell">
+		<h1>群鸟飞翔模拟</h1>
+	</div>
+	<div class="cell help">
+		<div>操作：鼠标按住左键前进，按住右键后退，拖动转向。</div>
+		<div>模式：w：行走模式，默认；e：查看模式；f：飞行模式；a：查看整体；t：从上往下查看；r：恢复默认视角；</div>
+	</div>
+	<div class="options">
+		<button onclick="clickStopButton()">开始/暂停</button>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+
+	var animateHandle;
+
+	function clickStopButton() {
+
+		if ( animateHandle ) {
+			cancelAnimationFrame(animateHandle);
+			animateHandle  = null;
+
+		} else {
+			autoRun();
+			
+		}
+	}
+
+	var movements = [], birds = [];
+
+	// 鸟的数量
+	var total = 100;
+
+	function init() {
+
+		var scene = document.getElementById('scene');
+
+		for (var i = 0; i < total; i++) {
+
+			var movement = new Movement();
+			movement.id = i;
+			movement.velocity = Util.randomVector(-2, 2);
+			movement.position  = Util.randomVector(-10, 150);
+			movement.setScope( [-150, 150], [10, 290], [-150, 150] );
+			movements.push( movement );
+
+			var bird = new Bird('bird_' + i);
+			birds.push( bird );
+
+			scene.appendChild( bird.element );
+
+			if ( i == 0 ) {
+				bird.setColor( '1 0 1' );
+
+			} else  if ( i % 2 == 0 ) {
+				bird.setColor( '0 1 0' );
+
+			} else {
+				bird.setColor( '0 0 1' );
+			}
+		}
+	}
+
+
+	function run() {
+
+		var count = movements.length;
+
+		for (var i = 0; i < count; i++) {
+
+			var movement = movements[i];
+			var bird = birds[i];
+			movement.run( movements );
+
+			bird.move( movement.position );
+			bird.rotate( movement.velocity );
+		}
+	}
+
+	function autoRun() {
+		// 获取每次的动画帧
+		animateHandle = requestAnimationFrame( autoRun );
+		run();
+	}
+
+	window.onload = function() {
+
+		init();
+
+		autoRun();
+
+	};
+
+
+</script>
+
+<x3d id="boidsX3d">
+    <scene id="scene">
+
+		<viewpoint position="0 -100 250" orientation="0 0 0"></viewpoint>
+
+		<navigationInfo type='"walk" "any"' id="navType" speed="20"></navigationInfo>
+
+        <background  skyColor="0 0 0.3"></background>
+
+        <directionalLight id="directional" direction='0 -0.85 0' on ="TRUE">
+        </directionalLight>
+
+	    <transform translation='0 -100 0'>
+	    	<Group>
+	    		<transform id="transBox" translation='0 0 0'> 
+	    		   <shape> 
+	    		   <appearance> 
+	    		      <material diffuseColor='1 0 0'></material> 
+	    		   </appearance> 
+	    		   <box></box> 
+	    		   </shape> 
+	    		</transform> 
+	    		
+	    		<transform translation='200 190 200'> 
+	    		   <shape> 
+	    		   <appearance> 
+	    		      <material diffuseColor='1 1 0'></material> 
+	    		   </appearance> 
+	    		<Cylinder bottom='true' top='true' height='400' lit='true' metadata='X3DMetadataObject' radius='5.0' side='true' solid='true' useGeoCache='true' ></Cylinder>
+	    		   </shape> 
+	    		</transform> 
+	    		<transform translation='200 190 -200'> 
+	    		   <shape> 
+	    		   <appearance> 
+	    		      <material diffuseColor='1 1 0'></material> 
+	    		   </appearance> 
+	    		<Cylinder bottom='true' top='true' height='400' lit='true' metadata='X3DMetadataObject' radius='5.0' side='true' solid='true' useGeoCache='true' ></Cylinder>
+	    		   </shape> 
+	    		</transform> 
+	    		<transform translation='-200 190 200'> 
+	    		   <shape> 
+	    		   <appearance> 
+	    		      <material diffuseColor='1 1 0'></material> 
+	    		   </appearance> 
+	    		<Cylinder bottom='true' top='true' height='400' lit='true' metadata='X3DMetadataObject' radius='5.0' side='true' solid='true' useGeoCache='true' ></Cylinder>
+	    		   </shape> 
+	    		</transform> 
+	    		<transform translation='-200 190 -200'> 
+	    		   <shape> 
+	    		   <appearance> 
+	    		      <material diffuseColor='1 1 0'></material> 
+	    		   </appearance> 
+	    		<Cylinder bottom='true' top='true' height='400' lit='true' metadata='X3DMetadataObject' radius='5.0' side='true' solid='true' useGeoCache='true' ></Cylinder>
+	    		   </shape> 
+	    		</transform> 
+	    		
+	    		<transform translation="0 -10 0" rotation="1 0 0 -1.57">
+					<Shape>
+						<Appearance><Material diffuseColor="0.6 0.6 1"></Material></Appearance>
+						<Plane solid="false" size="500 500"></Plane>
+					<Shape>
+	    		<transform>
+	    	</Group>
+	    </transform>
+
+    </scene>
+</x3d>
+
+</body>
+
+</html>
