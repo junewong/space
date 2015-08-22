@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<script src="./js/Grids.js"></script>
+	<script src="./js/Cell.js"></script>
+	<style>
+		.grid-row  {
+			display: block;
+			clear: both;
+		}
+		.grid-cell {
+			float: left;
+			background-color: white;
+			border: 1px solid rgb(225, 225, 225);
+		}
+
+		.grid-cell.alive {
+			background-color: green;
+		}
+
+	</style>
+</head>
+<body>
+
+<table>
+	<tr>
+		<td>
+			<div id="container"></div>
+		</td>
+		<td>
+			<div>
+				<button id="nextButton" >下一步</button>
+			</div>
+			<div>
+				<button id="playButton" >开始/暂停</button>
+			</div>
+		</td>
+	</tr>
+</table>
+
+
+	<script>
+		if (!Array.prototype.shuffle) {
+			Array.prototype.shuffle = function() {
+				for(var j, x, i = this.length; i; j = parseInt(Math.random() * i), x = this[--i], this[i] = this[j], this[j] = x);
+				return this;
+			};
+		}
+
+		window.onload = function() {
+
+			var wLength = 50, hLength = 34, size = 20;
+
+			var grids = new Grids( wLength, hLength, size, size );
+			grids.createAt( document.getElementById( 'container' ) );
+
+			grids.onClick( function( x, y, grid ) {
+				console.log( "click " + x + ", " + y );///
+				if ( false == isPlaying ) {
+					var id = Cell.getId( x, y );
+					var cell = cellMap[ id ];
+					if ( cell ) {
+						cell.setLive( cell.isAlive() ? 0 : 1 );
+					}
+				}
+			});
+
+			var cellList = [];
+			var cellMap = {};
+
+			for ( var y = 0; y < hLength; y++ ) {
+
+				for ( var x = 0; x < wLength; x++ ) {
+					var cell = new Cell( x, y );
+					var id = cell.getId();
+					cellList.push( cell );
+					cellMap[ id ] = cell;
+
+					cell.onFetchCell( function( x, y, id ) {
+						var cell = cellMap[ id ];
+						return cell;
+					});
+
+					cell.onChange( function( life ) {
+						//console.log( this.getId() + " : " + life );///
+						var grid =  grids.getGrid( this.x, this.y );
+						if ( this.isAlive() ) {
+							grid.className = 'grid-cell alive';
+						} else {
+							grid.className = 'grid-cell';
+						}
+
+					});
+				}
+			};
+
+			function init() {
+
+				//var points = [];
+				var points = [ [12, 12], [12, 13], [12, 14], [13, 14], [13, 15], [14, 14] ];
+				//var points = [ [10, 10], [10, 12] ];
+				//var points = [ [0, 0], [0, 1], [1, 0], [1, 1], [1, 2], [2, 2], [3, 1] ];
+
+				for ( var i in points ) {
+					var p = points[i];
+					var id = Cell.getId( p[0], p[1] );
+					var cell = cellMap[ id ];
+					if ( cell ) {
+						cell.setLive( CELL_ALIVE );
+					}
+				};
+			};
+
+			function run() {
+				//cellList.shuffle();
+
+				for ( var i = 0; i < cellList.length; i++ ) {
+					var cell = cellList[i];
+					if ( ! cell ) continue;
+					cell.checkAlive();
+				}
+
+				for ( var i = 0; i < cellList.length; i++ ) {
+					var cell = cellList[i];
+					if ( ! cell ) continue;
+					cell.change();
+				}
+			};
+
+			var handle;
+			var isPlaying = false;
+			function autoRun() {
+				// 获取每次的动画帧
+				setTimeout( function() {
+					if ( isPlaying ) {
+						handle = requestAnimationFrame( autoRun );
+						run();
+					}
+				}, 150 );
+			}
+
+
+			//autoRun();
+
+			document.getElementById( 'playButton' ).onclick =  function() {
+				/*
+				if ( ! handle  ) {
+					//handle = setInterval( run, 250 );
+
+				} else {
+					//clearInterval( handle );
+				}
+				*/
+				if ( handle ) {
+					isPlaying = false;
+					cancelAnimationFrame(handle);
+					handle  = null;
+
+				} else {
+					isPlaying = true;
+					autoRun();
+					
+				}
+			};
+
+			document.getElementById( 'nextButton' ).onclick =  function() {
+				run();
+			};
+
+			init();
+		};
+	</script>
+</body>
+</html>
