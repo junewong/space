@@ -31,6 +31,11 @@
 		</td>
 		<td>
 			<div>
+				<h4>最高：<span id="maxScore">0</span></h4>
+				<h4>当前：<span id="currentScore">0</span></h4>
+				<h4>第<span id="step">0</span>步</h4>
+			</div>
+			<div>
 				<button id="nextButton" >下一步</button>
 			</div>
 			<div>
@@ -42,14 +47,13 @@
 
 
 	<script>
-		if (!Array.prototype.shuffle) {
-			Array.prototype.shuffle = function() {
-				for(var j, x, i = this.length; i; j = parseInt(Math.random() * i), x = this[--i], this[i] = this[j], this[j] = x);
-				return this;
-			};
-		}
 
 		window.onload = function() {
+
+			// Score:
+			var maxScore = 0, currentScore = 0, step = 0;
+
+			// Grids:
 
 			var wLength = 50, hLength = 34, size = 20;
 
@@ -66,6 +70,8 @@
 					}
 				}
 			});
+
+			// Cells:
 
 			var cellList = [];
 			var cellMap = {};
@@ -96,25 +102,10 @@
 				}
 			};
 
-			function init() {
-
-				var points = [];
-				//var points = [ [12, 12], [12, 13], [12, 14], [13, 14], [13, 15], [14, 14] ];
-				//var points = [ [10, 10], [10, 12] ];
-				//var points = [ [0, 0], [0, 1], [1, 0], [1, 1], [1, 2], [2, 2], [3, 1] ];
-
-				for ( var i in points ) {
-					var p = points[i];
-					var id = Cell.getId( p[0], p[1] );
-					var cell = cellMap[ id ];
-					if ( cell ) {
-						cell.setLive( CELL_ALIVE );
-					}
-				};
-			};
-
 			function run() {
 				//cellList.shuffle();
+
+				currentScore = 0;
 
 				for ( var i = 0; i < cellList.length; i++ ) {
 					var cell = cellList[i];
@@ -126,23 +117,24 @@
 					var cell = cellList[i];
 					if ( ! cell ) continue;
 					cell.change();
+
+					if ( cell.isAlive() ) {
+						currentScore ++;
+					}
 				}
+
+				// show info:
+				step ++;
+				maxScore = Math.max( maxScore, currentScore );
+				document.getElementById( 'maxScore' ).innerHTML = maxScore;
+				document.getElementById( 'currentScore' ).innerHTML = currentScore;
+				document.getElementById( 'step' ).innerHTML = step;
+
+
 			};
 
-			var handle;
-			var isPlaying = false;
-			function autoRun() {
-				// 获取每次的动画帧
-				setTimeout( function() {
-					if ( isPlaying ) {
-						handle = requestAnimationFrame( autoRun );
-						run();
-					}
-				}, 150 );
-			}
 
-
-			//autoRun();
+			// events:
 
 			document.getElementById( 'playButton' ).onclick =  function() {
 				/*
@@ -166,7 +158,44 @@
 			};
 
 			document.getElementById( 'nextButton' ).onclick =  function() {
-				run();
+				if ( false == isPlaying ) {
+					run();
+				}
+			};
+
+
+			// run:
+
+			var handle;
+			var isPlaying = false;
+			function autoRun() {
+				// 获取每次的动画帧
+				setTimeout( function() {
+					if ( isPlaying ) {
+						handle = requestAnimationFrame( autoRun );
+						run();
+					}
+				}, 150 );
+			}
+
+
+			// init if need:
+
+			function init() {
+
+				var points = [];
+				//var points = [ [12, 12], [12, 13], [12, 14], [13, 14], [13, 15], [14, 14] ];
+				//var points = [ [10, 10], [10, 12] ];
+				//var points = [ [0, 0], [0, 1], [1, 0], [1, 1], [1, 2], [2, 2], [3, 1] ];
+
+				for ( var i in points ) {
+					var p = points[i];
+					var id = Cell.getId( p[0], p[1] );
+					var cell = cellMap[ id ];
+					if ( cell ) {
+						cell.setLive( CELL_ALIVE );
+					}
+				};
 			};
 
 			init();
