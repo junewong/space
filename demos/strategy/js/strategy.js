@@ -200,9 +200,9 @@ var DestroyStrategy = Class( StrategyBase, {
 		this.description = '从不主动跟对方合作，遇到有人发起合作，则选择欺诈。';
 	},
 
-	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
+	// 不主动跟人合作
 	deal : function( other ) {
-		return ACTION_COOPERATE;
+		return ACTION_NONE;
 	},
 
 	// 根据对方上一次做相同反应，否则选择合作
@@ -212,3 +212,43 @@ var DestroyStrategy = Class( StrategyBase, {
 
 });
 ALL_STRAGEGY.push( DestroyStrategy );
+
+var RandomStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '随心所欲' );
+		this.description = '无论是合作还是欺诈，都是随机的选择。';
+	},
+
+	// 随机选择合作还是放弃
+	deal : function( other ) {
+		return parseInt( Math.random() * 100 ) % 2 == 0 ? ACTION_COOPERATE : ACTION_NONE;
+	},
+
+	// 随机选择合作还是欺诈
+	answer : function( other ) {
+		return parseInt( Math.random() * 100 ) % 2 == 0 ? ACTION_COOPERATE : ACTION_CHEAT;
+	}
+
+});
+ALL_STRAGEGY.push( RandomStrategy );
+
+var RanCheatStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '心怀恶意' );
+		this.description = '每次都选择合作，但是当别人跟他合作的时候，有一半几率会选择欺诈';
+	},
+
+	// 主动跟人合作
+	deal : function( other ) {
+		return ACTION_COOPERATE;
+	},
+
+	// 随机选择合作还是欺诈
+	answer : function( other ) {
+		return parseInt( Math.random() * 100 ) % 2 == 0 ? ACTION_COOPERATE : ACTION_CHEAT;
+	}
+
+});
+ALL_STRAGEGY.push( RanCheatStrategy );

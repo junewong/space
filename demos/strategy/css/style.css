@@ -1,0 +1,26 @@
+.strategy {
+	width : 80px;
+	height : 80px;
+	padding-top : 10px;
+	padding-left : 10px;
+	border : 1px solid gray;
+	margin : 4px;
+}
+
+.strategy:hover {
+	border : 3px solid blue;
+}
+
+.strategy .score {
+	width : 60px;
+	height : 60px;
+	border : 1px solid gray;
+	text-align : center;
+}
+
+.strategy .name {
+	width : 100%;
+	height : 20px;
+	text-align : center;
+	font-size : 12px;
+}
