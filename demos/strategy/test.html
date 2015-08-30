@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<script src="js/base.js"></script>
+	<script src="js/action.js"></script>
+	<script src="js/strategy.js"></script>
+	<script src="js/game.js"></script>
+</head>
+<body>
+
+<script>
+window.onload = function() {
+	console.log( 'onload ...' );
+
+	var game = new StrategyGame();
+	game.setMaxStep( 20 );
+
+	var strategy;
+
+	strategy = new TitForTatStrategy();
+	game.addStrategy( strategy );
+
+	strategy = new CheatStrategy();
+	game.addStrategy( strategy );
+
+	strategy = new CooperateStrategy();
+	game.addStrategy( strategy );
+
+	/*
+	for ( var i in ALL_STRAGEGY ) {
+		strategy = new ALL_STRAGEGY[i]();
+		game.addStrategy( strategy );
+	}
+	*/
+
+	console.log( game.strategies );
+
+	game.nextCallback = function( step ) {
+	};
+
+	game.endCallback = function( step ) {
+		console.log( 'END!' );
+	};
+
+	game.dealCallback = function( a, valueA, b, valueB, total ) {
+		console.log( a.getId() + '(' + a.getValue() + ')' +  ":" + valueA + " | " + b.getId() + '(' + b.getValue() + ')' + ':' + valueB + ' | ' + total + '(' + game.getTotal() + ')' );
+	};
+
+	game.deathCallback = function( a ) {
+		console.log( a.getId() + ' is Death!' );
+	};
+
+	game.play();
+
+	console.log( 'play!' );
+
+};
+</script>
+	
+</body>
+</html>
