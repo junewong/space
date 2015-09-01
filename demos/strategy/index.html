@@ -12,12 +12,9 @@
 	<style>
 		#strategyGroup {
 			width: 800px;
-			height: 100px;
+			max-height: 800px;
+			min-height: 108px;
 			clear: both;
-		}
-
-		#totalScore {
-			text-align: center;
 		}
 
 		#strategyGroup .strategy{
@@ -30,15 +27,42 @@
 			overflow: scroll;
 		}
 
+		#choiceArea {
+			width : 180px;
+		}
+		#choiceArea>div{
+			float: left;
+		}
+
 		.report {
 			font-size : 12px;
 			padding : 2px;
+		}
+		.report:nth-child(even){
+			background-color: rgb(240,240,240);
+		}
+
+
+		.text-center {
+			text-align: center;
+		}
+
+		table {
+			border: 1px solid rgb(205,205,205);
+		}
+
+		table td{
+			background-color: rgb(249,251,255);
+			border: 1px solid rgb(225,225,225);
+		}
+		hr {
+			border: 1px solid rgb(225,225,225);
 		}
 	</style>
 </head>
 <body>
 
-<table border="1">
+<table border="0">
 	<tr>
 		<td valign="top">
 			<div id="strategyGroup"></div>
@@ -46,17 +70,25 @@
 			<div id="reportContainer"></div>
 		</td>
 		<td valign="top">
-			<h3 id="totalScore">0</h3>
+			<div>
+				<h2 class="text-center"><span id="totalScore">0</span> / <span id="avgScore">0</span></h2>
+				<h5 class="text-center">(总值/平均值)</h5>
+			</div>
+			<hr/>
+			<h5 class="text-center">第 <span id="step">0</span> 回合</h5>
 			<hr/>
 			<div>
-				<div id="choiceArea">
-				</div>
-				<div>
+				<div class="text-center">
+					<button id="reloadButton" onclick="javascript:location.reload();">重载</button>&nbsp;&nbsp;
 					<button id="nextButton">下一步</button>
 					<br/>
 					<button id="playButton">开始/暂停</button>
 				</div>
+				<hr/>
+				<div id="choiceArea">
+				</div>
 			</div>
+			<hr/>
 		</td>
 	</tr>
 </table>
@@ -84,6 +116,7 @@ window.onload = function() {
 	game.setMaxStep( 20 );
 
 	game.nextCallback = function( step ) {
+		D( 'step' ).innerHTML = step;
 	};
 
 	game.endCallback = function( step ) {
@@ -93,7 +126,8 @@ window.onload = function() {
 	};
 
 	game.dealCallback = function( a, valueA, b, valueB, total ) {
-		var log =  a.getId() + '(' + a.getValue() + ')' +  ":" + valueA + " | " + b.getId() + '(' + b.getValue() + ')' + ':' + valueB + ' | ' + total + '(' + game.getTotal() + ')';
+		//var log =  a.getId() + '(' + a.getValue() + ')' +  ":" + valueA + " | " + b.getId() + '(' + b.getValue() + ')' + ':' + valueB + ' | ' + total + '(' + game.getTotal() + ')';
+		var log = '【' + a.getUniqName() + '】向【' + b.getUniqName() + '】提出交易，双方交易结果：' +  valueA + ' / ' + valueB + '，总价值变动：' + total + '，当前总价值：' + game.getTotal();
 		printLog( log );
 		report( log );
 
@@ -104,10 +138,12 @@ window.onload = function() {
 		sprit.setScore( b.getValue() );
 
 		D( 'totalScore' ).innerHTML = game.getTotal();
+		D( 'avgScore' ).innerHTML = game.getAvgTotal();
 	};
 
 	game.deathCallback = function( a ) {
-		var log =  a.getId() + ' is Death!';
+		//var log =  a.getId() + ' is Death!';
+		var log = '【' + a.getUniqName() + '】出局！';
 		printLog( log );
 		report( log );
 	};
