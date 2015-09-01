@@ -1,9 +1,8 @@
 
 var Sprit = Class({
 
-	init : function( strategy, color ) {
+	init : function( strategy ) {
 		this.strategy = strategy;
-		this.color = color || '';
 		this.node = null;
 		this.scoreNode = null;
 		this.clickCallback = null;
@@ -22,7 +21,8 @@ var Sprit = Class({
 
 		var node = document.createElement( 'div' );
 		node.className = 'strategy';
-		node.style.backgroundColor = this.color;
+		//node.style.backgroundColor = this.strategy.style.bgColor;
+		//node.style.color = this.strategy.style.fontColor;
 		node.title = this.strategy.description;
 		node.onclick = function( e ) {
 			if ( _this.clickCallback ) {

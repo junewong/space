@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>博弈空间</title>
+	<script src="js/base.js"></script>
+	<script src="js/action.js"></script>
+	<script src="js/strategy.js"></script>
+	<script src="js/game.js"></script>
+	<script src="js/sprit.js"></script>
+	<link href="css/style.css" rel="stylesheet" type="text/css" />
+	<style>
+		#strategyGroup {
+			width: 800px;
+			height: 100px;
+			clear: both;
+		}
+
+		#totalScore {
+			text-align: center;
+		}
+
+		#strategyGroup .strategy{
+			float: left;
+		}
+
+		#reportContainer {
+			width : 100%;
+			height: 500px;
+			overflow: scroll;
+		}
+
+		.report {
+			font-size : 12px;
+			padding : 2px;
+		}
+	</style>
+</head>
+<body>
+
+<table border="1">
+	<tr>
+		<td valign="top">
+			<div id="strategyGroup"></div>
+			<hr/>
+			<div id="reportContainer"></div>
+		</td>
+		<td valign="top">
+			<h3 id="totalScore">0</h3>
+			<hr/>
+			<div>
+				<div id="choiceArea">
+				</div>
+				<div>
+					<button id="nextButton">下一步</button>
+					<br/>
+					<button id="playButton">开始/暂停</button>
+				</div>
+			</div>
+		</td>
+	</tr>
+</table>
+
+<script>
+
+window.onload = function() {
+
+	function report( text ) {
+		var div = document.createElement( 'div' );
+		div.className = 'report';
+		div.innerHTML = text;
+		var container = D( 'reportContainer' ); 
+		container.appendChild( div );
+		container.scrollTop = container.scrollHeight;
+	}
+
+	function printLog( log ) {
+		//console.log( log );
+	}
+
+	var spritMap = {};
+
+	var game = new StrategyGame();
+	game.setMaxStep( 20 );
+
+	game.nextCallback = function( step ) {
+	};
+
+	game.endCallback = function( step ) {
+		var log = 'END';
+		printLog( log );
+		report( log );
+	};
+
+	game.dealCallback = function( a, valueA, b, valueB, total ) {
+		var log =  a.getId() + '(' + a.getValue() + ')' +  ":" + valueA + " | " + b.getId() + '(' + b.getValue() + ')' + ':' + valueB + ' | ' + total + '(' + game.getTotal() + ')';
+		printLog( log );
+		report( log );
+
+		var sprit = spritMap[ a.getId() ];
+		sprit.setScore( a.getValue() );
+
+		sprit = spritMap[ b.getId() ];
+		sprit.setScore( b.getValue() );
+
+		D( 'totalScore' ).innerHTML = game.getTotal();
+	};
+
+	game.deathCallback = function( a ) {
+		var log =  a.getId() + ' is Death!';
+		printLog( log );
+		report( log );
+	};
+
+	function createStrategyButton( strategyClass ) {
+		var spritButton = new Sprit( new strategyClass() );
+
+		spritButton.onClick( function() {
+			var strategy = new strategyClass();
+			var sprit = new Sprit( strategy );
+			game.addStrategy( strategy );
+
+			D( 'strategyGroup' ).appendChild( sprit.getNode() );
+
+			spritMap[ strategy.getId() ] = sprit;
+		});
+
+		D( 'choiceArea' ).appendChild( spritButton.getNode() );
+	}
+
+	for ( var i in ALL_STRAGEGY ) {
+		var strategyClass = ALL_STRAGEGY[i];
+		createStrategyButton( strategyClass );
+	}
+
+
+	D( 'playButton' ).onclick =  function() {
+		if ( game.isPlaying() ) {
+			printLog( 'pause ...' );
+			game.pause();
+
+		} else {
+			printLog( 'play ...' );
+			game.play();
+		}
+	};
+
+	D( 'nextButton' ).onclick =  function() {
+		if ( false == game.isPlaying() ) {
+			game.next();
+		}
+	};
+
+};
+
+</script>
+
+</body>
+</html>

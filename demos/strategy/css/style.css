@@ -1,26 +1,28 @@
 .strategy {
 	width : 80px;
 	height : 80px;
-	padding-top : 10px;
-	padding-left : 10px;
+	padding-top : 16px;
+	padding-bottom : 4px;
 	border : 1px solid gray;
 	margin : 4px;
+	text-align : center;
+	background-color : rgb(255,252,115);	
 }
 
 .strategy:hover {
-	border : 3px solid blue;
+	border : 3px solid rgb(104,208,236);
+	width : 76px;
+	height : 76px;
 }
 
 .strategy .score {
-	width : 60px;
-	height : 60px;
-	border : 1px solid gray;
-	text-align : center;
+	width : 80px;
+	height : 56px;
+	font-size: 32px;
 }
 
 .strategy .name {
-	width : 100%;
+	width : 80px;
 	height : 20px;
-	text-align : center;
-	font-size : 12px;
+	font-size : 13px;
 }

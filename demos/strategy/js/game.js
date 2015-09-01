@@ -62,6 +62,10 @@ var StrategyGame = Class({
 		return this.total;
 	},
 
+	getAvgTotal : function() {
+		return this.strategies.length == 0 ? 0 : parseInt( this.total / this.strategies.length );
+	},
+
 	play : function() {
 		var _this = this;
 

@@ -63,6 +63,8 @@ var StrategyBase = Class({
 
 		this.changeValueCallback = null;
 		this.deathCallback = null;
+
+		this.style = { bgColor : '', fontColor : '' };
 	},
 
 	setId : function( id ) {
@@ -75,6 +77,10 @@ var StrategyBase = Class({
 
 	getName : function() {
 		return this.name;
+	},
+
+	getUniqName : function() {
+		return this.name + '(' + this.id + ')';
 	},
 
 	getValue : function() {
@@ -119,6 +125,7 @@ var TitForTatStrategy = Class( StrategyBase, {
 	init : function( id ) {
 		this._init( id, '以牙还牙' );
 		this.description = '根据跟对方上一个回合的交易情况，如果上次是欺诈，则报复，否则则合作。';
+		this.style.bgColor = 'rgb(251,94,122)';
 	},
 
 	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
@@ -172,6 +179,7 @@ var CooperateStrategy = Class( StrategyBase, {
 	init : function( id ) {
 		this._init( id, '遵纪守法' );
 		this.description = '如果对方上次有欺诈过，则不主动合作；但任何发起合作的时候都答应跟对方合作';
+		this.style.bgColor = 'rgb(181,238,45)';
 	},
 
 
@@ -198,6 +206,8 @@ var DestroyStrategy = Class( StrategyBase, {
 	init : function( id ) {
 		this._init( id, '毁灭人格' );
 		this.description = '从不主动跟对方合作，遇到有人发起合作，则选择欺诈。';
+		this.style.bgColor = 'rgb(60,82,97)';
+		this.style.fontColor = 'white';
 	},
 
 	// 不主动跟人合作
@@ -218,6 +228,7 @@ var RandomStrategy = Class( StrategyBase, {
 	init : function( id ) {
 		this._init( id, '随心所欲' );
 		this.description = '无论是合作还是欺诈，都是随机的选择。';
+		this.style.bgColor = 'rgb(49,228,123)';
 	},
 
 	// 随机选择合作还是放弃
@@ -238,6 +249,7 @@ var RanCheatStrategy = Class( StrategyBase, {
 	init : function( id ) {
 		this._init( id, '心怀恶意' );
 		this.description = '每次都选择合作，但是当别人跟他合作的时候，有一半几率会选择欺诈';
+		this.style.bgColor = 'rgb(224,102,214)';
 	},
 
 	// 主动跟人合作
