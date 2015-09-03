@@ -81,6 +81,7 @@
 				<div class="text-center">
 					<button id="reloadButton" onclick="javascript:location.reload();">重载</button>&nbsp;&nbsp;
 					<button id="nextButton">下一步</button>
+					<button id="randomButton">随机</button>
 					<br/>
 					<button id="playButton">开始/暂停</button>
 				</div>
@@ -148,22 +149,27 @@ window.onload = function() {
 		report( log );
 	};
 
+	function addSprit( strategyClass ) {
+		var strategy = new strategyClass();
+		var sprit = new Sprit( strategy );
+		game.addStrategy( strategy );
+
+		D( 'strategyGroup' ).appendChild( sprit.getNode() );
+
+		spritMap[ strategy.getId() ] = sprit;
+	}
+
 	function createStrategyButton( strategyClass ) {
 		var spritButton = new Sprit( new strategyClass() );
 
 		spritButton.onClick( function() {
-			var strategy = new strategyClass();
-			var sprit = new Sprit( strategy );
-			game.addStrategy( strategy );
-
-			D( 'strategyGroup' ).appendChild( sprit.getNode() );
-
-			spritMap[ strategy.getId() ] = sprit;
+			addSprit( strategyClass );
 		});
 
 		D( 'choiceArea' ).appendChild( spritButton.getNode() );
 	}
 
+	// init sprit selections:
 	for ( var i in ALL_STRAGEGY ) {
 		var strategyClass = ALL_STRAGEGY[i];
 		createStrategyButton( strategyClass );
@@ -184,6 +190,14 @@ window.onload = function() {
 	D( 'nextButton' ).onclick =  function() {
 		if ( false == game.isPlaying() ) {
 			game.next();
+		}
+	};
+
+	D( 'randomButton' ).onclick = function() {
+		var count = randomNumber( 3, 9 );
+		for ( var i = 0; i < count; i ++ ) {
+			var index = randomNumber( ALL_STRAGEGY.length - 1 );
+			addSprit( ALL_STRAGEGY[ index ] );
 		}
 	};
 

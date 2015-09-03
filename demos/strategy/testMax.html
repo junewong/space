@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<script src="js/base.js"></script>
+	<script src="js/action.js"></script>
+	<script src="js/strategy.js"></script>
+	<script src="js/game.js"></script>
+</head>
+<body>
+
+<script>
+
+window.onload = function() {
+
+	function test() {
+		var game = new StrategyGame();
+		game.setMaxStep( 20 );
+
+		game.endCallback = function( step ) {
+			var max = game.getMaxScoreStragety();
+			var log = 'END(' + game.getLength() + '):max:' + max.getName() + ':score:' + max.getValue() + ':Total:' + game.getTotal() + ':AvgTotal:' + game.getAvgTotal() + ':Names:' + game.getNameList();
+			console.log( log ); 
+		};
+
+		var count = randomNumber( 3, 9 );
+		for ( var i = 0; i < count; i ++ ) {
+			var index = randomNumber( ALL_STRAGEGY.length - 1 );
+			var strategyClass = ALL_STRAGEGY[ index ];
+			var strategy = new strategyClass();
+			game.addStrategy( strategy );
+		}
+		game.play();
+	}
+
+	var times = 200;
+	for ( var i = 0; i < times; i ++ ) {
+		test();
+	}
+
+};
+
+</script>
+	
+</body>
+</html>

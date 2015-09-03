@@ -70,3 +70,13 @@ var Class = function() {
 function D( id ) {
 	return document.getElementById( id );
 }
+
+function randomNumber( from, to ) {
+	if ( to === undefined ) {
+		to = from;
+		from = 0;
+	}
+	var length = to - from;
+	var rand = parseInt( Math.random() * 100 % length );
+	return from + rand;
+}

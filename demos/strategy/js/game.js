@@ -66,6 +66,10 @@ var StrategyGame = Class({
 		return this.strategies.length == 0 ? 0 : parseInt( this.total / this.strategies.length );
 	},
 
+	getLength : function() {
+		return this.strategies.length;
+	},
+
 	play : function() {
 		var _this = this;
 
@@ -92,6 +96,31 @@ var StrategyGame = Class({
 
 	isPlaying : function() {
 		return !! this._isPlaying;
+	},
+
+	getMaxScoreStragety : function() {
+		var maxOne = null;
+		for ( var i in this.strategies ) {
+			var strategy = this.strategies[i];
+			if ( ! maxOne ) {
+				maxOne = strategy;
+
+			} else {
+				if ( strategy.getValue() > maxOne.getValue() ) {
+					maxOne = strategy;
+				}
+			}
+		}
+		return maxOne;
+	},
+
+	getNameList : function() {
+		var names = [];
+		for ( var i in this.strategies) {
+			var strategy = this.strategies[i];
+			names.push( strategy.getName() );
+		}
+		return names;
 	},
 
 	_changeTotal : function( offset ) {
