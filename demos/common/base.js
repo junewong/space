@@ -190,6 +190,14 @@ var Arrays = {
 			list.push( i );
 		}
 		return list;
+	},
+
+	copy : function( array ) {
+		var list = [];
+		for (var i = 0; i < array.length; i ++ ) {
+			list.push( array[i] );
+		}
+		return list;
 	}
 
 };
@@ -211,6 +219,12 @@ Array.prototype.mapNew = function( callback ) {
 		}
 	}
 	return list;
+};
+
+Array.prototype.addArray = function( array ) {
+	for ( var i = 0, len = array.length; i < len; i++ ) {
+		this.push( array[i] );
+	}
 };
 
 Array.prototype.shuffle = function() {

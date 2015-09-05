@@ -19,12 +19,15 @@ var RankWarGame = Class({
 		this.fightResultCallback = null;
 		this.swapRankCallback = null;
 
+		this.manualActor = null;
+
 		this.maxSkillsInFighting = 3;
 
 		this.rankMap = {};
 		this.actors = this._createActors();
 
 		this.maxStep = this.actors.length;
+
 	},
 
 	setMaxTruns : function( maxTruns ) {
@@ -40,6 +43,10 @@ var RankWarGame = Class({
 		return Arrays.createIndexArray( this.actors.length - 1 ).mapNew( function( index, i ) {
 			return _this.rankMap[ index + 1 ];
 		});
+	},
+
+	getManualActor : function() {
+		return this.manualActor;
 	},
 
 	next : function() {
@@ -209,6 +216,31 @@ var RankWarGame = Class({
 		names.push( ACTOR_NAME_PLAYER );
 		names.shuffle();
 
+		var strategyClasses = [];
+
+		// 特殊策略
+		var classNames = Arrays.create( 10, function( i ) {
+				return FocuseStrategy;
+		});
+		strategyClasses.addArray( classNames );
+
+		classNames = Arrays.create( 20, function( i ) {
+				return ExcellentStrategy;
+		});
+		strategyClasses.addArray( classNames );
+
+		// 其余用随机策略补充
+		var leftCount = this.maxActors - strategyClasses.length;
+		if ( leftCount > 0 ) {
+			classNames = Arrays.create( leftCount, function( i ) {
+					return RandomStrategy;
+			});
+			strategyClasses.addArray( classNames );
+		}
+
+		strategyClasses.shuffle();
+
+
 		var actors = names.mapNew( function( name, i ) {
 			 var rank = i + 1;
 			var skillGroup = new SkillGroup();
@@ -222,10 +254,14 @@ var RankWarGame = Class({
 			if ( actor.getName() == ACTOR_NAME_PLAYER ) {
 				actor.isManual = true;
 				actor.setStrategy( new ManualStrategy() );
+				_this.manualActor = actor;
 
 			} else {
+				var strategyClass = strategyClasses.length > 0 ? 
+								strategyClasses.shift() : RandomStrategy;
+
 				actor.isManual = false;
-				actor.setStrategy( new RandomStrategy() );
+				actor.setStrategy( new strategyClass() );
 			}
 
 			_this.rankMap[ rank ] = actor;

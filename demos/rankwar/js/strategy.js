@@ -125,17 +125,10 @@ var StrategyBase = Class({
 	}
 });
 
-/*
- * 以牙还牙策略
- */
-var RandomStrategy = Class( StrategyBase, {
 
-	init : function( id ) {
-		this._init( id, '随机策略' );
-		this.description = '任何选择都是随机的';
-	},
+var ChooseEnemy  = {
 
-	chooseEnemy : function( actors ) {
+	random : function( actors ) {
 		if ( ! actors ) {
 			return null;
 		}
@@ -146,6 +139,39 @@ var RandomStrategy = Class( StrategyBase, {
 		}
 		// 随机选择敌人
 		return actors[ i ];
+	}
+};
+
+var Fight = {
+
+	maxValueSkills : function( allSkills, count ) {
+		var skills = Arrays.copy( allSkills );
+		skills.sort( function( a, b ) {
+			return a.getValue() < b.getValue();
+		});
+		return skills.slice( 0, count );
+	},
+
+	// 十分之一的几率用随机，其他用最大值
+	randomOrMaxValue : function( skillGroup, count ) {
+		return Random.getInt( 9 ) === 0 ?
+					skillGroup.getRandomSkills( count ) :
+					this.maxValueSkills( skillGroup.skills, count );
+	}
+};
+
+/*
+ * 随机策略
+ */
+var RandomStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '随机策略' );
+		this.description = '任何选择都是随机的';
+	},
+
+	chooseEnemy : function( actors ) {
+		ChooseEnemy.random( actors );
 	},
 
 	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
@@ -169,6 +195,79 @@ var RandomStrategy = Class( StrategyBase, {
 });
 
 
+
+
+/*
+ * 随机策略
+ */
+var FocuseStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '专心致志' );
+		this.description = '专注提升自己的两种最强强项';
+	},
+
+	chooseEnemy : function( actors ) {
+		return ChooseEnemy.random( actors );
+	},
+
+	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
+	fight : function( skillGroup, count ) {
+		return Fight.maxValueSkills( skillGroup.skills, count );
+	},
+
+	// 根据对方上一次做相同反应，否则选择合作
+	attacked : function( enemy, skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	// 升级，随机分配技能点
+	levelUp : function( skills, points ) {
+		Fight.maxValueSkills( skills, points ).map( function( skill, i ) {
+			skill.addValue( 1 );
+		});
+	}
+
+});
+
+/*
+ * 随机策略
+ */
+var ExcellentStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '精英专修' );
+		this.description = '专修最擅长的前三项';
+	},
+
+	chooseEnemy : function( actors ) {
+		return ChooseEnemy.random( actors );
+	},
+
+	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
+	fight : function( skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	// 根据对方上一次做相同反应，否则选择合作
+	attacked : function( enemy, skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	// 随机在前三项最好的技能中升级
+	levelUp : function( skills, points ) {
+		Fight.maxValueSkills( skills, 3 ).shuffle().slice( 0, points ).map( function( skill, i ) {
+			skill.addValue( 1 );
+		});
+	}
+
+});
+
+
+
+/**
+ * 玩家策略 
+ */
 var ManualStrategy = Class( StrategyBase, {
 	init : function( id ) {
 		this._init( id, '玩家策略' );

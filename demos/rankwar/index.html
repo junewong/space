@@ -132,7 +132,7 @@ window.onload = function() {
 					return '' + skill.name + skill.getValue();
 				}).join( ', ' );
 
-				var log  = '$0: $1 -- $2 -- $3'.format( actor.context.getRank(), actor.getName(), skills, actor.context.getDescription() );
+				var log  = '$0: $1 -- $2 -- $3 -- 策略：$4'.format( actor.context.getRank(), actor.getName(), skills, actor.context.getDescription(), actor.strategy.getName() );
 				showLog( log );
 		});
 	}
@@ -190,6 +190,10 @@ window.onload = function() {
 	game.endCallback = function( truns ) {
 		showLog( '== 结束 == ', 'h3' );
 		printAllInfo();
+		var actor  = game.getManualActor();
+		if ( actor ) {
+			alert( '游戏结束！您最终的排名是：第$0名'.format( actor.context.getRank() ) );
+		}
 	};
 
 	var rankBoard = new RankBoard();
