@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>登天梯</title>
+	<script src="../common/base.js"></script>
+	<script src="../common/Grids.js"></script>
+	<script src="js/ui.js"></script>
+	<link href="css/style.css" rel="stylesheet" type="text/css" />
+	<style>
+		#strategyGroup {
+			width: 800px;
+			max-height: 800px;
+			min-height: 108px;
+			clear: both;
+		}
+
+		#strategyGroup .strategy{
+			float: left;
+		}
+
+		#reportContainer {
+			width : 100%;
+			height: 500px;
+			overflow: scroll;
+		}
+
+		#choiceArea {
+			width : 180px;
+		}
+		#choiceArea>div{
+			float: left;
+		}
+
+		.report {
+			font-size : 12px;
+			padding : 2px;
+		}
+		.report:nth-child(even){
+			background-color: rgb(240,240,240);
+		}
+
+
+		.text-center {
+			text-align: center;
+		}
+
+		table {
+			border: 1px solid rgb(205,205,205);
+		}
+
+		table td{
+			background-color: rgb(249,251,255);
+			border: 1px solid rgb(225,225,225);
+		}
+		hr {
+			border: 1px solid rgb(225,225,225);
+		}
+	</style>
+</head>
+<body>
+
+<table border="0">
+	<tr>
+		<td valign="top">
+			<div id="container"></div>
+		</td>
+		<td valign="top">
+		</td>
+	</tr>
+</table>
+
+<script>
+
+window.onload = function() {
+	var rankBoard = new RankBoard();
+	rankBoard.createAt( D( 'container' ) );
+};
+
+</script>
+
+</body>
+</html>

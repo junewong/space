@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>登天梯</title>
+	<script src="../common/base.js"></script>
+	<script src="js/dict.js"></script>
+	<script src="js/skill.js"></script>
+	<script src="js/strategy.js"></script>
+	<script src="js/actor.js"></script>
+	<script src="js/game.js"></script>
+</head>
+<body>
+
+<script>
+
+window.onload = function() {
+
+	function skillDesc( skills ) {
+		if ( ! skills ) {
+			return '';
+		}
+		return skills.mapNew( function( skill, i ) {
+			return '' + skill.name + skill.getValue();
+		}).join( ', ' );
+	}
+
+	var game = new RankWarGame( 10 );
+	game.setMaxTruns( 3 );
+
+	function printAllInfo() {
+		game.getAcotrsByRank().map( function( actor, i ) {
+				var skills = actor.skillGroup.skills.mapNew( function( skill, i ) {
+					return '' + skill.name + skill.getValue();
+				}).join( ', ' );
+
+				var log  = '$0: $1 -- $2 -- $3'.format( actor.context.getRank(), actor.getName(), skills, actor.context.getDescription() );
+				W( log );
+		});
+	}
+
+	printAllInfo();
+
+	game.nextTurnsCallback = function( i ) {
+		W( '第$0回合'.format( i ), 'h3' );
+	};
+
+	game.fightCallback = function( a, skillsA, b, skillsB ) {
+		W();
+		var log = '$0[$4] VS $1[$5]: ($2) VS ($3)。'.format( a.getName(), b.getName(), skillDesc( skillsA ), skillDesc( skillsB ), a.context.getRank(), b.context.getRank() );
+		W( log );
+	};
+
+	game.fightResultCallback = function( a, b, type, total ) {
+		var log = '>> $0[$4] 挑战 $1[$5]，得分：$2, $3。'.format( a.getName(), b.getName(), total, FIGHT_RESULT_MAP[type], a.context.getRank(), b.context.getRank()  );
+		W( log );
+	};
+
+	game.endCallback = function( truns ) {
+		W( '== 结束 == ', 'h3' );
+		printAllInfo();
+	};
+
+	game.play();
+
+};
+
+</script>
+
+</body>
+</html>

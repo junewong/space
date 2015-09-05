@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>登天梯</title>
+	<script src="../common/base.js"></script>
+	<script src="js/skill.js"></script>
+</head>
+<body>
+
+<script>
+
+window.onload = function() {
+	var skillsA = new SkillGroup();
+
+	var skillsB = new SkillGroup();
+
+	function showSkills( skill, i ) {
+		W( skill.name + ' : ' + skill.getValue() );
+	}
+
+	W( 'A skills:' );
+	skillsA.skills.map( showSkills );
+
+	W( 'B skills:' );
+	skillsB.skills.map( showSkills );
+
+	var randA = skillsA.getRandomSkills( 3 );
+	W( 'A Rand skills:' );
+	randA.map( showSkills );
+
+	W( 'B Rand skills:' );
+	var randB = skillsB.getRandomSkills( 3 );
+	randB.map( showSkills );
+
+	W(); W( 'check restrict: ', 'b' );
+	var total = 0;
+	Arrays.mapBoth( randA, randB, function( a, b, i ) {
+		var check = SkillRule.check( a, b );
+		W( '$0 VS $1, check is : $2'.format( a.name, b.name, check )  );
+
+		var realValue = SkillRule.getRealValue( a, b );
+		W( 'real value: $0 / $1 and $2 / $3'.format( realValue[0], a.getValue(), realValue[1], b.getValue() ) );
+
+		var score = SkillRule.fight( a, b );
+		W( 'fight result: ' + score );
+		W();
+
+		total += score;
+	});
+
+	W( 'total: ' + total );
+
+};
+
+</script>
+
+</body>
+</html>

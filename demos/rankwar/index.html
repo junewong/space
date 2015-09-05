@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>登天梯</title>
+	<script src="../common/base.js"></script>
+	<script src="../common/Grids.js"></script>
+	<script src="js/dict.js"></script>
+	<script src="js/skill.js"></script>
+	<script src="js/strategy.js"></script>
+	<script src="js/actor.js"></script>
+	<script src="js/game.js"></script>
+	<script src="js/ui.js"></script>
+	<link href="css/style.css" rel="stylesheet" type="text/css" />
+	<style>
+		.grid-row  {
+			display: block;
+			clear: both;
+		}
+		.grid-cell {
+			float: left;
+			background-color: white;
+			border: 1px solid rgb(225, 225, 225);
+		}
+
+		.grid-cell.alive {
+			background-color: green;
+		}
+
+		#strategyGroup {
+			width: 800px;
+			max-height: 800px;
+			min-height: 108px;
+			clear: both;
+		}
+
+		#strategyGroup .strategy{
+			float: left;
+		}
+
+		#reportContainer {
+			width : 100%;
+			height: 500px;
+			overflow: scroll;
+		}
+
+		#choiceArea {
+			width : 180px;
+		}
+		#choiceArea>div{
+			float: left;
+		}
+
+		.report {
+			font-size : 12px;
+			padding : 2px;
+		}
+		.report:nth-child(even){
+			background-color: rgb(240,240,240);
+		}
+
+
+		.text-center {
+			text-align: center;
+		}
+
+		table {
+			border: 1px solid rgb(205,205,205);
+		}
+
+		table td{
+			background-color: rgb(249,251,255);
+			border: 1px solid rgb(225,225,225);
+		}
+		hr {
+			border: 1px solid rgb(225,225,225);
+		}
+	</style>
+</head>
+<body>
+
+<table border="0">
+	<tr>
+		<td valign="top">
+			<div id="container"></div>
+		</td>
+		<td valign="top">
+			<h3 class="text-center">第 <span id="truns">0</span> 回合</h3>
+			<hr/>
+			<div>
+				<img src="http://a.hiphotos.baidu.com/baike/w%3D268/sign=96062907d9b44aed594eb9e28b1d876a/a1ec08fa513d269749f0221056fbb2fb4316d85f.jpg" alt="">
+			</div>
+			<hr/>
+			<div>
+				<div class="text-center">
+					<button id="nextButton">下一步</button>
+					<br/>
+					<button id="playButton">开始/暂停</button>
+				</div>
+				<hr/>
+				<div id="logConsole" class="log-console">
+				</div>
+			</div>
+			<hr/>
+		</td>
+	</tr>
+</table>
+
+<script>
+
+window.onload = function() {
+
+	function showLog( log ) {
+		console.log( log || '' );
+	}
+
+	function skillDesc( skills ) {
+		if ( ! skills ) {
+			return '';
+		}
+		return skills.mapNew( function( skill, i ) {
+			return '' + skill.name + skill.getValue();
+		}).join( ', ' );
+	}
+
+	var game = new RankWarGame( 100 );
+	game.setMaxTruns( 20 );
+
+	function printAllInfo() {
+		game.getAcotrsByRank().map( function( actor, i ) {
+				var skills = actor.skillGroup.skills.mapNew( function( skill, i ) {
+					return '' + skill.name + skill.getValue();
+				}).join( ', ' );
+
+				var log  = '$0: $1 -- $2 -- $3'.format( actor.context.getRank(), actor.getName(), skills, actor.context.getDescription() );
+				showLog( log );
+		});
+	}
+
+	printAllInfo();
+
+	game.nextTurnsCallback = function( i ) {
+		showLog( '第$0回合'.format( i ), 'h3' );
+		D( 'truns' ).innerHTML = i;
+	};
+
+	game.fightCallback = function( a, skillsA, b, skillsB ) {
+		showLog();
+		var log = '$0[$4] VS $1[$5]: ($2) VS ($3)。'.format( a.getName(), b.getName(), skillDesc( skillsA ), skillDesc( skillsB ), a.context.getRank(), b.context.getRank() );
+		showLog( log );
+
+		a.setFighting( true );
+		b.setFighting( true );
+
+		if ( a.isManual || b.isManual ) {
+			alert( log );
+		}
+	};
+
+	game.fightResultCallback = function( a, b, type, total ) {
+		var log = '$0[$4] 挑战 $1[$5]，得分：$2, $3。'.format( a.getName(), b.getName(), total, FIGHT_RESULT_MAP[type], a.context.getRank(), b.context.getRank()  );
+		showLog( '>> ' + log );
+		a.updateStatus();
+		b.updateStatus();
+
+		if ( a.isManual || b.isManual ) {
+			alert( log );
+		}
+
+		a.setFighting( false );
+		b.setFighting( false );
+	};
+
+	game.swapRankCallback = function( actorA, actorB, newRankA, newRankB ) {
+
+		var nodeA = actorA.getNode();
+		var nodeB = actorB.getNode();
+
+		var parentNodeA = nodeA.parentNode;
+		var parentNodeB = nodeB.parentNode;
+
+		nodeA = parentNodeA.removeChild( nodeA );
+		nodeB = parentNodeB.removeChild( nodeB );
+
+		parentNodeA.appendChild( nodeB );
+		parentNodeB.appendChild( nodeA );
+
+	};
+
+	game.endCallback = function( truns ) {
+		showLog( '== 结束 == ', 'h3' );
+		printAllInfo();
+	};
+
+	var rankBoard = new RankBoard();
+	rankBoard.createAt( D( 'container' ), game.actors );
+
+
+	D( 'playButton' ).onclick =  function() {
+		if ( game.isPlaying() ) {
+			game.pause();
+
+		} else {
+			game.play();
+		}
+	};
+
+	D( 'nextButton' ).onclick =  function() {
+		if ( false == game.isPlaying() ) {
+			game.next();
+		}
+	};
+};
+
+</script>
+
+</body>
+</html>
