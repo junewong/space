@@ -155,10 +155,6 @@ var ChooseEnemy  = {
 			return null;
 		}
 		var i = Random.getInt( actors.length -1 );
-		// 不做挑战
-		if ( i == actors.length ) {
-			return null;
-		}
 		// 随机选择敌人
 		return actors[ i ];
 	}
@@ -193,7 +189,7 @@ var RandomStrategy = Class( StrategyBase, {
 	},
 
 	chooseEnemy : function( actors ) {
-		ChooseEnemy.randomOrGiveup( actors );
+		return ChooseEnemy.randomOrGiveup( actors );
 	},
 
 	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
