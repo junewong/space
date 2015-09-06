@@ -134,8 +134,8 @@ var ChooseEnemy  = {
 			return null;
 		}
 
-		// 二十分之一会走下面的可能会放弃的流程
-		// 否则的话就一定要选择对手
+		// 二十分之一会走下面的对手
+		// 否则的话就一定要选择
 		if ( Random.getInt( 20 ) > 0 ) {
 			return this.random( actors );
 		}
