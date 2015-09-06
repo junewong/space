@@ -150,7 +150,7 @@ window.onload = function() {
 
 	game.fightCallback = function( a, skillsA, b, skillsB ) {
 		showLog();
-		var log = '$0[$4] VS $1[$5]: ($2) VS ($3)。'.format( a.getName(), b.getName(), skillDesc( skillsA ), skillDesc( skillsB ), a.context.getRank(), b.context.getRank() );
+		var log = '$0[$4] VS $1[$5]: \n($2) VS ($3)。'.format( a.getName(), b.getName(), skillDesc( skillsA ), skillDesc( skillsB ), a.context.getRank(), b.context.getRank() );
 		showLog( log );
 
 		a.setFighting( true );
