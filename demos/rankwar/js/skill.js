@@ -90,6 +90,15 @@ var SkillGroup = Class({
 
 var SkillRule = {
 
+	log : {
+		// 记录上一次交战的记录
+		lastFightLog : ''
+	},
+
+	getLastFightLog : function() {
+		return this.log.lastFightLog;
+	},
+
 	check : function( skillA, skillB ) {
 		if ( skillB.name === skillA.getRestrict() ) {
 			return SKILL_RULE_RESTRICT;
@@ -110,21 +119,34 @@ var SkillRule = {
 		var valueA = skillA.getValue();
 		var valueB = skillB.getValue();
 
+		var logA = skillA.name + valueA;
+		var logB = skillB.name + valueB;
+
 		var relation = this.check( skillA, skillB );
 		// 相克，攻击力减半
 		if ( relation == SKILL_RULE_RESTRICT ) {
 			valueB = Math.ceil( valueB /2 );
+			logB += "/2";
 
 		} else if ( relation == SKILL_RULE_BE_RESTRICT ) {
 			valueA = Math.ceil( valueA /2 );
+			logA += "/2";
 
 		// 相生，攻击力翻倍
 		} else if ( relation == SKILL_RULE_CREATE ) {
 			valueB *= 2;
+			logB += "*2";
 
 		} else if ( relation == SKILL_RULE_BE_CREATE ) {
 			valueA *= 2;
+			logA += "*2";
 		}
+
+		logA += '|' + valueA;
+		logB += '|' + valueB;
+
+		this.log.lastFightLog = logA + ' VS ' + logB;
+
 		return [ valueA, valueB ];
 	},
 

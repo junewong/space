@@ -128,11 +128,33 @@ var StrategyBase = Class({
 
 var ChooseEnemy  = {
 
+	// 随机选择，一定的几率会放弃
+	randomOrGiveup : function( actors ) {
+		if ( ! actors ) {
+			return null;
+		}
+
+		// 二十分之一会走下面的可能会放弃的流程
+		// 否则的话就一定要选择对手
+		if ( Random.getInt( 20 ) > 0 ) {
+			return this.random( actors );
+		}
+
+		var i = Random.getInt( actors.length );
+		// 不做挑战
+		if ( i == actors.length ) {
+			return null;
+		}
+		// 随机选择敌人
+		return actors[ i ];
+	},
+
+	// 随机选择，但不会放弃挑战 
 	random : function( actors ) {
 		if ( ! actors ) {
 			return null;
 		}
-		var i = Random.getInt( actors.length );
+		var i = Random.getInt( actors.length -1 );
 		// 不做挑战
 		if ( i == actors.length ) {
 			return null;
@@ -149,7 +171,7 @@ var Fight = {
 		skills.sort( function( a, b ) {
 			return a.getValue() < b.getValue();
 		});
-		return skills.slice( 0, count );
+		return skills.slice( 0, count ).shuffle();
 	},
 
 	// 十分之一的几率用随机，其他用最大值
@@ -171,7 +193,7 @@ var RandomStrategy = Class( StrategyBase, {
 	},
 
 	chooseEnemy : function( actors ) {
-		ChooseEnemy.random( actors );
+		ChooseEnemy.randomOrGiveup( actors );
 	},
 
 	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
@@ -196,9 +218,8 @@ var RandomStrategy = Class( StrategyBase, {
 
 
 
-
 /*
- * 随机策略
+ * 专心致志策略
  */
 var FocuseStrategy = Class( StrategyBase, {
 
@@ -207,16 +228,15 @@ var FocuseStrategy = Class( StrategyBase, {
 		this.description = '专注提升自己的两种最强强项';
 	},
 
+	// 随机选择，但不会放弃挑战 
 	chooseEnemy : function( actors ) {
 		return ChooseEnemy.random( actors );
 	},
 
-	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
 	fight : function( skillGroup, count ) {
 		return Fight.maxValueSkills( skillGroup.skills, count );
 	},
 
-	// 根据对方上一次做相同反应，否则选择合作
 	attacked : function( enemy, skillGroup, count ) {
 		return Fight.randomOrMaxValue( skillGroup, count );
 	},
@@ -230,8 +250,8 @@ var FocuseStrategy = Class( StrategyBase, {
 
 });
 
-/*
- * 随机策略
+/**
+ * 精英专修策略
  */
 var ExcellentStrategy = Class( StrategyBase, {
 
@@ -241,15 +261,13 @@ var ExcellentStrategy = Class( StrategyBase, {
 	},
 
 	chooseEnemy : function( actors ) {
-		return ChooseEnemy.random( actors );
+		return ChooseEnemy.randomOrGiveup( actors );
 	},
 
-	// 如果对方上一次是合作，则合作，否则报复；默认是合作；
 	fight : function( skillGroup, count ) {
 		return Fight.randomOrMaxValue( skillGroup, count );
 	},
 
-	// 根据对方上一次做相同反应，否则选择合作
 	attacked : function( enemy, skillGroup, count ) {
 		return Fight.randomOrMaxValue( skillGroup, count );
 	},

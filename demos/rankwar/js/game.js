@@ -4,7 +4,7 @@
 var RankWarGame = Class({
 
 	init : function( maxActors ) {
-		this.truns = 0;
+		this.turns = 0;
 		this.step = 1;
 		this.maxActors = maxActors || 100;
 		this.maxTruns = 20;
@@ -18,6 +18,7 @@ var RankWarGame = Class({
 		this.fightCallback = null;
 		this.fightResultCallback = null;
 		this.swapRankCallback = null;
+		this.giveUpCallback = null;
 
 		this.manualActor = null;
 
@@ -53,11 +54,11 @@ var RankWarGame = Class({
 
 		// 新的一回合
 		if ( this.step <= 1 ) {
-			this.truns ++;
+			this.turns ++;
 			// 打乱顺序
 			this.actors.shuffle();
 			if ( this.nextTurnsCallback ) {
-				this.nextTurnsCallback( this.truns, this.step );
+				this.nextTurnsCallback( this.turns, this.step );
 			}
 		}
 
@@ -70,6 +71,9 @@ var RankWarGame = Class({
 			// 按兵不动
 			if ( ! enemy ) {
 				actor.strategy.levelUp( actor.skillGroup.skills, SkillRule.getStayPoint() );
+				if ( this.giveUpCallback ) {
+					this.giveUpCallback( actor, this.turns, this.step);
+				}
 
 			} else {
 				this.fight( actor, enemy );
@@ -77,7 +81,7 @@ var RankWarGame = Class({
 		}
 
 		if ( this.nextStepCallback ) {
-			this.nextStepCallback( this.truns, this.step );
+			this.nextStepCallback( this.turns, this.step );
 		}
 
 		this.step ++;
@@ -87,10 +91,10 @@ var RankWarGame = Class({
 
 	checkEnd : function() {
 		if (  this.step >= this.maxStep ) {
-			if ( this.truns >= this.maxTruns ) {
+			if ( this.turns >= this.maxTruns ) {
 				this.pause();
 				if ( this.endCallback ) {
-					this.endCallback( this.truns );
+					this.endCallback( this.turns );
 				}
 			}
 			this.step = 1;
@@ -133,10 +137,12 @@ var RankWarGame = Class({
 			this.fightCallback( actorA, skillsA, actorB, skillsB);
 		}
 
-		var total = 0 ;
+		var logs = [];
+		var total = 0;
 		Arrays.mapBoth( skillsA, skillsB, function( a, b, i ) {
 			var score = SkillRule.fight( a, b );
 			total += SkillRule.getRealScore( score );
+			logs.push( SkillRule.getLastFightLog() );
 		});
 
 		var resultType = SkillRule.getResultType( total );
@@ -161,7 +167,7 @@ var RankWarGame = Class({
 		this._changeRank( actorA, actorB, resultType );
 
 		if ( this.fightResultCallback ) {
-			this.fightResultCallback( actorA, actorB, resultType, total );
+			this.fightResultCallback( actorA, actorB, resultType, total, logs );
 		}
 
 	},

@@ -258,6 +258,10 @@ Object.prototype.getByKeys = function( keys ) {
 	});
 };
 
+Object.prototype.wrap = function( left, right ) {
+	return left + this + ( right || '' );
+};
+
 
 function hasClass(ele,cls) {
 	return !!ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
