@@ -101,7 +101,7 @@ var StrategyBase = Class({
 	},
 
 	// be override
-	chooseEnemy : function( actors ) {
+	chooseEnemy : function( actors, me ) {
 	},
 
 	// be override
@@ -125,6 +125,8 @@ var StrategyBase = Class({
 	}
 });
 
+
+// ==== 原子操作 ====
 
 var ChooseEnemy  = {
 
@@ -157,11 +159,34 @@ var ChooseEnemy  = {
 		var i = Random.getInt( actors.length -1 );
 		// 随机选择敌人
 		return actors[ i ];
+	},
+
+	// 在挑战列表的前几名中随机挑选一个挑战
+	topOne : function( actors, count ) {
+		if ( ! actors ) {
+			return null;
+		}
+		var topActors = actors.length < count ? actors : actors.slice( 0, count  );
+		return Random.one( topActors );
+	},
+
+	// 有分析过程的选择，查找排名最前且胜率比自己低的对手挑战，否则随机
+	smartChoice : function( actors, me ) {
+		var win = me.context.getWin();
+		if ( win === 0 ) {
+			return this.random( actors );
+		}
+		var choice = actors.findFirst( function( actor, i ) {
+			return actor.context.getWin() < win;
+		});
+
+		return choice || this.random( actors );
 	}
 };
 
 var Fight = {
 
+	// 使用最强的技能
 	maxValueSkills : function( allSkills, count ) {
 		var skills = Arrays.copy( allSkills );
 		skills.sort( function( a, b ) {
@@ -178,6 +203,68 @@ var Fight = {
 	}
 };
 
+var Levelup = {
+
+	// 给数组中的技能加点数
+	addPoints : function( skills ) {
+		( skills instanceof Array ? skills : [ skills ] ) .map( function( skill, i ) {
+			skill.addValue( 1 );
+		});
+	},
+
+	// 把点数加在最强几个技能上
+	addToMaxSkills : function( skills, points ) {
+		this.addPoints( Fight.maxValueSkills( skills, points ) );
+	},
+
+	// 随机在前三项最好的技能中升级
+	randomFor3MaxSkills : function( skills, points ) {
+		this.addPoints( Fight.maxValueSkills( skills, 3 ).shuffle().slice( 0, points ) );
+	},
+
+	// 带分析的选择
+	smartChoice : function( skills, points ) {
+		var maxSkills = Fight.maxValueSkills( skills, 3 );
+
+		// 如果有3个点数，则平均加
+		if ( points === 3 ) {
+			this.addPoints( maxSkills );
+			return;
+		}
+
+		var base = 20;
+
+		// 三个都大于20,则随机在三个中分配
+		if ( skills.allMatch( function( skill ) { return skill.getValue() >= base; } ) ) {
+			this.randomFor3MaxSkills( skills, points );
+			return;
+		}
+
+		// 如果最大的技能超过20
+		if ( maxSkills[0].getValue() >= base ) {
+			// 如果第二个技能还不到20，加给第二和第三技能
+			if ( maxSkills[1].getValue() < base ) {
+				this.addPoints( maxSkills.slice( 1, points ) );
+				return;
+
+			} else {
+				// 只有第三技能没到20，则全部加到第三技能去
+				this.addPoints( Arrays.copyToArray( maxSkills[2], points ) );
+				return;
+			}
+
+		// 如果都不到20，则加最强和第三的前几个技能
+		} else {
+			this.addToMaxSkills( skills, points );
+			return;
+		}
+
+		this.addToMaxSkills( skills, points );
+	}
+};
+
+// ==== 各种策略 ====
+
 /*
  * 随机策略
  */
@@ -188,7 +275,7 @@ var RandomStrategy = Class( StrategyBase, {
 		this.description = '任何选择都是随机的';
 	},
 
-	chooseEnemy : function( actors ) {
+	chooseEnemy : function( actors, me ) {
 		return ChooseEnemy.randomOrGiveup( actors );
 	},
 
@@ -214,6 +301,7 @@ var RandomStrategy = Class( StrategyBase, {
 
 
 
+
 /*
  * 专心致志策略
  */
@@ -225,7 +313,7 @@ var FocuseStrategy = Class( StrategyBase, {
 	},
 
 	// 随机选择，但不会放弃挑战 
-	chooseEnemy : function( actors ) {
+	chooseEnemy : function( actors, me ) {
 		return ChooseEnemy.random( actors );
 	},
 
@@ -237,11 +325,8 @@ var FocuseStrategy = Class( StrategyBase, {
 		return Fight.randomOrMaxValue( skillGroup, count );
 	},
 
-	// 升级，随机分配技能点
 	levelUp : function( skills, points ) {
-		Fight.maxValueSkills( skills, points ).map( function( skill, i ) {
-			skill.addValue( 1 );
-		});
+		Levelup.addToMaxSkills( skills, points );
 	}
 
 });
@@ -256,7 +341,7 @@ var ExcellentStrategy = Class( StrategyBase, {
 		this.description = '专修最擅长的前三项';
 	},
 
-	chooseEnemy : function( actors ) {
+	chooseEnemy : function( actors, me ) {
 		return ChooseEnemy.randomOrGiveup( actors );
 	},
 
@@ -268,15 +353,67 @@ var ExcellentStrategy = Class( StrategyBase, {
 		return Fight.randomOrMaxValue( skillGroup, count );
 	},
 
-	// 随机在前三项最好的技能中升级
 	levelUp : function( skills, points ) {
-		Fight.maxValueSkills( skills, 3 ).shuffle().slice( 0, points ).map( function( skill, i ) {
-			skill.addValue( 1 );
-		});
+		Levelup.randomFor3MaxSkills( skills, points );
 	}
 
 });
 
+/**
+ * 狂热挑战策略
+ */
+var ChallengerStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '狂热挑战' );
+		this.description = '每次从前三名中随机挑选一名挑战。';
+	},
+
+	chooseEnemy : function( actors, me ) {
+		return ChooseEnemy.topOne( actors, 3 );
+	},
+
+	fight : function( skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	attacked : function( enemy, skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	levelUp : function( skills, points ) {
+		Levelup.randomFor3MaxSkills( skills, points );
+	}
+
+});
+
+/**
+ * 谋定后动挑战策略
+ */
+var SmartStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '谋定后动' );
+		this.description = '找胜率比自己低的对手挑战；根据当前的情况分配点数；';
+	},
+
+	chooseEnemy : function( actors, me ) {
+		return ChooseEnemy.smartChoice( actors, me );
+	},
+
+	fight : function( skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	attacked : function( enemy, skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	levelUp : function( skills, points ) {
+		Levelup.smartChoice( skills, points );
+	}
+
+});
 
 
 /**
@@ -290,10 +427,10 @@ var ManualStrategy = Class( StrategyBase, {
 		this.lastLevelupSkills = '';
 	},
 
-	chooseEnemy : function( actors ) {
+	chooseEnemy : function( actors, me ) {
 		var names = actors.mapNew( function( actor, i ) {
-			return actor.getName() + '(' + i + ')';
-		}).join( ', ' );
+			return '【' + i + '】' + actor.getName();
+		}).join( '\n' );
 
 		var text = '是否发起挑战？当前可以选择的对象有：\n' + names + '\n请输入对应的数字编号';
 		var command = this._getInput( text );
@@ -340,7 +477,7 @@ var ManualStrategy = Class( StrategyBase, {
 
 		var skillNames = skills.mapNew( function( skill, i ) {
 			return '【' + i + '】' + skill.name +  skill.getValue() ;
-		}).join( '    ' );
+		}).join( '\n' );
 
 		var command = null;
 		var k = 10;

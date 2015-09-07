@@ -163,12 +163,14 @@ window.onload = function() {
 
 	game.fightResultCallback = function( a, b, type, total, logs ) {
 		var i = 0;
-		var log = '$0[$4] 挑战 $1[$5]，得分：$2, $3。\n$6'.format( a.getName(), b.getName(), total, FIGHT_RESULT_MAP[type], a.context.getRank(), b.context.getRank(), '(' + logs.join( '), (' ) + ')' );
+		var isManual = a.isManual || b.isManual ;
+		var fightLog = isManual ? logs.join( '\n') : '(' + logs.join( '), (' ) + ')';
+		var log = '$0[$4] 挑战 $1[$5]，得分：$2, $3。\n$6'.format( a.getName(), b.getName(), total, FIGHT_RESULT_MAP[type], a.context.getRank(), b.context.getRank(), fightLog );
 		showLog( '>> ' + log );
 		a.updateStatus();
 		b.updateStatus();
 
-		if ( a.isManual || b.isManual ) {
+		if ( isManual ) {
 			alert( log );
 		}
 

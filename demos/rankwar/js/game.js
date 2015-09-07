@@ -67,7 +67,7 @@ var RankWarGame = Class({
 		var targets = this._getFrontActors( actor );
 
 		if ( targets ) {
-			var enemy = actor.strategy.chooseEnemy( targets );
+			var enemy = actor.strategy.chooseEnemy( targets, actor );
 			// 按兵不动
 			if ( ! enemy ) {
 				actor.strategy.levelUp( actor.skillGroup.skills, SkillRule.getStayPoint() );
@@ -225,15 +225,19 @@ var RankWarGame = Class({
 		var strategyClasses = [];
 
 		// 特殊策略
-		var classNames = Arrays.create( 10, function( i ) {
-				return FocuseStrategy;
-		});
-		strategyClasses.addArray( classNames );
+		strategyClasses.addArray( 
+			Arrays.create( 10, function( i ) { return FocuseStrategy; })
 
-		classNames = Arrays.create( 20, function( i ) {
-				return ExcellentStrategy;
-		});
-		strategyClasses.addArray( classNames );
+		).addArray( 
+			Arrays.create( 10, function( i ) { return ExcellentStrategy; })
+
+		).addArray( 
+			Arrays.create( 10, function( i ) { return ChallengerStrategy; })
+
+		).addArray( 
+			Arrays.create( 15, function( i ) { return SmartStrategy; })
+		);
+
 
 		// 其余用随机策略补充
 		var leftCount = this.maxActors - strategyClasses.length;

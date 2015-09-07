@@ -198,6 +198,14 @@ var Arrays = {
 			list.push( array[i] );
 		}
 		return list;
+	},
+
+	copyToArray: function( item, count ) {
+		var list = [];
+		for ( var i = 0; i < count; i++) {
+			list.push( item );
+		}
+		return list;
 	}
 
 };
@@ -225,6 +233,7 @@ Array.prototype.addArray = function( array ) {
 	for ( var i = 0, len = array.length; i < len; i++ ) {
 		this.push( array[i] );
 	}
+	return this;
 };
 
 Array.prototype.shuffle = function() {
@@ -232,6 +241,26 @@ Array.prototype.shuffle = function() {
 		return Math.floor(Math.random() * 3) - 1; 
 	});
 	return this;
+};
+
+Array.prototype.findFirst = function( callback ) {
+	for ( var i = 0, len = this.length; i < len; i++ ) {
+		var item = this[i];
+		if ( callback( item, i ) ) {
+			return item;
+		}
+	}
+	return null;
+};
+
+Array.prototype.allMatch = function( callback ) {
+	for ( var i = 0, len = this.length; i < len; i++ ) {
+		var item = this[i];
+		if ( false === callback( item, i ) ) {
+			return false;
+		}
+	}
+	return true;
 };
 
 // e.g.: 

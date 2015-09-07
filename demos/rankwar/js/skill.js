@@ -72,7 +72,7 @@ var SkillGroup = Class({
 		var _this = this;
 
 		var rand = Random.splitNumber( total, this.skills.length );
-		rand.map( function( value, i ) {
+		rand.shuffle().shuffle().map( function( value, i ) {
 			_this.skills[i].setInitValue( value );
 		});
 	},
@@ -126,26 +126,26 @@ var SkillRule = {
 		// 相克，攻击力减半
 		if ( relation == SKILL_RULE_RESTRICT ) {
 			valueB = Math.ceil( valueB /2 );
-			logB += "/2";
+			logB += " / 2";
 
 		} else if ( relation == SKILL_RULE_BE_RESTRICT ) {
 			valueA = Math.ceil( valueA /2 );
-			logA += "/2";
+			logA += " / 2";
 
 		// 相生，攻击力翻倍
 		} else if ( relation == SKILL_RULE_CREATE ) {
 			valueB *= 2;
-			logB += "*2";
+			logB += " * 2";
 
 		} else if ( relation == SKILL_RULE_BE_CREATE ) {
 			valueA *= 2;
-			logA += "*2";
+			logA += " * 2";
 		}
 
-		logA += '|' + valueA;
-		logB += '|' + valueB;
+		logA += ' >> ' + valueA;
+		logB += ' >> ' + valueB;
 
-		this.log.lastFightLog = logA + ' VS ' + logB;
+		this.log.lastFightLog = logA + '\tvs\t' + logB + '\t:\t' + SkillRule.getResultType( valueA - valueB );
 
 		return [ valueA, valueB ];
 	},
