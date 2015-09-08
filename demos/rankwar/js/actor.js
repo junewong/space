@@ -27,6 +27,7 @@ var Actor = Class({
 
 	setStrategy : function( strategy ) {
 		this.strategy = strategy;
+		this.strategy.setContext( this.context );
 	},
 
 	getNode : function() {
@@ -42,7 +43,7 @@ var Actor = Class({
 
 		var node = document.createElement( 'div' );
 		node.className = this.isManual ? 'actor manual' : 'actor';
-		node.title = '策略：' + this.strategy.getName() + '。' + this.strategy.description;
+		node.title = this.strategy.getName() + '：' + this.strategy.description + '；';
 		node.onclick = function( e ) {
 			if ( _this.clickCallback ) {
 				_this.clickCallback( e );

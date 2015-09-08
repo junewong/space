@@ -164,6 +164,10 @@ var RankWarGame = Class({
 			actorB.context.increaseFair();
 		}
 
+		// 历史记录
+		actorA.context.history.addEnemy( actorB, skillsB );
+		actorB.context.history.addEnemy( actorA, skillsA );
+
 		this._changeRank( actorA, actorB, resultType );
 
 		if ( this.fightResultCallback ) {

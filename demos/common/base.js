@@ -263,6 +263,24 @@ Array.prototype.allMatch = function( callback ) {
 	return true;
 };
 
+Array.prototype.addUniq = function( value ) {
+	if ( false === ( value in this ) ) {
+		this.push( value );
+	}
+	return this;
+};
+
+Array.prototype.getValues = function( indexs ) {
+	var list = [];
+	for ( var i = 0, len = indexs.length; i < len; i++ ) {
+		var value = this[ indexs[i] ];
+		if ( value !== undefined ) {
+			list.push( value );
+		}
+	}
+	return list;
+};
+
 // e.g.: 
 // 	"{0} is dead, but {1} is alive! {0} {2}".format("ASP", "ASP.NET")
 String.prototype.format = function() {

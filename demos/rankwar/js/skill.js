@@ -19,12 +19,17 @@ FIGHT_RESULT_MAP[ FIGHT_RESULT_LOST ] = '败北';
 FIGHT_RESULT_MAP[ FIGHT_RESULT_FAIR ] = '平手'; 
 
 var Skill = Class({
-	init : function( name, value, restrict, create ) {
+	init : function( name, value, restrict, create, index ) {
 		this.name = name;
 		this.initValue = value;
 		this.value = value;
 		this.restrict = restrict;
 		this.create = create;
+		this.index = index;
+	},
+
+	getName : function() {
+		return this.name;
 	},
 
 	getValue : function() {
@@ -33,6 +38,10 @@ var Skill = Class({
 
 	addValue : function( offset ) {
 		this.value += offset;
+	},
+
+	getIndex : function() {
+		return this.index;
 	},
 
 	setInitValue : function( value ) {
@@ -49,16 +58,17 @@ var Skill = Class({
 	getCreate : function() {
 		return this.create;
 	}
+
 });
 
 var SkillGroup = Class({
 	init : function( defauleValue ) {
 
-		this.gold   = new Skill( '金', defauleValue,  '木', '水' );
-		this.wood   = new Skill( '木', defauleValue,  '土', '火' );
-		this.warter = new Skill( '水', defauleValue,  '火', '木' );
-		this.fire   = new Skill( '火', defauleValue,  '金', '土' );
-		this.earth  = new Skill( '土', defauleValue,  '水', '金' );
+		this.gold   = new Skill( '金', defauleValue,  '木', '水', 0 );
+		this.wood   = new Skill( '木', defauleValue,  '土', '火', 1 );
+		this.warter = new Skill( '水', defauleValue,  '火', '木', 2 );
+		this.fire   = new Skill( '火', defauleValue,  '金', '土', 3 );
+		this.earth  = new Skill( '土', defauleValue,  '水', '金', 4 );
 
 		this.skills = [ this.gold, this.wood, this.warter, this.fire, this.earth ];
 
@@ -142,8 +152,8 @@ var SkillRule = {
 			logA += " * 2";
 		}
 
-		logA += ' >> ' + valueA;
-		logB += ' >> ' + valueB;
+		logA += ' -> ' + valueA;
+		logB += ' -> ' + valueB;
 
 		this.log.lastFightLog = logA + '\tvs\t' + logB + '\t:\t' + SkillRule.getResultType( valueA - valueB );
 

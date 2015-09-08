@@ -1,9 +1,44 @@
+var History = Class( {
+	init : function() {
+		// 交战过的对手
+		this.enemies = [];
+		// 交战过的对手用过的技能
+		this.enemySkills = {};
+	},
+
+	addEnemy : function( actor, skills ) {
+		this.enemies.push( actor.getId() );
+		if ( skills ) {
+			this.addEnemySkills( actor, skills );
+		}
+	},
+
+	addEnemySkills : function( actor, skills ) {
+		var id = actor.getId();
+		var list = this.enemySkills[ id ];
+		if ( list === undefined ) {
+			list = [];
+			this.enemySkills[ id ] = list;
+		}
+
+		skills.map ( function( skill, i ) {
+			list.addUniq( skill.getIndex() ).sort();
+		});
+	},
+
+	getSkills : function( actor ) {
+		return this.enemySkills[ actor.getId() ];
+	}
+
+});
+
 var Context = Class({
 	init : function() {
 		this.rank = 0;
 		this.win = 0;
 		this.lost = 0;
 		this.fair = 0;
+		this.history = new History();
 	},
 
 	getWin : function() {
@@ -53,7 +88,7 @@ var StrategyBase = Class({
 	},
 
 	_init : function( id, name ) {
-		this.context =  new Context();
+		this.context = null;
 		this.id = id;
 		this.name = name;
 		this.description = '';
@@ -63,6 +98,10 @@ var StrategyBase = Class({
 		this.deathCallback = null;
 
 		this.style = { bgColor : '', fontColor : '' };
+	},
+
+	setContext : function( context ) {
+		this.context = context;
 	},
 
 	setId : function( id ) {
@@ -382,7 +421,7 @@ var ChallengerStrategy = Class( StrategyBase, {
 	},
 
 	levelUp : function( skills, points ) {
-		Levelup.randomFor3MaxSkills( skills, points );
+		Levelup.addToMaxSkills( skills, points );
 	}
 
 });
@@ -432,10 +471,28 @@ var ManualStrategy = Class( StrategyBase, {
 			return '【' + i + '】' + actor.getName();
 		}).join( '\n' );
 
-		var text = '是否发起挑战？当前可以选择的对象有：\n' + names + '\n请输入对应的数字编号';
-		var command = this._getInput( text );
-		if ( command === null ) {
-			return;
+		var _this = this;
+		var callback = function( actor, i ) {
+			return '【' + i + '】' + actor.getName() +  _this._getHistorySkills( actor ) + '  ' + actor.strategy.getName();
+		};
+
+		var command;
+		var i = 10;
+		while ( i-- > 0 ) {
+			var text = '是否发起挑战？当前可以选择的对象有：\n' + names + '\n请输入对应的数字编号\n输入“i“则查看对方的信息';
+			command = this._getInput( text );
+			if ( command === null ) {
+				return;
+			}
+			// 'i' 指令可查看用户资料
+			if ( command === 'i' ) {
+				var help = actors.mapNew( callback ).join( '\n' );
+				alert( help );
+
+			} else {
+				break;
+
+			}
 		}
 
 		var index = parseInt( command );
@@ -449,7 +506,8 @@ var ManualStrategy = Class( StrategyBase, {
 
 	// 根据对方上一次做相同反应，否则选择合作
 	attacked : function( enemy, skillGroup, count ) {
-		var preText = '$0(第$1位)向你发起了挑战！\n'.format( enemy.getName(), enemy.context.getRank() );
+		var enemySkills = this._getHistorySkills( enemy );
+		var preText = '$0(第$1位)向你发起了挑战！\n$2\n'.format( enemy.getName(), enemy.context.getRank(), enemySkills );
 		return this._selectSkills( skillGroup.skills, count, preText, this.lastFightSkills );
 	},
 
@@ -471,6 +529,17 @@ var ManualStrategy = Class( StrategyBase, {
 		}).join( ', ');
 
 		alert( '升级后的技能如下：' + results );
+	},
+
+	_getHistorySkills : function( enemy ) {
+		var historySkills = this.context.history.getSkills( enemy ) || [];
+
+		return enemy.skillGroup.skills.mapNew( function( skill, i ) {
+			var value = skill.getIndex() in historySkills ? skill.getValue() : '？';
+			return skill.getName() + value;
+
+		}).join( '   ' ).wrap( '（', '）' );
+
 	},
 
 	_selectSkills : function( skills, count, preText, content, checkCallback ) {
@@ -510,6 +579,7 @@ var ManualStrategy = Class( StrategyBase, {
 		// 这里有点不太好的地方是，用callback来识别输入的来源
 		if ( checkCallback ) {
 			this.lastLevelupSkills = command;
+
 		} else {
 			this.lastFightSkills = command;
 		}
