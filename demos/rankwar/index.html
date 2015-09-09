@@ -92,8 +92,14 @@
 			</div>
 			<hr/>
 			<div>
+
 				<div class="text-center">
-					<button id="nextButton">下一步</button>
+					<select id="gameMode" name="gameMode">
+						<option value="1">个人挑战模式</option>
+						<option value="2">个人淘汰模式</option>
+					</select>
+					<br/>
+					<button id="nextButton" style="display:none;">下一步</button>
 					<br/>
 					<button id="playButton">开始/暂停</button>
 				</div>
@@ -125,6 +131,8 @@ window.onload = function() {
 
 	var game = new RankWarGame( 100 );
 	game.setMaxTruns( 20 );
+
+	game.setGameMode ( new PersonalWarGameMode() );
 
 	function printAllInfo() {
 		game.getAcotrsByRank().map( function( actor, i ) {
@@ -194,12 +202,20 @@ window.onload = function() {
 
 	};
 
+	game.startCallback = function() {
+		showLog( '== 开始 == ', 'h3' );
+		D( 'gameMode' ).disable = 'disable';
+	};
+
 	game.endCallback = function( turns ) {
 		showLog( '== 结束 == ', 'h3' );
 		printAllInfo();
 		var actor  = game.getManualActor();
 		if ( actor ) {
 			alert( '游戏结束！您最终的排名是：第$0名'.format( actor.context.getRank() ) );
+
+		} else {
+			alert( '游戏结束！' );
 		}
 	};
 
@@ -219,6 +235,17 @@ window.onload = function() {
 	D( 'nextButton' ).onclick =  function() {
 		if ( false == game.isPlaying() ) {
 			game.next();
+		}
+	};
+
+	D( 'gameMode' ).onchange = function() {
+		var value = this.value;
+		if ( value === 1 ) {
+			game.setGameMode( new PersonalWarGameMode() );
+
+		} else if ( value == 2 ) {
+			game.setGameMode( new PersonalDieOutGameMode() );
+
 		}
 	};
 };

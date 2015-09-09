@@ -4,13 +4,21 @@ var Actor = Class({
 	init : function( name, skillGroup, context ) {
 		this.id = null;
 		this.name = name;
+		this.totalLife = 12;
+		this.life = this.totalLife;
+
 		this.node = null;
 		this.statusNode = null;
-		this.clickCallback = null;
+		this.lifeBar = null;
+
 		this.skillGroup = skillGroup;
 		this.context = context;
-		this.isManual = false;
 		this.strategy = null;
+
+		this.isManual = false;
+		this.death = false;
+
+		this.clickCallback = null;
 	},
 
 	setId : function( id ) {
@@ -23,6 +31,42 @@ var Actor = Class({
 
 	getName : function() {
 		return this.name;
+	},
+
+	die : function() {
+		this.death = true;
+		addClass( this.getNode(), 'death' );
+	},
+
+	isDeath : function() {
+		return this.death;
+	},
+
+	initLife : function( life ) {
+		this.totalLife = life;
+		this.life = life;
+	},
+
+	setLife : function( life ) {
+		this.life = life;
+	},
+
+	getLife  : function() {
+		return this.life;
+	},
+
+	getTotalLife  : function() {
+		return this.totalLife;
+	},
+
+	changeLife : function( offset ) {
+		this.life += offset;
+		if ( this.life <= 0 ) {
+			this.life = 0;
+			this.die();
+		}
+		var percent = this.life / this.totalLife;
+		this.setLifeBarPercent( percent );
 	},
 
 	setStrategy : function( strategy ) {
@@ -50,7 +94,13 @@ var Actor = Class({
 			}
 		};
 
-		var div = document.createElement( 'div' );
+		var div;
+		div = document.createElement( 'div' );
+		div.className = 'life-bar';
+		this.lifeBar = div;
+		node.appendChild( div );
+
+		div = document.createElement( 'div' );
 		div.className = 'name';
 		div.innerHTML = this.getName();
 		node.appendChild( div );
@@ -83,6 +133,10 @@ var Actor = Class({
 		} else {
 			removeClass( this.getNode(), 'fight' );
 		}
-	}
+	},
 
+	setLifeBarPercent : function( percent ) {
+		this.lifeBar.style.width = percent * 100 + '%';
+	}
+	
 });

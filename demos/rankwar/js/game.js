@@ -3,22 +3,30 @@
  */
 var RankWarGame = Class({
 
-	init : function( maxActors ) {
+	init : function( maxActors, useManual ) {
 		this.turns = 0;
 		this.step = 1;
 		this.maxActors = maxActors || 100;
 		this.maxTruns = 20;
+		this.deathCount = 0;
+		// 是否玩家参与
+		this.useManual = useManual === undefined ? true : !!useManual;
 
 		this._isPlaying = false;
 		this.handle = null;
 
+		this.gameMode = null;
+
 		this.nextTurnsCallback = null;
 		this.nextStepCallback = null;
+		this.startCallback = null;
 		this.endCallback = null;
 		this.fightCallback = null;
 		this.fightResultCallback = null;
 		this.swapRankCallback = null;
 		this.giveUpCallback = null;
+		this.hurtCallback = null;
+		this.deathCallback = null;
 
 		this.manualActor = null;
 
@@ -28,6 +36,7 @@ var RankWarGame = Class({
 		this.actors = this._createActors();
 
 		this.maxStep = this.actors.length;
+
 
 	},
 
@@ -50,11 +59,16 @@ var RankWarGame = Class({
 		return this.manualActor;
 	},
 
+	setGameMode : function( gameMode ) {
+		this.gameMode = gameMode;
+	},
+
 	next : function() {
 
 		// 新的一回合
 		if ( this.step <= 1 ) {
 			this.turns ++;
+			this.maxStep = this.actors.length - this.deathCount;
 			// 打乱顺序
 			this.actors.shuffle();
 			if ( this.nextTurnsCallback ) {
@@ -64,8 +78,19 @@ var RankWarGame = Class({
 
 		// 每个人轮流发起挑战
 		var actor = this.actors[ this.step -1 ];
-		var targets = this._getFrontActors( actor );
 
+		// 如果已经淘汰，则让位给下一个
+		while( actor.isDeath() && this.deathCount < this.actors.length ) {
+			this.step ++;
+			this.checkEnd();
+			if ( this.step <= 1 ) {
+				return;
+			}
+			actor = this.actors[ this.step -1 ];
+		}
+
+		// 可交战对手
+		var targets = this._getFrontActors( actor );
 		if ( targets ) {
 			var enemy = actor.strategy.chooseEnemy( targets, actor );
 			// 按兵不动
@@ -76,6 +101,7 @@ var RankWarGame = Class({
 				}
 
 			} else {
+				// 挑战
 				this.fight( actor, enemy );
 			}
 		}
@@ -85,13 +111,12 @@ var RankWarGame = Class({
 		}
 
 		this.step ++;
-
 		this.checkEnd();
 	},
 
 	checkEnd : function() {
 		if (  this.step >= this.maxStep ) {
-			if ( this.turns >= this.maxTruns ) {
+			if ( this.gameMode.isGameOver( this ) ) {
 				this.pause();
 				if ( this.endCallback ) {
 					this.endCallback( this.turns );
@@ -106,6 +131,18 @@ var RankWarGame = Class({
 
 		this._isPlaying = true;
 
+		// 游戏刚开始
+		if ( this.step === 1 && this.turns === 0 ) {
+			if ( ! this.gameMode ) {
+				this.setGameModel( new PersonalWarGameMode() );
+			}
+
+			if ( this.startCallback ) {
+				this.startCallback();
+			}
+		}
+
+		// 继续游戏
 		function autoRun() {
 			// 获取每次的动画帧
 			setTimeout( function() {
@@ -113,7 +150,7 @@ var RankWarGame = Class({
 					_this.handle = requestAnimationFrame( autoRun );
 					_this.next();
 				}
-			}, 100 );
+			}, 80 );
 		}
 
 		autoRun();
@@ -138,12 +175,14 @@ var RankWarGame = Class({
 		}
 
 		var logs = [];
-		var total = 0;
+		var total = 0, hurt = 0;
 		Arrays.mapBoth( skillsA, skillsB, function( a, b, i ) {
 			var score = SkillRule.fight( a, b );
 			total += SkillRule.getRealScore( score );
 			logs.push( SkillRule.getLastFightLog() );
 		});
+
+		hurt = -1 * Math.abs( total );
 
 		var resultType = SkillRule.getResultType( total );
 		var point = SkillRule.getWinPoint( total );
@@ -153,11 +192,19 @@ var RankWarGame = Class({
 			actorA.context.increaseWin();
 			actorB.context.increaseLost();
 			actorA.strategy.levelUp( actorA.skillGroup.skills, point );
+			// 扣血
+			if ( this.gameMode.isCanBeDeath() ) {
+				actorB.changeLife( hurt );
+			}
 
 		} else if ( resultType == FIGHT_RESULT_LOST ) {
 			actorA.context.increaseLost();
 			actorB.context.increaseWin();
 			actorB.strategy.levelUp( actorB.skillGroup.skills, point );
+			// 扣血
+			if ( this.gameMode.isCanBeDeath() ) {
+				actorA.changeLife( hurt );
+			}
 
 		} else {
 			actorA.context.increaseFair();
@@ -174,6 +221,30 @@ var RankWarGame = Class({
 			this.fightResultCallback( actorA, actorB, resultType, total, logs );
 		}
 
+		// 检测死亡
+		if ( this.gameMode.isCanBeDeath() ) {
+			if ( actorA.isDeath() ) {
+				this._die( actorA );
+
+			} else if ( actorB.isDeath() ) {
+				this._die( actorB );
+			}
+		}
+
+	},
+
+	_die : function( actor ) {
+		this.deathCount ++;
+
+		if ( this.deathCallback ) {
+			this.deathCallback( actor );
+		}
+
+		var from = actor.context.getRank();
+		var lastDeathRank = this.maxActors - this.deathCount + 1;
+
+		// 移动到最后
+		this._moveBackword( from, lastDeathRank );
 	},
 
 	_changeRank : function( actorA, actorB, resultType ) {
@@ -195,12 +266,24 @@ var RankWarGame = Class({
 		var from = loser.context.getRank();
 		var to = winner.context.getRank();
 
+		this._moveForword( from, to );
+	},
+
+	// 向前移动
+	_moveForword : function( from, to ) {
 		// 两两交换中间的排名
 		for ( var i = to; i >= from + 1; i -- ) {
 			if ( i === 1 ) break;
 			this._swapRank( this.rankMap[ i ], this.rankMap[ i - 1 ]  );
 		}
+	},
 
+	// 向后移动
+	_moveBackword : function( from, to ) {
+		for ( var i = from; i <= to -1; i ++ ) {
+			if ( i === this.maxActors ) break;
+			this._swapRank( this.rankMap[ i ], this.rankMap[ i + 1 ]  );
+		}
 	},
 
 	_swapRank : function( actorA, actorB ) {
@@ -222,8 +305,10 @@ var RankWarGame = Class({
 	_createActors : function() {
 		var _this = this;
 
-		var names = ACTOR_NAMES.slice( 0, this.maxActors - 1 );
-		names.push( ACTOR_NAME_PLAYER );
+		var names = ACTOR_NAMES.slice( 0, this.maxActors - !!this.useManual );
+		if ( this.useManual ) {
+			names.push( ACTOR_NAME_PLAYER );
+		}
 		names.shuffle();
 
 		var strategyClasses = [];
@@ -298,3 +383,85 @@ var RankWarGame = Class({
 
 });
 
+
+
+
+/**
+ * 游戏模式的基类
+ */
+var GameModeBase = Class({
+
+	init : function() {
+		this.name = '';
+	},
+
+	getName : function() {
+		return this.name;
+	},
+
+	// 游戏是否结束了
+	isGameOver : function( game ) {
+		return false;
+	},
+
+	// 是否允许卡牌死亡
+	isCanBeDeath : function() {
+		return false;
+	},
+
+	// 是否最后一回合
+	_isLastStep : function ( game ) {
+		if (  game.step >= game.maxStep && game.turns >= game.maxTruns ) {
+			return true;
+		}
+		return false;
+	}
+
+});
+
+/**
+ * 个人挑战模式
+ */
+var PersonalWarGameMode = Class( GameModeBase, {
+
+	init : function() {
+		this.name = '个人挑战模式';
+	},
+
+	// 游戏是否结束了
+	isGameOver : function( game ) {
+		return this._isLastStep( game );
+	},
+
+	// 是否允许卡牌死亡
+	isCanBeDeath : function() {
+		return false;
+	}
+
+});
+
+/**
+ * 个人淘汰模式
+ */
+var PersonalDieOutGameMode = Class( GameModeBase, {
+
+	init : function() {
+		this.name = '个人淘汰模式';
+	},
+
+	// 游戏是否结束了
+	isGameOver : function( game ) {
+		// 剩下一个人的时候结束
+		if ( game.actors.length - game.deathCount <= 1 ) {
+			return true;
+		}
+
+		return this._isLastStep( game );
+	},
+
+	// 是否允许卡牌死亡
+	isCanBeDeath : function() {
+		return true;
+	}
+
+});
