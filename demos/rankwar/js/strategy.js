@@ -479,7 +479,7 @@ var ManualStrategy = Class( StrategyBase, {
 		var command;
 		var i = 10;
 		while ( i-- > 0 ) {
-			var text = '是否发起挑战？当前可以选择的对象有：\n' + names + '\n请输入对应的数字编号\n输入“i“则查看对方的信息';
+			var text = '是否发起挑战？当前可以选择的对象有：\n' + names + '\n请输入对应的数字编号\n输入【i】则查看对方的信息';
 			command = this._getInput( text );
 			if ( command === null ) {
 				return;
