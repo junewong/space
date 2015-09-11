@@ -229,6 +229,19 @@ Array.prototype.mapNew = function( callback ) {
 	return list;
 };
 
+// 统计出现的key的次数
+Array.prototype.countKeys = function( callback ) {
+	var result = {};
+	for ( var i = 0, len = this.length; i < len; i++ ) {
+		var k = callback( this[i], i );
+		if ( k !== null || k !== undefined) {
+			var count =  result[ k ];
+			result[ k ] = count !== undefined ? count + 1 : 0;
+		}
+	}
+	return result;
+};
+
 Array.prototype.addArray = function( array ) {
 	for ( var i = 0, len = array.length; i < len; i++ ) {
 		this.push( array[i] );

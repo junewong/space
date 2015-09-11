@@ -33,11 +33,11 @@ var RankWarGame = Class({
 		this.maxSkillsInFighting = 3;
 
 		this.rankMap = {};
-		this.actors = this._createActors();
+		this.actors = [];
 
 		this.maxStep = this.actors.length;
 
-
+		this.isCreated = false;
 	},
 
 	setMaxTruns : function( maxTruns ) {
@@ -90,7 +90,7 @@ var RankWarGame = Class({
 		}
 
 		// 可交战对手
-		var targets = this._getFrontActors( actor );
+		var targets = this._getTargetActor( actor );
 		if ( targets ) {
 			var enemy = actor.strategy.chooseEnemy( targets, actor );
 			// 按兵不动
@@ -126,7 +126,17 @@ var RankWarGame = Class({
 		}
 	},
 
+	create : function() {
+		this.actors = this._createActors();
+		this.maxStep = this.actors.length;
+		this.isCreated = true;
+	},
+
 	play : function() {
+		if ( false === this.isCreated ) {
+			return;
+		}
+
 		var _this = this;
 
 		this._isPlaying = true;
@@ -339,6 +349,16 @@ var RankWarGame = Class({
 
 		strategyClasses.shuffle();
 
+		// 团队模式
+		var countries;
+		if ( _this.gameMode && _this.gameMode.isTeamMode() ) {
+			countries = Arrays.create( names.length, function( i ) {
+				var index =  i % COUNTRIES.length;
+				return COUNTRIES[ index ];
+			});
+			countries.shuffle();
+		}
+
 
 		var actors = names.mapNew( function( name, i ) {
 			 var rank = i + 1;
@@ -350,6 +370,7 @@ var RankWarGame = Class({
 			var actor = new Actor( name, skillGroup, context );
 			actor.setId( i );
 
+			// 策略 
 			if ( actor.getName() == ACTOR_NAME_PLAYER ) {
 				actor.isManual = true;
 				actor.setStrategy( new ManualStrategy() );
@@ -363,12 +384,35 @@ var RankWarGame = Class({
 				actor.setStrategy( new strategyClass() );
 			}
 
+			// 是否团队模式
+			if ( _this.gameMode && _this.gameMode.isTeamMode() ) {
+				var countryName = countries[ i ];
+				actor.setCountry( countryName );
+				actor.setCountryColor( COUNTRY_COLORS[ countryName ] );
+			}
+
+			actor.shouldShowLifeBar = _this.gameMode ? _this.gameMode.isCanBeDeath() : false;
+			actor.shouldShowCountryBar = _this.gameMode ? _this.gameMode.isTeamMode() : false;
+
 			_this.rankMap[ rank ] = actor;
 
 			return actor;
 		});
 
 		return actors;
+	},
+
+	_getTargetActor : function( actor ) {
+		var targets = this._getFrontActors( actor );
+		if ( ! targets ) {
+			return targets;
+		}
+		if ( ! this.gameMode.isTeamMode() ){
+			return targets;
+		}
+		return targets.mapNew( function( enemy, i ) {
+			return enemy.country !== actor.country ? enemy : null;
+		});
 	},
 
 	_getFrontActors : function( actor ) {
@@ -409,12 +453,23 @@ var GameModeBase = Class({
 		return false;
 	},
 
+	// 是否团队模式
+	isTeamMode : function() {
+		return false;
+	},
+
 	// 是否最后一回合
 	_isLastStep : function ( game ) {
 		if (  game.step >= game.maxStep && game.turns >= game.maxTruns ) {
 			return true;
 		}
 		return false;
+	},
+
+	getWonTeams : function() {
+		var countCountry = game.getAcotrsByRank().slice( 0, 10 ).countKeys( function( actor, i ) {
+			return actor.country;
+		});
 	}
 
 });
@@ -461,6 +516,63 @@ var PersonalDieOutGameMode = Class( GameModeBase, {
 
 	// 是否允许卡牌死亡
 	isCanBeDeath : function() {
+		return true;
+	}
+
+});
+
+/**
+ * 团队挑战模式
+ */
+var CountryWarGameMode = Class( GameModeBase, {
+
+	init : function() {
+		this.name = '团队挑战模式';
+	},
+
+	// 游戏是否结束了
+	isGameOver : function( game ) {
+		return this._isLastStep( game );
+	},
+
+	// 是否允许卡牌死亡
+	isCanBeDeath : function() {
+		return false;
+	},
+
+	// 是否团队模式
+	isTeamMode : function() {
+		return true;
+	}
+
+});
+
+/**
+ * 团队淘汰模式
+ */
+var CountryDieOutGameMode = Class( GameModeBase, {
+
+	init : function() {
+		this.name = '团队淘汰模式';
+	},
+
+	// 游戏是否结束了
+	isGameOver : function( game ) {
+		// 剩下一个人的时候结束
+		if ( game.actors.length - game.deathCount <= 1 ) {
+			return true;
+		}
+
+		return this._isLastStep( game );
+	},
+
+	// 是否允许卡牌死亡
+	isCanBeDeath : function() {
+		return true;
+	},
+
+	// 是否团队模式
+	isTeamMode : function() {
 		return true;
 	}
 

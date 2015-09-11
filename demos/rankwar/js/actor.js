@@ -10,6 +10,7 @@ var Actor = Class({
 		this.node = null;
 		this.statusNode = null;
 		this.lifeBar = null;
+		this.countryBar = null;
 
 		this.skillGroup = skillGroup;
 		this.context = context;
@@ -19,6 +20,12 @@ var Actor = Class({
 		this.death = false;
 
 		this.clickCallback = null;
+
+		this.shouldShowLifeBar = false;
+		this.shouldShowCountryBar = false;
+
+		this.country = '';
+		this.countryColor = '';
 	},
 
 	setId : function( id ) {
@@ -74,6 +81,15 @@ var Actor = Class({
 		this.strategy.setContext( this.context );
 	},
 
+	setCountry : function( country ) {
+		this.country = country;
+		this.shouldShowCountryBar = !!country;
+	},
+
+	setCountryColor : function( countryColor ) {
+		this.countryColor = countryColor;
+	},
+
 	getNode : function() {
 		if ( ! this.node ) {
 			this.node = this.createNode();
@@ -98,6 +114,7 @@ var Actor = Class({
 		div = document.createElement( 'div' );
 		div.className = 'life-bar';
 		this.lifeBar = div;
+		this.showLifeBar( this.shouldShowLifeBar );
 		node.appendChild( div );
 
 		div = document.createElement( 'div' );
@@ -109,6 +126,12 @@ var Actor = Class({
 		div.className = 'status';
 		div.innerHTML = this.context.getDescription();
 		this.statusNode = div;
+		node.appendChild( div );
+
+		div = document.createElement( 'div' );
+		div.className = 'country-bar';
+		this.countryBar = div;
+		this.showCountryBar( this.shouldShowCountryBar );
 		node.appendChild( div );
 
 		return node;
@@ -137,6 +160,21 @@ var Actor = Class({
 
 	setLifeBarPercent : function( percent ) {
 		this.lifeBar.style.width = percent * 100 + '%';
+	},
+
+	showLifeBar : function( shown ) {
+		this.shouldShowLifeBar = shown;
+		if ( this.lifeBar ) {
+			this.lifeBar.style.display = shown ? '' : 'none';
+		}
+	},
+
+	showCountryBar : function( shown ) {
+		this.shouldShowCountryBar = shown;
+		if ( this.countryBar ) {
+			this.countryBar.style.display = shown ? '' : 'none';
+			this.countryBar.style.backgroundColor = this.countryColor;
+		}
 	}
 	
 });

@@ -104,3 +104,17 @@ var ACTOR_NAMES = [
 
 // 玩家名称
 var ACTOR_NAME_PLAYER = '玩家';
+
+
+// 国家
+var COUNTRY_1 = '魏国';
+var COUNTRY_2 = '吴国';
+var COUNTRY_3 = '蜀国';
+var COUNTRIES = [ COUNTRY_1, COUNTRY_2, COUNTRY_3 ];
+
+// 国家颜色
+var COUNTRY_COLORS = {
+	'魏国' : 'blue',
+	'吴国' : 'red',
+	'蜀国' : 'green'
+};

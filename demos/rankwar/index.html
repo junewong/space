@@ -94,12 +94,15 @@
 			<div>
 
 				<div class="text-center">
-					<select id="gameMode" name="gameMode">
+					<select id="gameMode">
 						<option value="1">个人挑战模式</option>
 						<option value="2">个人淘汰模式</option>
+						<option value="3">团队挑战模式</option>
+						<option value="4">团队淘汰模式</option>
 					</select>
-					<br/>
+					<button id="createButton">创建卡牌</button>
 					<button id="nextButton" style="display:none;">下一步</button>
+					<br/>
 					<br/>
 					<button id="playButton">开始/暂停</button>
 				</div>
@@ -128,6 +131,10 @@ window.onload = function() {
 			return '' + skill.name + skill.getValue();
 		}).join( ', ' );
 	}
+
+	var rankBoard = new RankBoard();
+	rankBoard.createAt( D( 'container' ), [] );
+
 
 	var game = new RankWarGame( 100 );
 	game.setMaxTruns( 20 );
@@ -219,17 +226,29 @@ window.onload = function() {
 		}
 	};
 
-	var rankBoard = new RankBoard();
-	rankBoard.createAt( D( 'container' ), game.actors );
-
 
 	D( 'playButton' ).onclick =  function() {
+		if ( ! game.isCreated ) {
+			alert( '请先创建卡牌' );
+			return;
+		}
 		if ( game.isPlaying() ) {
 			game.pause();
 
 		} else {
 			game.play();
 		}
+	};
+
+	// 游戏开始，创建卡牌
+	D( 'createButton' ).onclick =  function() {
+		if ( game.isPlaying() ) {
+			return;
+		}
+
+		game.create();
+		rankBoard.clean();
+		rankBoard.createAt( D( 'container' ), game.actors );
 	};
 
 	D( 'nextButton' ).onclick =  function() {
@@ -240,14 +259,21 @@ window.onload = function() {
 
 	D( 'gameMode' ).onchange = function() {
 		var value = this.value;
-		if ( value === 1 ) {
+		if ( value == 1 ) {
 			game.setGameMode( new PersonalWarGameMode() );
 
 		} else if ( value == 2 ) {
 			game.setGameMode( new PersonalDieOutGameMode() );
 
+		} else  if ( value == 3 ) {
+			game.setGameMode( new CountryWarGameMode() );
+
+		} else if ( value == 4 ) {
+			game.setGameMode( new CountryDieOutGameMode() );
+
 		}
 	};
+
 };
 
 </script>
