@@ -294,6 +294,25 @@ Array.prototype.getValues = function( indexs ) {
 	return list;
 };
 
+Array.prototype.randomOne = function() {
+	return Random.one( this );
+};
+
+Array.prototype.randomSome = function( count ) {
+	return Random.some( this, count );
+};
+
+
+Array.prototype.contains = function( item ) {
+	for ( var i = 0, len = this.length; i < len; i++ ) {
+		if ( item == this[i] ) {
+			return true;
+		}
+	}
+	return false;
+};
+
+
 // e.g.: 
 // 	"{0} is dead, but {1} is alive! {0} {2}".format("ASP", "ASP.NET")
 String.prototype.format = function() {

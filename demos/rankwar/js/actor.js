@@ -26,6 +26,8 @@ var Actor = Class({
 
 		this.country = '';
 		this.countryColor = '';
+
+		this.isGhostKiller = false;
 	},
 
 	setId : function( id ) {
@@ -115,6 +117,7 @@ var Actor = Class({
 		div.className = 'life-bar';
 		this.lifeBar = div;
 		this.showLifeBar( this.shouldShowLifeBar );
+		this.node = node;
 		node.appendChild( div );
 
 		div = document.createElement( 'div' );
@@ -134,6 +137,7 @@ var Actor = Class({
 		this.showCountryBar( this.shouldShowCountryBar );
 		node.appendChild( div );
 
+		this.setGhostKiller( this.isGhostKiller );
 		return node;
 	},
 
@@ -175,6 +179,17 @@ var Actor = Class({
 			this.countryBar.style.display = shown ? '' : 'none';
 			this.countryBar.style.backgroundColor = this.countryColor;
 		}
+	},
+
+	setGhostKiller : function( isGhostKiller ) {
+		this.isGhostKiller = isGhostKiller;
+		if ( this.node ) {
+			if ( isGhostKiller ) {
+				addClass( this.node, 'ghost-killer' );
+			} else {
+				removeClass( this.node, 'ghost-killer' );
+			}
+		} 
 	}
 	
 });

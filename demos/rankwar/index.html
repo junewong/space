@@ -99,6 +99,7 @@
 						<option value="2">个人淘汰模式</option>
 						<option value="3">团队挑战模式</option>
 						<option value="4">团队淘汰模式</option>
+						<option value="5">幽灵杀手模式</option>
 					</select>
 					<button id="createButton">创建卡牌</button>
 					<button id="nextButton" style="display:none;">下一步</button>
@@ -209,6 +210,12 @@ window.onload = function() {
 
 	};
 
+	game.ghostChangeCallback = function( ghostActor, targetActor ) {
+		var log = '幽灵杀手 $0 淘汰，附身到 $1 上。$1 成为幽灵杀手，技能提升为：$2'.format( ghostActor.name, targetActor.name, skillDesc( targetActor.skillGroup.skills ) );
+		showLog( log );
+		alert( log );
+	};
+
 	game.startCallback = function() {
 		showLog( '== 开始 == ', 'h3' );
 		D( 'gameMode' ).disable = 'disable';
@@ -271,6 +278,8 @@ window.onload = function() {
 		} else if ( value == 4 ) {
 			game.setGameMode( new CountryDieOutGameMode() );
 
+		} else if ( value == 5 ) {
+			game.setGameMode( new GhostKillerGameMode() );
 		}
 	};
 

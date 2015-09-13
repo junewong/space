@@ -27,6 +27,7 @@ var RankWarGame = Class({
 		this.giveUpCallback = null;
 		this.hurtCallback = null;
 		this.deathCallback = null;
+		this.ghostChangeCallback = null;
 
 		this.manualActor = null;
 
@@ -57,6 +58,24 @@ var RankWarGame = Class({
 
 	getManualActor : function() {
 		return this.manualActor;
+	},
+
+	// 获取普通的卡牌
+	getNormalActors : function() {
+		return this.actors.mapNew( function( actor, i ) {
+			if ( ! actor.isManual && ! actor.strategy.isGhostKiller() ) {
+				return actor;
+			}
+		});
+	},
+
+	// 获取未被淘汰的普通的卡牌
+	getLivingNormalActors : function() {
+		return this.getNormalActors().mapNew( function( actor, i ) {
+			if ( ! actor.isDeath() ) {
+				return actor;
+			}
+		});
 	},
 
 	setGameMode : function( gameMode ) {
@@ -255,6 +274,11 @@ var RankWarGame = Class({
 
 		// 移动到最后
 		this._moveBackword( from, lastDeathRank );
+
+		// 如果是幽灵模式，需要特殊处理
+		if ( this.gameMode.isGhostKillerMode() && actor.strategy.isGhostKiller() ) {
+			this._accessoryBody( actor );
+		}
 	},
 
 	_changeRank : function( actorA, actorB, resultType ) {
@@ -360,6 +384,7 @@ var RankWarGame = Class({
 		}
 
 
+		// 创建角色
 		var actors = names.mapNew( function( name, i ) {
 			 var rank = i + 1;
 			var skillGroup = new SkillGroup();
@@ -370,12 +395,13 @@ var RankWarGame = Class({
 			var actor = new Actor( name, skillGroup, context );
 			actor.setId( i );
 
-			// 策略 
+			// 玩家策略 
 			if ( actor.getName() == ACTOR_NAME_PLAYER ) {
 				actor.isManual = true;
 				actor.setStrategy( new ManualStrategy() );
 				_this.manualActor = actor;
 
+			// 随机策略 
 			} else {
 				var strategyClass = strategyClasses.length > 0 ? 
 								strategyClasses.shift() : RandomStrategy;
@@ -398,6 +424,22 @@ var RankWarGame = Class({
 
 			return actor;
 		});
+
+		// 幽灵模式，挑选3个幽灵杀手
+		if ( this.gameMode.isGhostKillerMode() ) {
+			actors.mapNew( function( actor, i ) {
+				if ( ! actor.isManual ) {
+					return actor;
+				}
+
+			}).randomSome( 3 ).map( function( targetActor ) {
+
+				var ghostStrategy = GhostKillerStrategy.createBy( targetActor );
+				targetActor.setStrategy( ghostStrategy );
+				targetActor.setGhostKiller( true );
+			});
+
+		}
 
 		return actors;
 	},
@@ -423,7 +465,32 @@ var RankWarGame = Class({
 		var from = ( rank - 10 ).fixedIn( 0, this.maxActors );
 		var to = rank - 1;
 		return this.rankMap.getByKeys( Arrays.range( from, to ) );
+	},
+
+	// 幽灵杀手附身到其他随机一张卡牌上
+	_accessoryBody : function( ghostActor ) {
+		var livingActors = this.getLivingNormalActors();
+		if ( ! livingActors ) {
+			return;
+		}
+
+		// 替换上幽灵杀手的策略
+		var targetActor = Random.one( livingActors );
+		var ghostStrategy = GhostKillerStrategy.createBy( targetActor );
+		targetActor.setStrategy( ghostStrategy );
+		targetActor.setGhostKiller( true );
+
+		// 所有技能加上幽灵杀手的30%
+		Arrays.mapBoth( targetActor.skillGroup.skills, ghostActor.skillGroup.skills, function( target, source, i ) {
+			var offset = parseInt( source.getValue() * 0.3 );
+			target.addValue( offset );
+		});
+
+		if ( this.ghostChangeCallback ) {
+			this.ghostChangeCallback( ghostActor, targetActor );
+		}
 	}
+
 
 });
 
@@ -458,12 +525,27 @@ var GameModeBase = Class({
 		return false;
 	},
 
+	// 是否是幽灵杀手模式
+	isGhostKillerMode : function() {
+		return false;
+	},
+
 	// 是否最后一回合
 	_isLastStep : function ( game ) {
 		if (  game.step >= game.maxStep && game.turns >= game.maxTruns ) {
 			return true;
 		}
 		return false;
+	},
+
+	// 是否最后一个人或者最后一回合
+	_isLastManOrLastStep : function ( game ) {
+		// 剩下一个人的时候结束
+		if ( game.actors.length - game.deathCount <= 1 ) {
+			return true;
+		}
+
+		return this._isLastStep( game );
 	},
 
 	getWonTeams : function() {
@@ -558,12 +640,7 @@ var CountryDieOutGameMode = Class( GameModeBase, {
 
 	// 游戏是否结束了
 	isGameOver : function( game ) {
-		// 剩下一个人的时候结束
-		if ( game.actors.length - game.deathCount <= 1 ) {
-			return true;
-		}
-
-		return this._isLastStep( game );
+		return this._isLastManOrLastStep( game );
 	},
 
 	// 是否允许卡牌死亡
@@ -573,6 +650,37 @@ var CountryDieOutGameMode = Class( GameModeBase, {
 
 	// 是否团队模式
 	isTeamMode : function() {
+		return true;
+	}
+
+});
+
+/**
+ * 幽灵杀手模式
+ */
+var GhostKillerGameMode = Class( GameModeBase, {
+
+	init : function() {
+		this.name = '幽灵杀手模式';
+	},
+
+	// 游戏是否结束了
+	isGameOver : function( game ) {
+		return this._isLastManOrLastStep( game );
+	},
+
+	// 是否允许卡牌死亡
+	isCanBeDeath : function() {
+		return true;
+	},
+
+	// 是否团队模式
+	isTeamMode : function() {
+		return false;
+	},
+
+	// 是否是幽灵杀手模式
+	isGhostKillerMode : function() {
 		return true;
 	}
 

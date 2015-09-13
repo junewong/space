@@ -159,6 +159,11 @@ var StrategyBase = Class({
 		return this.getValue() <= 0;
 	},
 
+	// can be override
+	isGhostKiller : function() {
+		return false;
+	},
+
 	increaseStep : function() {
 		this.step += 1;
 	}
@@ -334,6 +339,10 @@ var RandomStrategy = Class( StrategyBase, {
 			var skill = Random.one( skills );
 			skill.addValue( 1 );
 		});
+	},
+
+	// 死亡的时候
+	death : function( game ) {
 	}
 
 });
@@ -453,6 +462,60 @@ var SmartStrategy = Class( StrategyBase, {
 	}
 
 });
+
+
+/**
+ * 谋定后动挑战策略
+ */
+var GhostKillerStrategy = Class( StrategyBase, {
+
+	init : function( id ) {
+		this._init( id, '幽灵杀手' );
+		this.description = '可攻击范围内出现玩家一定挑战；如果死亡，则会俯身到其他卡牌上，并且有属性加成；';
+	},
+
+	chooseEnemy : function( actors, me ) {
+		if ( ! actors  ) {
+			return null;
+		}
+		var manualActor = actors.findFirst( function( actor, i ) {
+			return actor.isManual;
+		});
+		if ( manualActor ) {
+			return manualActor;
+		}
+		return ChooseEnemy.smartChoice( actors, me );
+	},
+
+	fight : function( skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	attacked : function( enemy, skillGroup, count ) {
+		return Fight.randomOrMaxValue( skillGroup, count );
+	},
+
+	levelUp : function( skills, points ) {
+		Levelup.smartChoice( skills, points );
+	},
+
+	// can be override
+	isGhostKiller : function() {
+		return true;
+	},
+
+});
+
+// 在别人的基础上创建这个策略
+GhostKillerStrategy.createBy = function( sourceActor ) {
+	var strategy = new GhostKillerStrategy();
+	for ( var k in sourceActor.strategy ) {
+		if ( false ===  [ 'isGhostKiller', 'chooseEnemy', 'description' ].contains( k ) ) {
+			strategy[ k ] = sourceActor.strategy[ k ];
+		}
+	}
+	return strategy;
+};
 
 
 /**
