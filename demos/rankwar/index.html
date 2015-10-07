@@ -94,12 +94,21 @@
 			<div>
 
 				<div class="text-center">
+					<select id="maxActors">
+						<option value="100">100人</option>
+						<option value="50">50人</option>
+						<option value="30">30人</option>
+						<option value="20">20人</option>
+						<option value="10">10人</option>
+						<option value="3">3人</option>
+					</select>
 					<select id="gameMode">
 						<option value="1">个人挑战模式</option>
 						<option value="2">个人淘汰模式</option>
 						<option value="3">团队挑战模式</option>
 						<option value="4">团队淘汰模式</option>
 						<option value="5">幽灵杀手模式</option>
+						<option value="6">刺客任务模式</option>
 					</select>
 					<button id="createButton">创建卡牌</button>
 					<button id="nextButton" style="display:none;">下一步</button>
@@ -280,7 +289,14 @@ window.onload = function() {
 
 		} else if ( value == 5 ) {
 			game.setGameMode( new GhostKillerGameMode() );
+
+		} else if ( value == 6 ) {
+			game.setGameMode( new AssassinTaskGameMode() );
 		}
+	};
+
+	D( 'maxActors' ).onchange = function() {
+		game.setMaxActors( this.value );
 	};
 
 };

@@ -94,6 +94,12 @@ var SkillGroup = Class({
 		return indexs.slice( 0, count ).mapNew( function( index, i ) {
 			return _this.skills[ index ];
 		});
+	},
+
+	getDescription : function() {
+		return this.skills.mapNew( function( skill, i ) {
+			return skill.getName() + skill.getValue();
+		}).join( '   ' );
 	}
 });
 

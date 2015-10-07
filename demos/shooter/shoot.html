@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<script src="./libs/crafty-min.js"></script>
+	<script src="./js/map.js"></script>
+	<script src="./js/global.js"></script>
+	<script src="./js/Weapon.js"></script>
+	<script src="./js/material.js"></script>
+	<script src="./js/Actor.js"></script>
+</head>
+<body>
+
+<div id="game"></div>
+
+<script>
+
+var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
+
+Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT );
+Crafty.background('rgb(245,245,245)');
+
+Crafty.e( '2D, DOM, Color, Mouse' )
+	.attr( {w: CANVAS_WIDTH, h:CANVAS_HEIGHT, alpha:0} )
+	.bind( 'Click', function( e ) {
+		Crafty.trigger( 'CanvasMouseClick', e );
+	})
+	.bind( 'DoubleClick', function( e ) {
+		console.log( e.clientX + ' : ' + e.clientY );
+		Crafty.trigger( 'CanvasMouseDbClick', e );
+	})
+	.bind('MouseUp', function( e ) {
+		if( e.mouseButton == Crafty.mouseButtons.RIGHT ) {
+			Crafty.trigger( 'CanvasMouseRightClick', e );
+		}
+	});
+
+randomCreateEntity( 5, battleMap, function( i ) {
+	return Crafty.e( 'Rock' )
+				.color( 'black' );
+
+});
+
+
+var wallCount = randInt(1,  10);
+randomCreateEntity( wallCount, battleMap, function( i ) {
+    var w = randInt(1,  5 ) * 20;
+    var h = randInt(1,  5 ) * 20;
+
+	return Crafty.e( 'Wall' )
+				.attr({ w:w, h:h } );
+
+});
+
+/*
+randomCreateEntity( 6, battleMap, function( i ) {
+	return Crafty.e("Ball");
+
+});
+*/
+
+
+randomCreateEntity( 6, battleMap, function( i ) {
+	var k = randInt( 0, WEAPON_LIST.length -1 );
+
+	var weaponClass = WEAPON_LIST[ k ];
+	var color  = WEAPON_COLOS[ k ];
+
+	var pill = Crafty.e("WeaponPill");
+
+	pill.setWeapon( weaponClass );
+	pill.setWeaponColor( color );
+
+	return pill;
+
+});
+
+function createSoldier( count ) {
+	randomCreateEntity( count, battleMap, function( i ) {
+		return Crafty.e("Soldier")
+					.color( 'purple' );
+
+	});
+}
+
+function createPlayer() {
+	var pos = randPosition();
+	Crafty.e("Player")
+		.attr({ x: pos.x, y: pos.y } );
+}
+
+// 多少个战士
+var soldierCount = 6;
+createSoldier( soldierCount );
+
+createPlayer();
+
+
+Crafty.bind( 'Dead', function( entity ) {
+	if ( entity.has( 'Soldier' ) ) {
+		setTimeout( function() {
+			if ( Crafty( 'Soldier' ).length <  soldierCount ) {
+				createSoldier( 1 );
+			}
+		}, 1000 );
+	}
+
+	if ( entity.has( 'Player' ) ) {
+		setTimeout( function() {
+			if ( Crafty( 'Player' ).length <  1 ) {
+				createPlayer();
+			}
+		}, 1000 );
+	}
+});
+
+</script>
+
+</body>
+</html>

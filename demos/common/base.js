@@ -98,7 +98,7 @@ var Random = {
 			from = 0;
 		}
 		var length = to - from;
-		var rand = parseInt( Math.random() * 100 % length );
+		var rand = parseInt( Math.random() * 100 % ( length + 1) );
 		return from + rand;
 	},
 
@@ -229,6 +229,17 @@ Array.prototype.mapNew = function( callback ) {
 	return list;
 };
 
+// 统计符合的次数
+Array.prototype.count = function( callback ) {
+	var sum = 0;
+	for ( var i = 0, len = this.length; i < len; i++ ) {
+		if ( callback( this[i], i ) ) {
+			sum ++;
+		}
+	}
+	return sum;
+};
+
 // 统计出现的key的次数
 Array.prototype.countKeys = function( callback ) {
 	var result = {};
@@ -311,6 +322,16 @@ Array.prototype.contains = function( item ) {
 	}
 	return false;
 };
+
+Array.prototype.copy = function() {
+	return Arrays.copy( this );
+};
+
+Array.prototype.connect = function( item) {
+	this.push( item );
+	return this;
+};
+
 
 
 // e.g.: 

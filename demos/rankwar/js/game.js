@@ -30,6 +30,7 @@ var RankWarGame = Class({
 		this.ghostChangeCallback = null;
 
 		this.manualActor = null;
+		this.taskTargetActors = [];
 
 		this.maxSkillsInFighting = 3;
 
@@ -39,6 +40,10 @@ var RankWarGame = Class({
 		this.maxStep = this.actors.length;
 
 		this.isCreated = false;
+	},
+
+	setMaxActors : function( maxActors ) {
+		this.maxActors = maxActors;
 	},
 
 	setMaxTruns : function( maxTruns ) {
@@ -63,7 +68,7 @@ var RankWarGame = Class({
 	// 获取普通的卡牌
 	getNormalActors : function() {
 		return this.actors.mapNew( function( actor, i ) {
-			if ( ! actor.isManual && ! actor.strategy.isGhostKiller() ) {
+			if ( ! actor.isManual && ! actor.strategy.canRevivied() ) {
 				return actor;
 			}
 		});
@@ -102,6 +107,7 @@ var RankWarGame = Class({
 		while( actor.isDeath() && this.deathCount < this.actors.length ) {
 			this.step ++;
 			this.checkEnd();
+			// 如果被重置为1，则进入下一回合
 			if ( this.step <= 1 ) {
 				return;
 			}
@@ -148,6 +154,7 @@ var RankWarGame = Class({
 	create : function() {
 		this.actors = this._createActors();
 		this.maxStep = this.actors.length;
+		this.turns = 0;
 		this.isCreated = true;
 	},
 
@@ -253,16 +260,16 @@ var RankWarGame = Class({
 		// 检测死亡
 		if ( this.gameMode.isCanBeDeath() ) {
 			if ( actorA.isDeath() ) {
-				this._die( actorA );
+				this._die( actorA, actorB );
 
 			} else if ( actorB.isDeath() ) {
-				this._die( actorB );
+				this._die( actorB, actorA );
 			}
 		}
 
 	},
 
-	_die : function( actor ) {
+	_die : function( actor, victor ) {
 		this.deathCount ++;
 
 		if ( this.deathCallback ) {
@@ -276,8 +283,20 @@ var RankWarGame = Class({
 		this._moveBackword( from, lastDeathRank );
 
 		// 如果是幽灵模式，需要特殊处理
-		if ( this.gameMode.isGhostKillerMode() && actor.strategy.isGhostKiller() ) {
+		if ( this.gameMode.isGhostKillerMode() && actor.strategy.canRevivied() ) {
 			this._accessoryBody( actor );
+
+		} 
+
+		// 如果是幽灵模式，需要特殊处理
+		if ( this.gameMode.isAssassinTaskMode() && actor.strategy.canRevivied() ) {
+			// 如果是被玩家所击败，则不再重生
+			if ( victor.isManual ) {
+				actor.strategy.setRevivied( false );
+			}
+			if ( actor.strategy.canRevivied() ) {
+				this._accessoryBody( actor );
+			}
 		}
 	},
 
@@ -427,21 +446,46 @@ var RankWarGame = Class({
 
 		// 幽灵模式，挑选3个幽灵杀手
 		if ( this.gameMode.isGhostKillerMode() ) {
-			actors.mapNew( function( actor, i ) {
-				if ( ! actor.isManual ) {
-					return actor;
-				}
+			this._createGhostKiller( actors, 3 );
+		}
 
-			}).randomSome( 3 ).map( function( targetActor ) {
-
-				var ghostStrategy = GhostKillerStrategy.createBy( targetActor );
-				targetActor.setStrategy( ghostStrategy );
-				targetActor.setGhostKiller( true );
-			});
-
+		// 刺客任务模式，挑选1个任务对象
+		if ( this.gameMode.isAssassinTaskMode() ) {
+			this._createAssassinTaskTarget( actors, 1 );
 		}
 
 		return actors;
+	},
+
+	_createGhostKiller : function( actors, count ) {
+		actors.mapNew( function( actor, i ) {
+			if ( ! actor.isManual ) {
+				return actor;
+			}
+
+		}).randomSome( count ).map( function( targetActor ) {
+
+			var ghostStrategy = GhostKillerStrategy.createBy( targetActor );
+			targetActor.setStrategy( ghostStrategy );
+			targetActor.setGhostKiller( true );
+		});
+	},
+
+	_createAssassinTaskTarget : function( actors, count ) {
+		var _this = this;
+		actors.mapNew( function( actor, i ) {
+			if ( ! actor.isManual ) {
+				return actor;
+			}
+
+		}).randomSome( count ).map( function( targetActor ) {
+
+			var strategy = AssassinTaskStrategy.createBy( targetActor );
+			targetActor.setStrategy( strategy );
+			targetActor.setTaskTarget( true );
+
+			_this.taskTargetActors.push( targetActor );
+		});
 	},
 
 	_getTargetActor : function( actor ) {
@@ -476,9 +520,19 @@ var RankWarGame = Class({
 
 		// 替换上幽灵杀手的策略
 		var targetActor = Random.one( livingActors );
-		var ghostStrategy = GhostKillerStrategy.createBy( targetActor );
-		targetActor.setStrategy( ghostStrategy );
-		targetActor.setGhostKiller( true );
+
+		var strategy;
+		if ( this.gameMode.isGhostKillerMode() ) {
+			strategy = GhostKillerStrategy.createBy( targetActor );
+			targetActor.setStrategy( strategy );
+			targetActor.setGhostKiller( true );
+
+		} else if ( this.gameMode.isAssassinTaskMode() ) {
+			strategy = AssassinTaskStrategy.createBy( targetActor );
+			targetActor.setStrategy( strategy );
+			targetActor.setTaskTarget( true );
+			this.taskTargetActors.push( targetActor );
+		}
 
 		// 所有技能加上幽灵杀手的30%
 		Arrays.mapBoth( targetActor.skillGroup.skills, ghostActor.skillGroup.skills, function( target, source, i ) {
@@ -530,6 +584,11 @@ var GameModeBase = Class({
 		return false;
 	},
 
+	// 是否是刺客任务模式
+	isAssassinTaskMode : function() {
+		return false;
+	},
+
 	// 是否最后一回合
 	_isLastStep : function ( game ) {
 		if (  game.step >= game.maxStep && game.turns >= game.maxTruns ) {
@@ -548,6 +607,7 @@ var GameModeBase = Class({
 		return this._isLastStep( game );
 	},
 
+	// 获取获胜的团队
 	getWonTeams : function() {
 		var countCountry = game.getAcotrsByRank().slice( 0, 10 ).countKeys( function( actor, i ) {
 			return actor.country;
@@ -681,6 +741,47 @@ var GhostKillerGameMode = Class( GameModeBase, {
 
 	// 是否是幽灵杀手模式
 	isGhostKillerMode : function() {
+		return true;
+	}
+
+});
+
+/**
+ * 幽灵杀手模式
+ */
+var AssassinTaskGameMode = Class( GameModeBase, {
+
+	init : function() {
+		this.name = '刺杀任务模式';
+	},
+
+	// 游戏是否结束了
+	isGameOver : function( game ) {
+		// 玩家阵亡
+		if ( game.getManualActor().isDeath() ) {
+			return true;
+		}
+		if ( game.actors.length <= 1 ) {
+			return true;
+		}
+		// 刺杀目标是否都死了
+		return game.taskTargetActors.count( function( actor ) {
+			return ! actor.isDeath();
+		}) === 0;
+	},
+
+	// 是否允许卡牌死亡
+	isCanBeDeath : function() {
+		return true;
+	},
+
+	// 是否团队模式
+	isTeamMode : function() {
+		return false;
+	},
+
+	// 是否是刺客任务模式
+	isAssassinTaskMode : function() {
 		return true;
 	}
 

@@ -28,6 +28,7 @@ var Actor = Class({
 		this.countryColor = '';
 
 		this.isGhostKiller = false;
+		this.isTaskTarget = false;
 	},
 
 	setId : function( id ) {
@@ -138,6 +139,7 @@ var Actor = Class({
 		node.appendChild( div );
 
 		this.setGhostKiller( this.isGhostKiller );
+		this.setTaskTarget( this.isTaskTarget );
 		return node;
 	},
 
@@ -188,6 +190,17 @@ var Actor = Class({
 				addClass( this.node, 'ghost-killer' );
 			} else {
 				removeClass( this.node, 'ghost-killer' );
+			}
+		} 
+	},
+
+	setTaskTarget : function( isTaskTarget ) {
+		this.isTaskTarget = isTaskTarget;
+		if ( this.node ) {
+			if ( isTaskTarget ) {
+				addClass( this.node, 'task-target' );
+			} else {
+				removeClass( this.node, 'task-target' );
 			}
 		} 
 	}

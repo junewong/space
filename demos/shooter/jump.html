@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<script src="./libs/crafty-min.js"></script>
+</head>
+<body>
+
+<div id="game"></div>
+
+<script>
+
+function createGame() {
+	var bombPlaying = true;
+
+	var bombIntervalTime = 800;
+
+	var areaWidth = 600, areaHeight = 400;
+
+	Crafty.init(areaWidth + 10, areaHeight + 10, document.getElementById('game'));
+
+
+	Crafty.c('Floor', {
+	  init: function() {
+		this.requires('2D, Canvas, Color');
+	  }
+	});
+
+
+	Crafty.c('Wall', {
+	  init: function() {
+		this.requires('2D, Canvas, Color')
+		  .color('blue');
+	  }
+	});
+
+
+	Crafty.c('Actor', {
+	  init: function() {
+		  this.requires( '2D, Canvas, Color, Fourway, Gravity, Collision' )
+				.stopOnSolids();
+	  },
+		
+	  stopOnSolids: function() {
+		  var _this = this;
+		this.onHit('Wall', this.stopMovement);
+		this.onHit('Floor', this.stopMovement);
+		this.onHit('Bomb', function() {
+			_this.destroy();
+			bombPlaying = false;
+		});
+
+		return this;
+	  },
+
+	  // Stops the movement
+	  stopMovement: function() {
+		this._speed = 0;
+		if (this._movement) {
+		  var xOffset = this._movement.x < 0 ? -2 : (this._movement.x > 0 ? 2 : 0 );
+		  var yOffset = this._movement.y < 0 ? -2 : (this._movement.y > 0 ? 2 : 0 );
+		  this.x -= (this._movement.x + xOffset);
+		  this.y -= (this._movement.y + yOffset);
+		}
+	  }    
+	});
+
+	Crafty.c('Bomb', {
+	  init: function() {
+		  var _this = this;
+		  this.requires( '2D, Canvas, Color, Gravity, Collision' )
+				.onHit( 'Floor', function() {
+					alert( 1 );
+					_this.destroy();
+		  });
+	  }
+	});
+
+	Crafty.e('Floor')
+	  .attr({x: 0, y: areaHeight, w: areaWidth, h: 10})
+	  .color('green');
+
+	Crafty.e('Wall')
+	  .attr({x: areaWidth-10, y: 0, w: 10, h: areaHeight})
+	  .color('green');
+
+	Crafty.e('Wall')
+	  .attr({x: 0, y: 0, w: 10, h: areaHeight})
+	  .color('green');
+
+
+	Crafty.e('Actor')
+	  .attr({x: areaWidth/2 - 25, y: 0, w: 50, h: 50})
+	  .color('#F00')
+	  .fourway(4)
+	  .gravity('Floor');
+
+
+
+	function createBomb() {
+		setTimeout( function() {
+				var x = Math.random() * 10000 % areaWidth;
+				var bomb = Crafty.e('Bomb')
+				  .attr({x: x, y: 0, w: 12, h: 20})
+				  .color('red')
+				  .gravity('Floor');
+			
+				setTimeout( function() {
+					bomb.destroy();
+				}, 3000 );
+			
+				if ( bombPlaying ) {
+					if ( bombIntervalTime > 250 ) {
+						bombIntervalTime -= 10;
+					}                
+					createBomb();  
+				}        	
+		}, bombIntervalTime );
+	}
+
+
+	createBomb();
+
+}
+
+createGame();
+
+</script>
+
+<button onclick="createGame();">Reload</button>
+	
+</body>
+</html>

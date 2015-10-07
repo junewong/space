@@ -98,6 +98,8 @@ var StrategyBase = Class({
 		this.deathCallback = null;
 
 		this.style = { bgColor : '', fontColor : '' };
+
+		this.isRevivied = false;
 	},
 
 	setContext : function( context ) {
@@ -160,8 +162,13 @@ var StrategyBase = Class({
 	},
 
 	// can be override
-	isGhostKiller : function() {
-		return false;
+	// 可以复活，如幽灵杀手模式等使用
+	canRevivied : function() {
+		return !!this.isRevivied;
+	},
+
+	setRevivied : function( isRevivied ) {
+		this.isRevivied = isRevivied;
 	},
 
 	increaseStep : function() {
@@ -471,7 +478,8 @@ var GhostKillerStrategy = Class( StrategyBase, {
 
 	init : function( id ) {
 		this._init( id, '幽灵杀手' );
-		this.description = '可攻击范围内出现玩家一定挑战；如果死亡，则会俯身到其他卡牌上，并且有属性加成；';
+		this.description = '可攻击范围内如果出现玩家一定挑战；如果死亡，则会俯身到其他卡牌上，并且有属性加成；';
+		this.isRevivied = true;
 	},
 
 	chooseEnemy : function( actors, me ) {
@@ -497,25 +505,36 @@ var GhostKillerStrategy = Class( StrategyBase, {
 
 	levelUp : function( skills, points ) {
 		Levelup.smartChoice( skills, points );
-	},
-
-	// can be override
-	isGhostKiller : function() {
-		return true;
-	},
-
+	}
 });
-
-// 在别人的基础上创建这个策略
+GhostKillerStrategy.stickProperties = [ 'init', 'isRevivied', 'canRevivied', 'chooseEnemy', 'description' ];
 GhostKillerStrategy.createBy = function( sourceActor ) {
+	if ( !sourceActor ) {
+		return;
+	}
 	var strategy = new GhostKillerStrategy();
 	for ( var k in sourceActor.strategy ) {
-		if ( false ===  [ 'isGhostKiller', 'chooseEnemy', 'description' ].contains( k ) ) {
+		if ( false ===  this.stickProperties.contains( k ) ) {
 			strategy[ k ] = sourceActor.strategy[ k ];
 		}
 	}
 	return strategy;
 };
+
+/**
+ * 谋定后动挑战策略
+ * 继承于幽灵杀手
+ */
+var AssassinTaskStrategy = Class( GhostKillerStrategy, {
+	init : function( id ) {
+		this._init( id, '刺客任务' );
+		this.description = '作为刺杀对象；如果死亡，则会俯身到其他卡牌上，并且有属性加成；';
+		this.isRevivied = true;
+	}
+
+});
+AssassinTaskStrategy.stickProperties = [ 'init', 'isRevivied', 'canRevivied', 'description' ];
+AssassinTaskStrategy.createBy = GhostKillerStrategy.createBy;
 
 
 /**
@@ -536,7 +555,8 @@ var ManualStrategy = Class( StrategyBase, {
 
 		var _this = this;
 		var callback = function( actor, i ) {
-			return '【' + i + '】' + actor.getName() +  _this._getHistorySkills( actor ) + '  ' + actor.strategy.getName();
+			var skillDesc = actor.isManual ? actor.skillGroup.getDescription().wrap( '（', '）' ) : _this._getHistorySkills( actor );
+			return '【' + i + '】' + actor.getName() + skillDesc  + '  ' + actor.strategy.getName();
 		};
 
 		var command;
@@ -549,7 +569,7 @@ var ManualStrategy = Class( StrategyBase, {
 			}
 			// 'i' 指令可查看用户资料
 			if ( command === 'i' ) {
-				var help = actors.mapNew( callback ).join( '\n' );
+				var help = actors.copy().connect( me ).mapNew( callback ).join( '\n' );
 				alert( help );
 
 			} else {
@@ -579,7 +599,7 @@ var ManualStrategy = Class( StrategyBase, {
 		var preText = '恭喜！你获得了$0个技能点，可以选择添加到哪些技能上。\n'.format( points );
 
 		var selectedSkills =  this._selectSkills( skills, points, preText, this.lastLevelupSkills, function( command ) {
-			var reg = new RegExp( "(\\d\\s*){" + points + "}" );
+			var reg = new RegExp( "^(\\d\\s*){" + points + "}$" );
 			return reg.test( command );
 		});
 
