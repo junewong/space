@@ -80,7 +80,7 @@ randomCreateEntity( 6, battleMap, function( i ) {
 });
 
 function createSoldier( count ) {
-	randomCreateEntity( count, battleMap, function( i ) {
+	randomCreateEntity( count, null, function( i ) {
 		return Crafty.e("Soldier")
 					.color( 'purple' );
 

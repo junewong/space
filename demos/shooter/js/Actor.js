@@ -10,7 +10,7 @@ Crafty.c( "Actor", {
 	_init: function() {
 		var _root = this;
 
-		this.maxHP = 40;
+		this.maxHP = 100;
 		this.HP = this.maxHP;
 
 		this.speed = 4;
@@ -28,7 +28,7 @@ Crafty.c( "Actor", {
 		this.attach( this.hpBar );
 
 		this.onHit( 'Wall',  function( e ) {
-			this.stopMovement( e );
+			//this.stopMovement( e );
 			this.trigger( 'HitMaterial', e ); 
 		});
 
@@ -167,8 +167,8 @@ Crafty.c( "Actor", {
 	},
 
 	rotateTo : function( x, y, callback ) {
-		var degree = Math.atan2( x - this.x, this.y - y );
-		var angle = Crafty.math.radToDeg( degree );
+		var rad = Math.atan2( x - this.x, this.y - y );
+		var angle = Crafty.math.radToDeg( rad );
 		angle = ( 360 + angle ) % 360;
 		this.tween( { rotation: angle }, 300 )
 			.one( 'TweenEnd', function( e ) {
@@ -178,9 +178,21 @@ Crafty.c( "Actor", {
 			});
 	},
 
-	goBack : function( distance, animated, callback ) {
+	goBack : function( distance, animated, entity, callback ) {
 		distance = distance || this.speed;
-		var point = toAngle( this.x, this.y,  this.rotation + 180, distance );
+
+		var angle = 0;
+		if ( entity ) {
+			var cx = entity.x + entity.w /2;
+			var cy = entity.y + entity.h /2;
+			var rad = Math.atan2( this.x - cx, this.y - cy );
+			angle = Crafty.math.radToDeg( rad );
+
+		} else {
+			angle = this.rotation + 180;
+		}
+
+		var point = toAngle( this.x, this.y, angle, distance );
 		this.moveTo( point, animated, callback );
 	},
 
@@ -288,8 +300,8 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 
 			this.bind( 'HitMaterial', function( e ) {
 				var _this = this;
-				this.goBack( 2 * this.speed, true, function() {
-				});
+				var entity = e[0].obj;
+				this.goBack( 2 * this.speed, true, entity );
 			});
 	},
 
@@ -311,20 +323,21 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		var _this = this;
 
-		this.visibleDistance = 200;
+		this.visibleDistance = 300;
 		this.addVisibleFrame();
 
 		this.action = null;
 		this.lastMeetEntity = null;
 
 		this.bind( 'SwitchWeapon', function( weapon ) {
-			this.updateVisibleFrame();
+			//this.updateVisibleFrame();
 		});
 
 		this.bind( 'HitMaterial', function( e ) {
 			var _this = this;
 			this.setAction( null );
-			this.goBack( 4 * this.speed, true, function() {
+			var entity = e[0].obj;
+			this.goBack( 4 * this.speed, true, entity, function() {
 				var obj = e[0].obj;
 				_this.roundAction( obj );
 			});
@@ -386,7 +399,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	},
 
 	updateVisibleFrame : function() {
-		var size = this.weapon.config.distance;
+		//var size = this.weapon.config.distance;
+		var size = this.visibleDistance > this.weapon.config.distance ? this.visibleDistance : this.weapon.config.distance;
+
 		var x = this.x + this.w/2 - size/2;
 		var y = this.y + this.h/2 - size/2;
 		this.visibleFrame.attr( {x: x, y: y, w: size, h: size} );

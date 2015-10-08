@@ -16,6 +16,9 @@ function die( entity, callback ) {
 	var h = entity.h * 1.2;
 	entity.tween( {w: w, h:h, alpha:0.2}, 300 )
 		.bind( 'TweenEnd', function() {
+			if ( Game.battleMap ) {
+				Game.battleMap.removeBlock( entity.x, entity.y, entity.w, entity.h );
+			}
 			Crafty.trigger( 'Dead', entity );
 			entity.destroy();
 			if ( callback ) {
