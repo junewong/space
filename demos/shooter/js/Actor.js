@@ -268,7 +268,7 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 
 				// continue
 				if ( _this.running ) {
-					setTimeout( run, 40 );
+					setTimeout( run, 50 );
 				}
 			};
 
@@ -298,7 +298,18 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 				this.rotateTo( mouseX, mouseY );
 			})
 			.bind( 'ShootButtonDown', function( e ) {
-				this.attack();
+				this.shooting = true;
+				var _this = this;
+				var shoot = function() {
+					_this.attack();
+					if ( _this.shooting ) {
+						_this.timeout( shoot, 50 );
+					}
+				};
+				shoot();
+			})
+			.bind( 'ShootButtonUp', function( e ) {
+				this.shooting = false;
 			});
 
 			this.bind( 'HitMaterial', function( e ) {
