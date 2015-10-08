@@ -10,6 +10,8 @@ Crafty.c( "Actor", {
 	_init: function() {
 		var _root = this;
 
+		this.maxHP = 40;
+		this.HP = this.maxHP;
 
 		this.speed = 4;
 		this._movement = { x: 0, y: 0 };
@@ -18,6 +20,11 @@ Crafty.c( "Actor", {
 			.color('orange')
 			.replace('<center>|<center>')
 			.attr({x:100, y:100, w:20, h:20, rotation:0, running:false});
+
+		this.hpBar = Crafty.e( '2D, DOM, Color')
+						.attr( {x: this.x, y:this.y+18, w:20, h:2} )
+						.color( 'red' );
+		this.attach( this.hpBar );
 
 
 		this.onHit('Wall',  function( e ) {
@@ -37,7 +44,7 @@ Crafty.c( "Actor", {
 			if ( this.weapon.isOwner( bullets[0].obj ) ) {
 				return;
 			}
-			this.die();
+			this.hurt();
 		});
 
 		this.onHit( 'WeaponPill', function( pills ) {
@@ -66,6 +73,16 @@ Crafty.c( "Actor", {
 		this.weapon = new weaponClass( UID() );
 
 		this.trigger( 'SwitchWeapon', this.weapon );
+	},
+
+	hurt: function() {
+		this.HP --;
+		var width = this.HP / this.maxHP * this.hpBar.w;
+		this.hpBar.attr( {w: width} );
+
+		if ( this.HP <= 0 ) {
+			this.die();
+		}
 	},
 
 	attack : function() {
