@@ -59,9 +59,11 @@ function randomCreateEntity( count, map, callback ) {
 
 		var p = randPosition( entity.w, entity.h );
 
-		if ( ! map.checkBlock( p.x, p.y, entity.w, entity.h ) ) {
+		if ( ! map || ! map.checkBlock( p.x, p.y, entity.w, entity.h ) ) {
 			entity.attr( {x: p.x, y: p.y} );
-			map.addEntity( entity );
+			if ( map ) {
+				map.addEntity( entity );
+			}
 			entity = null;
 			i++;
 		}

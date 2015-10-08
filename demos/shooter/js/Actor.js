@@ -26,7 +26,6 @@ Crafty.c( "Actor", {
 						.color( 'red' );
 		this.attach( this.hpBar );
 
-
 		this.onHit( 'Wall',  function( e ) {
 			this.stopMovement( e );
 			this.trigger( 'HitMaterial', e ); 
@@ -307,7 +306,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		this.lastMeetEntity = null;
 
 		this.bind( 'SwitchWeapon', function( weapon ) {
-			//this.updateVisibleFrame();
+			this.updateVisibleFrame();
 		});
 
 		this.bind( 'HitMaterial', function( e ) {
@@ -328,6 +327,10 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 				} else {
 					entity = hitData.shift().obj;
 				}
+			}
+
+			if  ( this.hasObstacle( entity ) ) {
+				return;
 			}
 
 			this.lastMeetEntity = entity;
@@ -367,10 +370,16 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		this.attach( this.visibleFrame );
 
+		this.updateVisibleFrame();
 	},
 
 	updateVisibleFrame : function() {
-		this.addVisibleFrame();
+		var size = this.weapon.config.distance;
+		var x = this.x + this.w/2 - size/2;
+		var y = this.y + this.h/2 - size/2;
+		this.visibleFrame.attr( {x: x, y: y, w: size, h: size} );
+
+		this.visibleDistance = size;
 	},
 
 	setAction : function( name, action ) {
@@ -498,6 +507,19 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		var p = toAngle( this.x, this.y, angle, distance );
 		return p;
+	},
+
+	// 跟目标之间是否存在障碍
+	hasObstacle: function( obj ) {
+		var minX = Math.min( this.x, obj.x );
+		var minY = Math.min( this.y, obj.y );
+
+		// 中间点 
+		var cx = Math.abs( obj.x - this.x ) + minX;
+		var cy = Math.abs( obj.y - this.y ) + minY;
+
+		var exist = Game.battleMap.checkBlock( cx, cy, this.w, this.h );
+		return exist;
 	}
 
 
