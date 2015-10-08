@@ -15,6 +15,7 @@ Crafty.c( "Actor", {
 
 		this.speed = 4;
 		this._movement = { x: 0, y: 0 };
+		this._targetPosition = { x: 0, y: 0 };
 
 		this.requires( '2D, DOM, Color, Tween, Collision, Mouse, HTML' )
 			.color('orange')
@@ -29,6 +30,14 @@ Crafty.c( "Actor", {
 		this.onHit( 'Wall',  function( e ) {
 			this.stopMovement( e );
 			this.trigger( 'HitMaterial', e ); 
+		});
+
+		this.onHit( 'Player',  function( e ) {
+			this.stopMovement( e );
+		});
+
+		this.onHit( 'Soldier',  function( e ) {
+			this.stopMovement( e );
 		});
 
 		this.onHit( 'Rock', function() {
@@ -123,6 +132,9 @@ Crafty.c( "Actor", {
 			 this.stopMovement();
 			 return;
 		}
+
+		this._targetPosition.x = point.x;
+		this._targetPosition.y = point.y;
 
 		if ( ! animated ) {
 			this._movement.x = point.x - this.x;
@@ -383,7 +395,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	},
 
 	setAction : function( name, action ) {
-		console.log( 'action: ' + name );
+		//console.log( 'action: ' + name );
 		this.action = action || null;
 
 	},
@@ -478,16 +490,31 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	roundAction: function( obj ) {
 		var _this = this;
 
-		/*
+		var targetX = this._targetPosition.x;
+		var targetY = this._targetPosition.y;
+
 		var offset = Math.max( this.w, this.h );
 
-		var x = this.x < obj.x ? obj.x - offset : obj.x + obj.w + offset;
-		var y = this.y < obj.y ? obj.y - offset : obj.y + obj.h + offset;
+		var pathX = this.x < obj.x ? obj.x - offset : obj.x + obj.w + offset;
+		var pathY = this.y < obj.y ? obj.y - offset : obj.y + obj.h + offset;
 
 		//var dx = ( this.y < obj.y ? 1 : -1 ) * ( this.obj.x + this.obj.w + 2 * offset ) + x;
 		//var dy = ( this.x < obj.x ? 1 : -1 ) * ( this.obj.y + this.obj.h + 2 * offset ) + y;
-		*/
+		
+		var action = function() {
+			var time = _this.rotateAndMoveTo( {x: pathX, y: pathY}, true, function() {
+				if ( _this.x == targetX && _this.y == targetY ) {
+					_this.wandAction();
 
+				} else {
+					pathX = targetX;
+					pathY = targetY;
+				}
+			});
+			return time;
+		};
+
+		/*
 		var size = Math.max( obj.w, obj.h );
 		var p = this.randPositionByAngle( this.rotation + 90, this.rotation + 180 , size * 2 );
 
@@ -497,6 +524,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			});
 			return time;
 		};
+		*/
 
 		this.setAction( 'round', action );
 	},
@@ -511,14 +539,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 	// 跟目标之间是否存在障碍
 	hasObstacle: function( obj ) {
-		var minX = Math.min( this.x, obj.x );
-		var minY = Math.min( this.y, obj.y );
-
-		// 中间点 
-		var cx = Math.abs( obj.x - this.x ) + minX;
-		var cy = Math.abs( obj.y - this.y ) + minY;
-
-		var exist = Game.battleMap.checkBlock( cx, cy, this.w, this.h );
+		var exist = Game.battleMap.checkObstacal( this.x, this.y, obj.x, obj.y );
 		return exist;
 	}
 
