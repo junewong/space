@@ -24,6 +24,7 @@ Game.battleMap = battleMap;
 Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT );
 Crafty.background('rgb(245,245,245)');
 
+// 增加鼠标事件
 Crafty.e( '2D, DOM, Color, Mouse' )
 	.attr( {w: CANVAS_WIDTH, h:CANVAS_HEIGHT, alpha:0} )
 	.bind( 'Click', function( e ) {
@@ -39,19 +40,6 @@ Crafty.e( '2D, DOM, Color, Mouse' )
 		}
 	});
 
-Crafty.e( '2D, DOM, Color, Mouse' )
-	.attr( {x: CANVAS_WIDTH - 100, y: CANVAS_HEIGHT - 100, w: 50, h:50, alpha:0.6} )
-	.css( 'border-radius', 30 )
-	.css( 'border', '4px solid gray' )
-	.color( 'black' )
-	.bind( 'MouseDown', function( e ) {
-		Crafty.trigger( 'ShootButtonDown', e );
-		return false;
-	})
-	.bind( 'MouseUp', function( e ) {
-		Crafty.trigger( 'ShootButtonUp', e );
-		return false;
-	});
 
 randomCreateEntity( 5, battleMap, function( i ) {
 	return Crafty.e( 'Rock' )
@@ -115,7 +103,7 @@ createSoldier( soldierCount );
 createPlayer();
 
 
-
+// 复活 
 Crafty.bind( 'Dead', function( entity ) {
 	if ( entity.has( 'Soldier' ) ) {
 		setTimeout( function() {
@@ -133,6 +121,21 @@ Crafty.bind( 'Dead', function( entity ) {
 		}, 1000 );
 	}
 });
+
+// 射击按钮
+Crafty.e( '2D, DOM, Color, Mouse' )
+	.attr( {x: CANVAS_WIDTH - 100, y: CANVAS_HEIGHT - 100, w: 50, h:50, alpha:0.6} )
+	.css( 'border-radius', 30 )
+	.css( 'border', '4px solid gray' )
+	.color( 'black' )
+	.bind( 'MouseDown', function( e ) {
+		Crafty.trigger( 'ShootButtonDown', e );
+		return false;
+	})
+	.bind( 'MouseUp', function( e ) {
+		Crafty.trigger( 'ShootButtonUp', e );
+		return false;
+	});
 
 </script>
 
