@@ -284,18 +284,21 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 			.bind( 'CanvasMouseClick', function( e ) {
 				var mouseX = e.clientX, mouseY = e.clientY;
 				this.rotateTo( mouseX, mouseY );
-			})
-			.bind( 'CanvasMouseDbClick', function( e ) {
-				var mouseX = e.clientX, mouseY = e.clientY;
-				this.rotateTo( mouseX, mouseY );
 				this.moveTo( {x: mouseX, y:mouseY}, true );
 			})
-			.bind( 'CanvasMouseRightClick', function( e ) {
+			.bind( 'CanvasMouseDbClick', function( e ) {
 				var _this = this;
 				var mouseX = e.clientX, mouseY = e.clientY;
 				this.rotateTo( mouseX, mouseY, function() {
 					_this.attack();
 				});
+			})
+			.bind( 'CanvasMouseRightClick', function( e ) {
+				var mouseX = e.clientX, mouseY = e.clientY;
+				this.rotateTo( mouseX, mouseY );
+			})
+			.bind( 'ShootButtonDown', function( e ) {
+				this.attack();
 			});
 
 			this.bind( 'HitMaterial', function( e ) {

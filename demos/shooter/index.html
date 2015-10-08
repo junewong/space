@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,width=device-width,height=device-height,target-densitydpi=device-dpi,user-scalable=no" />
 	<title></title>
 	<script src="./libs/crafty-min.js"></script>
 	<script src="./js/map.js"></script>
@@ -37,6 +38,20 @@ Crafty.e( '2D, DOM, Color, Mouse' )
 		if( e.mouseButton == Crafty.mouseButtons.RIGHT ) {
 			Crafty.trigger( 'CanvasMouseRightClick', e );
 		}
+	});
+
+Crafty.e( '2D, DOM, Color, Mouse' )
+	.attr( {x: CANVAS_WIDTH - 100, y: CANVAS_HEIGHT - 100, w: 50, h:50, alpha:0.65} )
+	.css( 'border-radius', 30 )
+	.css( 'border', '4px solid gray' )
+	.color( 'black' )
+	.bind( 'MouseDown', function( e ) {
+		Crafty.trigger( 'ShootButtonDown', e );
+		return false;
+	})
+	.bind( 'MouseUp', function( e ) {
+		Crafty.trigger( 'ShootButtonUp', e );
+		return false;
 	});
 
 randomCreateEntity( 5, battleMap, function( i ) {
@@ -99,6 +114,7 @@ createSoldier( soldierCount );
 
 // 创建玩家
 createPlayer();
+
 
 
 Crafty.bind( 'Dead', function( entity ) {
