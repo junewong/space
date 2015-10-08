@@ -6,6 +6,9 @@ Crafty.c( "Bullet", {
 	}
 });
 
+/**
+ * 武器，基类
+ */
 var Weapon = function( owner, config ) {
 	this.owner = owner;
 	this.total = 0;
@@ -15,6 +18,7 @@ var Weapon = function( owner, config ) {
 		distance : 300,
 		time : 1000,
 		bulletSize : 4,
+		damage : 2,
 		randRotation : 0,
 		rotationCallback : null
 	}, config || {} );
@@ -37,7 +41,7 @@ var Weapon = function( owner, config ) {
 		}
 		_this.total ++;
 		Crafty.e( 'Bullet' )
-			.attr({ x:x, y:y, w:_this.config.bulletSize, h:_this.config.bulletSize, alpha:1, owner:_this.owner } )
+			.attr({ x:x, y:y, w:_this.config.bulletSize, h:_this.config.bulletSize, alpha:1, owner:_this.owner, damage: this.config.damage } )
 			.tween( {x: point.x, y:point.y, alpha:0.3}, _this.config.time )
 			.one( 'TweenEnd', function() {
 				_this.total --;
@@ -59,48 +63,67 @@ var Weapon = function( owner, config ) {
 	};
 };
 
+/**
+ * 手枪
+ */
 var HandGun = function( owner ) {
 	return new Weapon( owner );
 };
 
+/**
+ * 狙击枪
+ */
 var SniperGun = function( owner ) {
 	var config = {
 		max : 1,
 		distance : 600,
 		time : 800,
+		damage : 5,
 		bulletSize : 6
 	};
 	return new Weapon( owner, config );
 };
 
+/**
+ * 冲锋枪 
+ */
 var TommyGun = function( owner ) {
 	var config = {
 		max : 20,
 		distance : 300,
 		time : 1000,
+		damage : 1,
 		bulletSize : 2
 	};
 	return new Weapon( owner, config );
 };
 
+/**
+ * 散弹枪 
+ */
 var ScatterGun = function( owner ) {
 	var config = {
 		max : 8,
 		distance : 150,
 		time : 500,
+		damage : 3,
 		bulletSize : 4,
 		randRotation : 30 
 	};
 	return new Weapon( owner, config );
 };
 
-var ShieldGun = function( owner ) {
+/**
+ * 鞭枪 
+ */
+var WhipGun = function( owner ) {
 	var max = 24;
 	var index = 0;
 	var config = {
 		max : max,
 		distance : 100,
 		time : 200,
+		damage : 4,
 		bulletSize : 4,
 		rotationCallback : function( rotation ) {
 			index ++;
@@ -113,5 +136,5 @@ var ShieldGun = function( owner ) {
 	return new Weapon( owner, config );
 };
 
-var WEAPON_LIST = [ HandGun, TommyGun, SniperGun, ScatterGun, ShieldGun ];
+var WEAPON_LIST = [ HandGun, TommyGun, SniperGun, ScatterGun, WhipGun ];
 var WEAPON_COLOS = [ 'blue', 'red', 'orange', 'green', 'pink' ];
