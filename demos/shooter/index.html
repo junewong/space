@@ -129,12 +129,12 @@ Crafty.e( '2D, DOM, Color, Mouse' )
 	.css( 'border', '4px solid gray' )
 	.color( 'black' )
 	.bind( 'MouseDown', function( e ) {
-		this.attr( {alpah: 1.0} );
+		this.attr( {alpha: 1.0} );
 		Crafty.trigger( 'ShootButtonDown', e );
 		return false;
 	})
 	.bind( 'MouseUp', function( e ) {
-		this.attr( {alpah: 0.6} );
+		this.attr( {alpha: 0.6} );
 		Crafty.trigger( 'ShootButtonUp', e );
 		return false;
 	});
