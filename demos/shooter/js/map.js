@@ -38,6 +38,12 @@ Map.prototype = {
 		this.setValue( x, y, w, h, 0 );
 	},
 
+	getBlock: function( x0, y0 ) {
+		var x = Math.floor( x0 / this.tileSize );
+		var y = Math.floor( y0 / this.tileSize );
+		return {x: x, y: y};
+	},
+
 	setValue : function( x0, y0, w0, h0, value ) {
 		var x = Math.floor( x0 / this.tileSize );
 		var y = Math.floor( y0 / this.tileSize );
@@ -60,7 +66,7 @@ Map.prototype = {
 		h = Math.floor( h / this.tileSize );
 		for ( var xLen = x + w; x < xLen; x ++ ) {
 			for ( var yLen = y + h; y < yLen; y ++ ) {
-				if ( ! ( x < this.tiles.length && y < this.tiles[x].length ) ) {
+				if ( ! ( x < this.tiles.length && this.tiles[x] && y < this.tiles[x].length ) ) {
 					continue;
 				}
 				var v = this.tiles[x][y];
@@ -95,5 +101,172 @@ Map.prototype = {
 		}
 
 		return false;
+	},
+
+	isSameBlock: function( rect, targetX, targetY ) {
+		var b1 = this.getBlock( rect.x, rect.y );
+		var b2 = this.getBlock( targetX, targetY );
+
+		return b2.x >= b1.x && b2.x <= ( b1.x + rect.w ) && 
+				b2.y >= b1.y && b2.y <= ( b1.y + rect.h ) ||
+				b1.x >= b2.x && b1.x <= ( b2.x + this.tileSize ) && 
+				b1.y >= b2.y && b1.y <= ( b2.y + this.tileSize );
+
+	},
+
+	/**
+	 * 根据当前坐标和目标坐标，查找一条绕过障碍物的路径
+	 */
+	findPath: function( e, targetX, targetY, callback ) {
+
+		var rect = { x: e.x, y: e.y, w: e.w, h: e.h};
+
+		var count = 100;
+		var paths = [];
+
+		var lastIndex = -1;
+
+		while ( count -- > 0 && ! this.isSameBlock( rect, targetX, targetY ) ) {
+			var gridIndex = this._getGridIndex( rect.x, rect.y, targetX, targetY );
+
+			var grid = this._getRectByGridIndex( rect, gridIndex );
+
+			// 顺时针查找没有障碍的格子
+			// 不允许走反方向的回头路
+			var findCount = 0;
+			while ( Math.abs( gridIndex - lastIndex ) === 4 || this.checkBlock( grid.x, grid.y, rect.w, rect.h ) ) {
+				if ( findCount >= 8 ) {
+					return paths;
+				}
+				gridIndex = ( gridIndex + 1 ) % 8;
+				grid = this._getRectByGridIndex( rect, gridIndex );
+				findCount ++;
+			}
+
+			// 相差超过一格，说明是拐弯了，把边角补上
+			if ( paths.length > 1 && gridIndex % 2 === 0 ) {
+				var corner = this._getRectByGridIndex( rect, lastIndex );
+				var cornerPos = {x: corner.x, y:corner.y};
+				paths.push( cornerPos );
+				if ( callback ) {
+					callback( cornerPos );
+				}
+			}
+
+			rect.x = grid.x;
+			rect.y = grid.y;
+
+			var pos = {x: rect.x, y:rect.y};
+			paths.push( pos );
+
+			if ( callback ) {
+				callback( pos );
+			}
+
+			lastIndex = gridIndex;
+		}
+
+		return paths;
+
+	},
+
+	/**
+	 * 九宫格从左上角顺时针一圈编号为0-7
+	 */
+	_getRectByGridIndex: function( e, i ) {
+		var x, y;
+		switch ( i % 8 ) {
+			case 0:
+				x = e.x - e.w;
+				y = e.y - e.h;
+				break;
+			case 1:
+				x = e.x;
+				y = e.y - e.h;
+				break;
+			case 2:
+				x = e.x + e.w;
+				y = e.y - e.h;
+				break;
+			case 3:
+				x = e.x + e.w;
+				y = e.y;
+				break;
+			case 4:
+				x = e.x + e.w;
+				y = e.y + e.h;
+				break;
+			case 5:
+				x = e.x;
+				y = e.y + e.h;
+				break;
+			case 6:
+				x = e.x - e.w;
+				y = e.y + e.h;
+				break;
+			case 7:
+				x = e.x - e.w;
+				y = e.y;
+				break;
+			default:
+				return e;
+
+		}
+
+		return {x :x, y: y, w: e.w, h: e.h};
+	},
+
+	/**
+	 * 获取当期到目标的方向是属于九宫格上的哪个格子
+	 */
+	_getGridIndex: function( x, y, targetX, targetY ) {
+		var block = this.getBlock( x, y );
+		var targetBlock = this.getBlock( targetX, targetY );
+
+		var rad = Math.atan2( targetBlock.x - block.x,  block.y - targetBlock.y );
+		rad -= Math.PI/2;
+		//rad = ( rad + 2 * Math.PI )  % ( 2 * Math.PI );
+
+		/*
+		var angle = ( Crafty.math.radToDeg( rad ) + 45 + 360 ) % 360;
+		var index = Math.floor( angle / 45  ) % 8; // 360 / 8 = 45
+		return index;
+		*/
+
+		var size = this.tileSize * 1.5;
+		var half = this.tileSize /2;
+
+		var checkX = Math.cos( rad ) * size;
+		var checkY = Math.sin( rad ) * size;
+
+		var offsetX = checkX;
+		var offsetY = checkY;
+
+		if ( offsetX < -half && offsetY < -half ) {
+			return 0;
+
+		} else if (  offsetX >= -half && offsetX < half && offsetY < -half ) {
+			return 1;
+
+		} else if (  offsetX >= half && offsetY <= -half ) {
+			return 2;
+
+		} else if (  offsetX >= half && offsetY >= -half && offsetY < half ) {
+			return 3;
+
+		} else if (  offsetX >= half && offsetY >= half ) {
+			return 4;
+
+		} else if (  offsetX >= -half && offsetY < half  && offsetY >= half ) {
+			return 5;
+
+		} else if ( offsetX < -half && offsetY >= half ) {
+			return 6;
+
+		} else if ( offsetX < -half && offsetY >= -half && offsetY < half ) {
+			return 7;
+		}
+
+		return null;
 	}
 };

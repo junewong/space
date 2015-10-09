@@ -170,7 +170,8 @@ Crafty.c( "Actor", {
 		var rad = Math.atan2( x - this.x, this.y - y );
 		var angle = Crafty.math.radToDeg( rad );
 		angle = ( 360 + angle ) % 360;
-		this.tween( { rotation: angle }, 300 )
+		var time = angle == this.rotation ? 0 : 300;
+		this.tween( { rotation: angle }, time )
 			.one( 'TweenEnd', function( e ) {
 				if ( callback ) {
 					callback( e );
@@ -337,6 +338,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		var _this = this;
 
+		this.waiting = false;
+		this.searchingPath = false;
+
 		this.visibleDistance = 300;
 		this.addVisibleFrame();
 
@@ -348,12 +352,15 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		});
 
 		this.bind( 'HitMaterial', function( e ) {
+			if ( this.searchingPath ) {
+				return;
+			}
 			var _this = this;
 			this.setAction( null );
 			var entity = e[0].obj;
 			this.goBack( 4 * this.speed, true, entity, function() {
-				var obj = e[0].obj;
-				_this.roundAction( obj );
+				//var obj = e[0].obj;
+				//_this.roundAction( obj );
 			});
 		});
 		
@@ -425,12 +432,22 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 	setAction : function( name, action ) {
 		//console.log( 'action: ' + name );
+		if ( name === 'moveOnPath' ) {
+			this.searchingPath = true;
+		} else {
+			this.searchingPath = false;
+		}
+
 		this.action = action || null;
 
 	},
 
 	performAction : function() {
-		var defaultTime  = 200;
+		if ( this.waiting ) {
+			return;
+		}
+
+		var defaultTime = 200;
 		var time = defaultTime;
 
 		if ( this.action ) {
@@ -522,40 +539,36 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var targetX = this._targetPosition.x;
 		var targetY = this._targetPosition.y;
 
-		var offset = Math.max( this.w, this.h );
+		var paths = Game.battleMap.findPath( this, targetX, targetY );
+		if ( ! paths ) {
+			return;
+		}
 
-		var pathX = this.x < obj.x ? obj.x - offset : obj.x + obj.w + offset;
-		var pathY = this.y < obj.y ? obj.y - offset : obj.y + obj.h + offset;
+		this.moveOnPathAction( paths );
+	},
 
-		//var dx = ( this.y < obj.y ? 1 : -1 ) * ( this.obj.x + this.obj.w + 2 * offset ) + x;
-		//var dy = ( this.x < obj.x ? 1 : -1 ) * ( this.obj.y + this.obj.h + 2 * offset ) + y;
-		
+	moveOnPathAction : function( paths ) {
+		var _this = this;
+
+		var i = 0;
 		var action = function() {
-			var time = _this.rotateAndMoveTo( {x: pathX, y: pathY}, true, function() {
-				if ( _this.x == targetX && _this.y == targetY ) {
-					_this.wandAction();
-
-				} else {
-					pathX = targetX;
-					pathY = targetY;
+			var path = paths[i];
+			if ( ! path ) {
+				return 0;
+			}
+			//console.log( 'next path, i:' + i + ' x:' + path.x + ' y:' + path.y );///
+			console.log( 'next path, i:' + i + ' path:' + path );///
+			var time = _this.rotateAndMoveTo( path, true, function() {
+				i++;
+				action();
+				if ( i >= paths.length - 1 ) {
+					_this.setAction( null );
 				}
 			});
 			return time;
 		};
 
-		/*
-		var size = Math.max( obj.w, obj.h );
-		var p = this.randPositionByAngle( this.rotation + 90, this.rotation + 180 , size * 2 );
-
-		var action = function() {
-			var time = _this.rotateAndMoveTo( {x: p.x, y: p.y}, true, function() {
-				_this.wandAction();
-			});
-			return time;
-		};
-		*/
-
-		this.setAction( 'round', action );
+		this.setAction( 'moveOnPath', action );
 	},
 
 	randPositionByAngle : function( angle1, angle2, maxDistance ) {
