@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<script src="./libs/crafty-min.js"></script>
+	<script src="./js/map.js"></script>
+	<script src="./js/global.js"></script>
+	<script src="./js/Weapon.js"></script>
+	<script src="./js/material.js"></script>
+	<script src="./js/Actor.js"></script>
+</head>
+<body>
+
+<div id="game"></div>
+
+<script>
+
+var Game = {};
+
+var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
+Game.battleMap = battleMap;
+
+Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT );
+Crafty.background('rgb(245,245,245)');
+
+
+var wall = Crafty.e( 'Wall' )
+		.attr({x: 100, y: 160,  w:300, h:200 } );
+battleMap.addEntity( wall );
+
+wall = Crafty.e( 'Wall' )
+		.attr({x: 380, y: 140,  w:80, h:60 } );
+battleMap.addEntity( wall );
+
+wall = Crafty.e( 'Wall' )
+		.attr({x: 280, y: 100,  w:50, h:30 } );
+battleMap.addEntity( wall );
+
+
+var soldier = Crafty.e("Soldier")
+			.attr({x: 200, y: 380} )
+			.color( 'purple' );
+
+soldier.waiting = true;
+
+var targetX = 150, targetY = 140;
+
+
+Crafty.e( '2D, DOM, Color' )
+	.attr({x: targetX, y: targetY, w:20, h:20 } )
+	.color( 'red' );
+
+
+var paths = [];
+
+setTimeout( function() {
+
+	paths = battleMap.findPath( soldier, targetX, targetY, function( pos ) {
+		Crafty.e( '2D, DOM, Color' )
+			.attr({x: pos.x, y: pos.y, w:20, h:20 } )
+			.color( 'green' );
+	});
+
+	soldier.attr( {z : soldier._globalZ + 1} );
+	soldier.moveOnPathAction( paths );
+	soldier.performAction();
+	soldier.action();
+
+	/*
+	for ( var i in paths ) {
+		var path = paths[i];
+
+		Crafty.e( 'Rock' )
+			.attr({x: path.x, y: path.y } )
+			.color( 'black' );
+	}
+	*/
+
+}, 800 );
+
+
+
+</script>
+
+</body>
+</html>
+
