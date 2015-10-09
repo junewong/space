@@ -41,8 +41,9 @@ battleMap.addEntity( wall );
 var soldier = Crafty.e("Soldier")
 			.attr({x: 200, y: 380} )
 			.color( 'purple' );
+soldier.debugSearchPathing = true;
 
-soldier.waiting = true;
+//soldier.waiting = true;
 
 var targetX = 150, targetY = 140;
 
@@ -56,17 +57,18 @@ var paths = [];
 
 setTimeout( function() {
 
+	/*
 	paths = battleMap.findPath( soldier, targetX, targetY, function( pos ) {
 		Crafty.e( '2D, DOM, Color' )
 			.attr({x: pos.x, y: pos.y, w:20, h:20 } )
 			.color( 'green' );
 	});
+	*/
 
-	soldier.attr( {z : soldier._globalZ + 1} );
-	soldier.moveOnPathAction( paths );
-	soldier.performAction();
-	soldier.action();
-
+	//soldier.attr( {z : soldier._globalZ + 1} );
+	//soldier.moveOnPathAction( paths );
+	//soldier.performAction();
+	//soldier.action();
 	/*
 	for ( var i in paths ) {
 		var path = paths[i];
@@ -77,8 +79,10 @@ setTimeout( function() {
 	}
 	*/
 
-}, 800 );
+	soldier.attr( {z : soldier._globalZ + 1} );
+	soldier.roundTo( targetX, targetY );
 
+}, 100 );
 
 
 </script>

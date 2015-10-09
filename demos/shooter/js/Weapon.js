@@ -42,6 +42,7 @@ var Weapon = function( owner, config ) {
 		_this.total ++;
 		Crafty.e( 'Bullet' )
 			.attr({ x:x, y:y, w:_this.config.bulletSize, h:_this.config.bulletSize, alpha:1, owner:_this.owner, damage: this.config.damage } )
+			.origin( this.w /2, this.height /2 )
 			.tween( {x: point.x, y:point.y, alpha:0.3}, _this.config.time )
 			.one( 'TweenEnd', function() {
 				_this.total --;

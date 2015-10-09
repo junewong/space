@@ -18,14 +18,16 @@ Crafty.c( "Actor", {
 		this._targetPosition = { x: 0, y: 0 };
 
 		this.requires( '2D, DOM, Color, Tween, Collision, Mouse, HTML' )
-			.color('orange')
+			.attr( {x:100, y:100, w:20, h:20, rotation:0, running:false} )
 			.replace('<center>|<center>')
-			.attr( {x:100, y:100, w:20, h:20, rotation:0, running:false} );
+			.color('orange');
 
 		this.hpBar = Crafty.e( '2D, DOM, Color')
 						.attr( {x: this.x, y:this.y+18, w:20, h:2} )
 						.color( 'red' );
 		this.attach( this.hpBar );
+
+		this.origin( this.w /2, this.h /2 );
 
 		this.onHit( 'Wall',  function( e ) {
 			//this.stopMovement( e );
@@ -119,11 +121,11 @@ Crafty.c( "Actor", {
 
 	rotateAndMoveTo : function( pos, animated, callback ) {
 		var _this = this;
-		this.rotateTo( pos.x, pos.y, function() {
+		var rotateTime = this.rotateTo( pos.x, pos.y, function() {
 			_this.moveTo( pos, animated, callback );
 		});
 
-		return this.calculateMoveTime( pos ) + 300;
+		return this.calculateMoveTime( pos ) + rotateTime;
 	},
 
 	moveTo : function( point, animated, callback ) {
@@ -169,14 +171,15 @@ Crafty.c( "Actor", {
 	rotateTo : function( x, y, callback ) {
 		var rad = Math.atan2( x - this.x, this.y - y );
 		var angle = Crafty.math.radToDeg( rad );
-		angle = ( 360 + angle ) % 360;
+		angle = angle % 360;
 		var time = angle == this.rotation ? 0 : 300;
 		this.tween( { rotation: angle }, time )
 			.one( 'TweenEnd', function( e ) {
 				if ( callback ) {
 					callback( e );
 				}
-			});
+		});
+		return time;
 	},
 
 	goBack : function( distance, animated, entity, callback ) {
@@ -347,6 +350,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		this.action = null;
 		this.lastMeetEntity = null;
 
+		this.debugSearchPathing = false;
+
+
 		this.bind( 'SwitchWeapon', function( weapon ) {
 			//this.updateVisibleFrame();
 		});
@@ -359,8 +365,8 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			this.setAction( null );
 			var entity = e[0].obj;
 			this.goBack( 4 * this.speed, true, entity, function() {
-				//var obj = e[0].obj;
-				//_this.roundAction( obj );
+				var obj = e[0].obj;
+				_this.roundAction( obj );
 			});
 		});
 		
@@ -431,15 +437,11 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	},
 
 	setAction : function( name, action ) {
-		//console.log( 'action: ' + name );
-		if ( name === 'moveOnPath' ) {
-			this.searchingPath = true;
-		} else {
-			this.searchingPath = false;
+		if ( this.searchingPath ) {
+			return;
 		}
-
+		console.log( 'action: ' + name );
 		this.action = action || null;
-
 	},
 
 	performAction : function() {
@@ -539,7 +541,25 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var targetX = this._targetPosition.x;
 		var targetY = this._targetPosition.y;
 
-		var paths = Game.battleMap.findPath( this, targetX, targetY );
+		this.roundTo( targetX, targetY );
+	},
+
+	roundTo : function( targetX, targetY ) {
+		this.stopMovement();
+
+		var callback = this.debugSearchPathing ? function( pos ) {
+			var block = Crafty.e( '2D, DOM, Color' )
+				.attr({x: pos.x, y: pos.y, w:20, h:20 } )
+				.color( 'green' );
+
+			setTimeout( function() {
+				block.destroy();
+			}, 20000 );
+
+		} : null;
+
+		var paths = Game.battleMap.findPath( this, targetX, targetY, callback );
+		console.log( 'create path length: %d', paths.length );///
 		if ( ! paths ) {
 			return;
 		}
@@ -554,14 +574,14 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var action = function() {
 			var path = paths[i];
 			if ( ! path ) {
+				this.searchingPath = false;
 				return 0;
 			}
-			//console.log( 'next path, i:' + i + ' x:' + path.x + ' y:' + path.y );///
-			console.log( 'next path, i:' + i + ' path:' + path );///
+			//console.log( 'next path, i:' + i + ' path:' + path );///
 			var time = _this.rotateAndMoveTo( path, true, function() {
 				i++;
-				action();
 				if ( i >= paths.length - 1 ) {
+					this.searchingPath = false;
 					_this.setAction( null );
 				}
 			});
@@ -569,6 +589,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		};
 
 		this.setAction( 'moveOnPath', action );
+		this.searchingPath = true;
 	},
 
 	randPositionByAngle : function( angle1, angle2, maxDistance ) {

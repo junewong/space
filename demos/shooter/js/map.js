@@ -124,6 +124,10 @@ Map.prototype = {
 		var count = 100;
 		var paths = [];
 
+		// 顺时针还是逆时针
+		//var direction = targetX < rect.x ? -1 : 1;
+		var direction = 1;
+
 		var lastIndex = -1;
 
 		while ( count -- > 0 && ! this.isSameBlock( rect, targetX, targetY ) ) {
@@ -138,7 +142,7 @@ Map.prototype = {
 				if ( findCount >= 8 ) {
 					return paths;
 				}
-				gridIndex = ( gridIndex + 1 ) % 8;
+				gridIndex = ( gridIndex + direction ) % 8;
 				grid = this._getRectByGridIndex( rect, gridIndex );
 				findCount ++;
 			}
