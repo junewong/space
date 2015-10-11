@@ -17,12 +17,16 @@ Crafty.c( "Actor", {
 		this._movement = { x: 0, y: 0 };
 		this._targetPosition = { x: 0, y: 0 };
 
-		this.requires( '2D, DOM, Color, Tween, Collision, Mouse, HTML' )
+		this.requires( '2D, Canvas, Color, Tween, Collision, Mouse' )
 			.attr( {x:100, y:100, w:20, h:20, rotation:0, running:false} )
-			.replace('<center>|<center>')
 			.color('orange');
 
-		this.hpBar = Crafty.e( '2D, DOM, Color')
+		this.gunPipe = Crafty.e( '2D, Canvas, Color')
+						.attr( {x: this.x + this.w/2-1, y:this.y-7, w:2, h:12} )
+						.color( 'black' );
+		this.attach( this.gunPipe );
+
+		this.hpBar = Crafty.e( '2D, Canvas, Color')
 						.attr( {x: this.x, y:this.y+18, w:20, h:2} )
 						.color( 'red' );
 		this.attach( this.hpBar );
@@ -47,20 +51,22 @@ Crafty.c( "Actor", {
 		});
 
 		this.onHit( 'Ball', function() {
-		
+			this.die();
 		});
 
 		this.onHit( 'Bullet', function( bullets ) {
-			var damage = 0;
+			var damage = 0, bullet;
 			for ( var i in bullets ) {
-				var bullet = bullets[i].obj;
+				bullet = bullets[i].obj;
 				if ( this.weapon.isOwner( bullet ) ) {
 					return;
 				}
 				damage += bullet.damage;
 			}
 
-			this.hurt( damage );
+			var attackerId = bullet.owner;
+
+			this.hurt( damage, attackerId );
 		});
 
 		this.onHit( 'WeaponPill', function( pills ) {
@@ -86,13 +92,17 @@ Crafty.c( "Actor", {
 			weaponClass = index;
 		}
 
-		this.weapon = new weaponClass( UID() );
+		this.weapon = new weaponClass( this.getId() );
 
 		this.trigger( 'SwitchWeapon', this.weapon );
 	},
 
-	hurt: function( damage ) {
+	hurt: function( damage, attackerId ) {
 		if ( damage <= 0 ) {
+			return;
+		}
+
+		if ( attackerId === this.getId() ) {
 			return;
 		}
 
@@ -103,11 +113,18 @@ Crafty.c( "Actor", {
 
 		if ( this.HP <= 0 ) {
 			this.die();
+
+		} else {
+			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId} );
 		}
 	},
 
+	getAttackDistance : function() {
+		return this.weapon.config.distance;
+	},
+
 	attack : function() {
-		var p = toAngle( this.x, this.y, this.rotation, this.speed + 1 );
+		var p = toAngle( this.gunPipe.x, this.gunPipe.y, this.rotation, this.speed + 1 );
 		this.weapon.shootTo( p.x, p.y, this.rotation );
 	},
 
@@ -132,7 +149,7 @@ Crafty.c( "Actor", {
 
 		 if ( checkCanvasOut( point.x, point.y ) ) {
 			 this.stopMovement();
-			 return;
+			 return 0;
 		}
 
 		this._targetPosition.x = point.x;
@@ -197,7 +214,7 @@ Crafty.c( "Actor", {
 		}
 
 		var point = toAngle( this.x, this.y, angle, distance );
-		this.moveTo( point, animated, callback );
+		return this.moveTo( point, animated, callback );
 	},
 
 	stopTweenMove : function() {
@@ -218,6 +235,8 @@ Crafty.c( "Actor", {
 			this.x -= (this._movement.x + xOffset);
 			this.y -= (this._movement.y + yOffset);
 		}
+
+		Crafty.trigger( 'StopMovement' );
 	 },
 
 	die: function() {
@@ -286,16 +305,16 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 				this._movement.y = 0;
 			})
 			.bind( 'CanvasMouseClick', function( e ) {
-				var mouseX = e.clientX, mouseY = e.clientY;
-				this.rotateTo( mouseX, mouseY );
-				this.moveTo( {x: mouseX, y:mouseY}, true );
-			})
-			.bind( 'CanvasMouseDbClick', function( e ) {
 				var _this = this;
 				var mouseX = e.clientX, mouseY = e.clientY;
 				this.rotateTo( mouseX, mouseY, function() {
 					_this.attack();
 				});
+			})
+			.bind( 'CanvasMouseDbClick', function( e ) {
+				var mouseX = e.clientX, mouseY = e.clientY;
+				this.rotateTo( mouseX, mouseY );
+				this.moveTo( {x: mouseX, y:mouseY}, true );
 			})
 			.bind( 'CanvasMouseRightClick', function( e ) {
 				var mouseX = e.clientX, mouseY = e.clientY;
@@ -348,9 +367,10 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		this.addVisibleFrame();
 
 		this.action = null;
+
 		this.lastMeetEntity = null;
 
-		this.debugSearchPathing = false;
+		this.debugSearchPathing = true;
 
 
 		this.bind( 'SwitchWeapon', function( weapon ) {
@@ -365,8 +385,8 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			this.setAction( null );
 			var entity = e[0].obj;
 			this.goBack( 4 * this.speed, true, entity, function() {
-				var obj = e[0].obj;
-				_this.roundAction( obj );
+				//var obj = e[0].obj;
+				//_this.roundAction( obj );
 			});
 		});
 		
@@ -397,6 +417,40 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		});
 
+		this.bind( 'BeAttacked', function( data ) {
+			if ( data.attackerId === this.getId() ) {
+				return;
+			}
+
+			var damage = data.damage;
+			if ( this.needToShun( damage ) ) {
+				this.shunAction( data.attackerId );
+			}
+		});
+
+		this.bind( 'ActionEnd', function( action ) {
+			console.log( 'perform end for action: ' + ( action ? action.name : 'null' ) );///
+			/*
+			if ( action.getCostTime() < 100 ) {
+				this.timeout( function() {
+					_this.performAction();
+				}, 100 );
+
+			} else {
+				_this.performAction();
+			}
+			*/
+		});
+
+		this.bind( 'StopMovement', function() {
+			if ( _this.action && _this.action.getCostTime() < 100 ) {
+				return;
+
+			} else {
+				_this.performAction();
+			}
+		});
+
 		this.performAction();
 	},
 
@@ -405,8 +459,8 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		var size = this.visibleDistance || this.weapon.config.distance * 0.8;
 
-		//this.visibleFrame = Crafty.e( '2D, DOM, Collision, WiredHitBox' )
-		this.visibleFrame = Crafty.e( '2D, DOM, Collision' )
+		//this.visibleFrame = Crafty.e( '2D, Canvas, Collision, WiredHitBox' )
+		this.visibleFrame = Crafty.e( '2D, Canvas, Collision' )
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
@@ -436,37 +490,51 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		this.visibleDistance = size;
 	},
 
-	setAction : function( name, action ) {
-		if ( this.searchingPath ) {
-			return;
+	setAction : function( action ) {
+		if ( action && this.action && this.action.performing ) {
+			if ( this.action.desire > action.desire ) {
+				console.log( 'pass action: ' + action.name + ', current action: ' + this.action.name );
+				return;
+
+			} else {
+				console.log( 'action: ' + ( action ? action.name : '' ) );
+				this.action.cancel();
+				this.action = action;
+				this.performAction();
+
+			}
 		}
-		console.log( 'action: ' + name );
+
+		console.log( 'action: ' + ( action ? action.name : '' ) );
 		this.action = action || null;
 	},
 
 	performAction : function() {
-		if ( this.waiting ) {
-			return;
-		}
+		console.log( 'performing action: ' + ( this.action ? this.action.name : 'null' ) );///
 
-		var defaultTime = 200;
-		var time = defaultTime;
+		var _this = this;
 
+		var time = 0;
 		if ( this.action ) {
-			time = this.action();
-			if ( time === undefined ) {
-				time = defaultTime;
-
-			} else if ( time === 0 ) {
-				this.setAction( null );
+			if ( this.action.performing ) {
+				return;
 			}
+
+			time = this.action.perform();
 			this.visibleFrame.resetHitChecks();
 
 		} else {
 			this.wandAction();
+			time = this.action.perform();
 		}
 
-		this.timeout( this.performAction, time - 50 );
+		if ( ! time ) {
+			this.setAction( null );
+		}
+
+		this.timeout( function() {
+			_this.performAction();
+		}, 100 );
 	},
 
 	attackAction : function( entity ) {
@@ -475,7 +543,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		this.stopTweenMove();
 
 		var count = 20;
-		var action = function() {
+		var action = new Action( 'attackAction', ACTION_LEVEL_NORMAL, function() {
 			if ( count <= 0 ) {
 				return 0;
 			}
@@ -485,29 +553,30 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			_this.attackTo( entity );
 			count--;
 
+			action.finish();
+
 			return 100;
-		};
-		this.setAction( 'attackAction', action );
+		});
+
+		this.setAction( action );
 	},
 
 	wandAction : function() {
 		var _this = this;
 
-		var isMoving = false;
-
-		var action = function() {
-			isMoving = true;
+		var action = new Action( 'wand', ACTION_LEVEL_LOW,  function() {
 			if ( isNaN(  _this.rotation ) )  {
 				return 0;
 			}
 			var pos = _this.randPositionByAngle( _this.rotation - 120, _this.rotation + 120, randInt( 20, CANVAS_WIDTH /2 ) );
 			var time = _this.rotateAndMoveTo( pos, true, function() {
-				isMoving = false;
+				action.finish();
 			});
 			return time;
-		};
+			//_this.roundTo( pos.x, pos.y );
+		});
 
-		this.setAction( 'wand', action );
+		this.setAction( action );
 
 		return 1000;
 	},
@@ -519,7 +588,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		var _this = this;
 
-		var action = function()  {
+		var action = new Action( 'seek', ACTION_LEVEL_NORMAL, function()  {
 			if ( ! entity ) {
 				return 0;
 			}
@@ -528,11 +597,12 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 				if ( distance > _this.visibleDistance * 1.5 ) {
 					_this.setAction( null );
 				}
+				action.finish();
 			});
 			return time;
-		};
+		});
 
-		this.setAction( 'seek', action );
+		this.setAction( action );
 	},
 
 	roundAction: function( obj ) {
@@ -548,18 +618,19 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		this.stopMovement();
 
 		var callback = this.debugSearchPathing ? function( pos ) {
-			var block = Crafty.e( '2D, DOM, Color' )
-				.attr({x: pos.x, y: pos.y, w:20, h:20 } )
+			var block = Crafty.e( '2D, Canvas, Color' )
+				.attr({x: pos.x, y: pos.y, w:20, h:20, alpha: 0.6 } )
 				.color( 'green' );
 
 			setTimeout( function() {
 				block.destroy();
-			}, 20000 );
+			}, 10000 );
 
 		} : null;
 
 		var paths = Game.battleMap.findPath( this, targetX, targetY, callback );
 		console.log( 'create path length: %d', paths.length );///
+
 		if ( ! paths ) {
 			return;
 		}
@@ -571,24 +642,25 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var _this = this;
 
 		var i = 0;
-		var action = function() {
+		var action = new Action( 'moveOnPath', ACTION_LEVEL_HIGH, function() {
 			var path = paths[i];
 			if ( ! path ) {
 				this.searchingPath = false;
 				return 0;
 			}
 			//console.log( 'next path, i:' + i + ' path:' + path );///
+			var _action = action;
 			var time = _this.rotateAndMoveTo( path, true, function() {
 				i++;
 				if ( i >= paths.length - 1 ) {
 					this.searchingPath = false;
-					_this.setAction( null );
+					action.finish();
 				}
 			});
 			return time;
-		};
+		});
 
-		this.setAction( 'moveOnPath', action );
+		this.setAction( action );
 		this.searchingPath = true;
 	},
 
@@ -596,14 +668,82 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var angle = randInt( angle1, angle2 + 180 );
 		var distance = randInt( 10, maxDistance );
 
-		var p = toAngle( this.x, this.y, angle, distance );
-		return p;
+		var pos = toAngle( this.x, this.y, angle, distance );
+		return pos;
 	},
 
 	// 跟目标之间是否存在障碍
 	hasObstacle: function( obj ) {
 		var exist = Game.battleMap.checkObstacal( this.x, this.y, obj.x, obj.y );
 		return exist;
+	},
+
+	lastDamage : 0,
+	lastDamageTime : + new Date(),
+
+	needToShun : function( damage ) {
+		var now = + new Date();
+		var isTimeout = ( now - this.lastDamageTime ) / 1000 > 3;
+
+		this.lastDamage += damage;
+		this.lastDamageTime = now;
+
+		if ( isTimeout ) {
+			this.lastDamageTime = now;
+			lastDamage = 0;
+			return false;
+		}
+
+		if ( this.lastDamage > this.maxHP / 10 ) {
+			lastDamage = 0;
+			return true;
+		}
+
+		return false;
+	},
+
+	shunAction : function( attackerId ) {
+		if ( attackerId === undefined) {
+			return;
+		}
+
+		var attacker = Crafty( attackerId );
+		if ( ! attacker ) {
+			return;
+		}
+
+		var _this = this;
+		var execute;
+
+		var distance = attacker.getAttackDistance() / 2;
+
+		var seed = randInt( -1, 1 );
+
+		if ( seed === 0 ) {
+			execute = function() {
+				return _this.goBack( distance, true, function() {
+					action.finish();
+				});
+			};
+
+		} else {
+			var rad = Math.atan2( attacker.x - this.x, attacker.y - this.y );
+			var angle = Crafty.math.radToDeg( rad );
+			angle += ( seed * 90 );
+
+			var pos = toAngle( this.x, this.y, angle, distance );
+
+			execute = function() {
+				return _this.moveTo( pos, true, function() {
+					action.finish();
+				});
+			};
+		}
+
+		var action = new Action( 'shun', ACTION_LEVEL_HIGH, execute );
+
+
+		this.setAction( action );
 	}
 
 

@@ -60,6 +60,10 @@ Map.prototype = {
 	},
 
 	checkBlock : function( x, y, w, h ) {
+		if ( this.isOutofBound( x, y, w, h ) ) {
+			return true;
+		}
+
 		x = Math.floor( x / this.tileSize );
 		y = Math.floor( y / this.tileSize );
 		w = Math.floor( w / this.tileSize );
@@ -74,6 +78,19 @@ Map.prototype = {
 					return true;
 				}
 			}
+		}
+		return false;
+	},
+
+	/**
+	 * 是否超出边界
+	 */
+	isOutofBound : function( x, y, w, h ) {
+		if ( x < 0 || x + w > this.width ) {
+			return true;
+		}
+		if ( y < 0 || y + h > this.height ) {
+			return true;
 		}
 		return false;
 	},

@@ -27,7 +27,7 @@ Crafty.c( "Ball", {
 		var _this = this;
 		var frame = 0;
 		var isRunning = true;
-		this.requires( '2D, DOM, Color, Tween, Collision' )
+		this.requires( '2D, Canvas, Color, Tween, Collision' )
 			.color('red')
 			.attr({ x: 10, y: 10, w: 20, h: 20,
 					dX: Crafty.math.randomInt(2, 6),
@@ -47,8 +47,8 @@ Crafty.c( "Ball", {
 				if ( this.y <= 0 || this.y >= CANVAS_HEIGHT )
 					this.dY *= -1;
 
-				this.x += this.dX;
-				this.y += this.dY;
+				this.x += ( this.dX + randInt( -2, 2 ) );
+				this.y += ( this.dY + randInt( -2, 2 ) );
 			})
 			.onHit('Wall', function ( all ) {
 				var obj = all[0].obj;
