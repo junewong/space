@@ -36,7 +36,9 @@ function extend( target, obj) {
 	return newObj;
 }
 
-var randInt = Crafty.math.randomInt;
+function randInt( a, b ) {
+	return Crafty.math.randomInt( a, b );
+}
 
 function checkCanvasOut( x, y ) {
 	 if ( x <= 0 || x >= CANVAS_WIDTH || y <= 0 || y >= CANVAS_HEIGHT ) {

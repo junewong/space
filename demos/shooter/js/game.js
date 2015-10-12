@@ -7,6 +7,10 @@ var CANVAS_HEIGHT = window.innerHeight -20 || 420;
 var TILE_SIZE = 10;
 
 
+var log = function( text ) {
+	// pass;
+};
+
 /**
  * 游戏对象
  */
@@ -28,13 +32,20 @@ var Game = {
 			var name = array[ i ], args;
 			console.log( 'try to init component : ' + name );
 			if ( name.indexOf( ':' ) > -1 ) {
-				args = [ name.split( ':' )[1] ];
-				name = name.split( ':' )[0];
-
+				var p = name.split( ':' );
+				args = [ p[1] ];
+				name = p[0];
 			}
 			var component = this[ name ];
 			component.apply( this, args );
 		}
+
+		Crafty.bind( 'KeyDown', function( e ) {
+			if ( e.keyCode === 27 ) {
+				Crafty.pause();
+				console.log( 'Game pause: ' + Crafty.isPaused() );
+			}
+		});
 
 	},
 
@@ -65,9 +76,10 @@ var Game = {
 		});
 	},
 
-	wall : function() {
+	wall : function( maxCount ) {
+		maxCount = parseInt( maxCount || 10 );
 
-		var wallCount = randInt(1,  10);
+		var wallCount = randInt(1, maxCount );
 
 		randomCreateEntity( wallCount, this.battleMap, function( i ) {
 			var w = randInt(1,  5 ) * 20;
@@ -116,7 +128,7 @@ var Game = {
 
 	soldier: function( count ) {
 		// 多少个战士
-		this.soldierCount = count || 6;
+		this.soldierCount = parseInt( count || 6 );
 
 		this._createSoldier( this.soldierCount );
 
@@ -176,5 +188,11 @@ var Game = {
 				return false;
 			});
 
+	},
+
+	logger : function() {
+		log =  function( text ) {
+			console.log( text );
+		};
 	}
 };

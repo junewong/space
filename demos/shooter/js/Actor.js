@@ -146,22 +146,28 @@ Crafty.c( "Actor", {
 	},
 
 	moveTo : function( point, animated, callback ) {
-
 		 if ( checkCanvasOut( point.x, point.y ) ) {
 			 this.stopMovement();
 			 return 0;
 		}
 
+		 if ( this.moving ) {
+			 return;
+		 }
+
 		this._targetPosition.x = point.x;
 		this._targetPosition.y = point.y;
+
+		this.moving = true;
 
 		if ( ! animated ) {
 			this._movement.x = point.x - this.x;
 			this._movement.y = point.y - this.y;
 			this.x = point.x;
 			this.y = point.y;
+			this.moving = false;
 
-			return 0;
+			return 100;
 
 		} else {
 			this._movement.x = this.speed;
@@ -171,6 +177,7 @@ Crafty.c( "Actor", {
 			this.tween( { x: point.x,  y: point.y }, time );
 			if ( callback ) {
 				this.one( 'TweenEnd', function ( e ) {
+					this.moving = false;
 					callback( e );
 				});
 			}
@@ -219,6 +226,7 @@ Crafty.c( "Actor", {
 
 	stopTweenMove : function() {
 		this.tween( {x:this.x, y:this.y}, 0 );
+		this.moving = false;
 	},
 
 	// Stops the movement
@@ -361,6 +369,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var _this = this;
 
 		this.waiting = false;
+		this.moving = false;
 		this.searchingPath = false;
 
 		this.visibleDistance = 300;
@@ -383,10 +392,11 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			}
 			var _this = this;
 			this.setAction( null );
+			this.stopTweenMove();
 			var entity = e[0].obj;
 			this.goBack( 4 * this.speed, true, entity, function() {
-				//var obj = e[0].obj;
-				//_this.roundAction( obj );
+				var obj = e[0].obj;
+				_this.roundAction( obj );
 			});
 		});
 		
@@ -429,7 +439,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		});
 
 		this.bind( 'ActionEnd', function( action ) {
-			console.log( 'perform end for action: ' + ( action ? action.name : 'null' ) );///
+			log( 'perform end for action: ' + ( action ? action.name : 'null' ) );///
 			/*
 			if ( action.getCostTime() < 100 ) {
 				this.timeout( function() {
@@ -443,15 +453,20 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		});
 
 		this.bind( 'StopMovement', function() {
+			log( 'event StopMovement ...' );///
+			if ( _this.action ) {
+				log( 'action ' + _this.action.name + ' cancel.' );
+				_this.action.cancel();
+			}
 			if ( _this.action && _this.action.getCostTime() < 100 ) {
 				return;
 
 			} else {
-				_this.performAction();
+				//_this.performAction();
 			}
 		});
 
-		this.performAction();
+		this.timeout( this.performAction, 200 );
 	},
 
 	addVisibleFrame : function() {
@@ -493,48 +508,51 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	setAction : function( action ) {
 		if ( action && this.action && this.action.performing ) {
 			if ( this.action.desire > action.desire ) {
-				console.log( 'pass action: ' + action.name + ', current action: ' + this.action.name );
+				log( 'pass action: ' + action.name + ', current action: ' + this.action.name );
 				return;
 
 			} else {
-				console.log( 'action: ' + ( action ? action.name : '' ) );
-				this.action.cancel();
+				log( 'action: ' + ( action ? action.name : '' ) );
+				this.action.destroy();
 				this.action = action;
 				this.performAction();
 
 			}
 		}
 
-		console.log( 'action: ' + ( action ? action.name : '' ) );
+		if ( action && action.name != 'round' ) {
+			this.searchingPath = false;
+		}
+
+		log( 'action: ' + ( action ? action.name : '' ) );
 		this.action = action || null;
 	},
 
 	performAction : function() {
-		console.log( 'performing action: ' + ( this.action ? this.action.name : 'null' ) );///
-
 		var _this = this;
 
 		var time = 0;
 		if ( this.action ) {
-			if ( this.action.performing ) {
-				return;
+			if ( ! this.action.performing ) {
+				log( 'performing action: ' + ( this.action ? this.action.name : 'null' ) );///
+				time = this.action.perform();
+				this.visibleFrame.resetHitChecks();
+				if ( ! time ) {
+					this.setAction( null );
+				}
 			}
-
-			time = this.action.perform();
-			this.visibleFrame.resetHitChecks();
 
 		} else {
 			this.wandAction();
 			time = this.action.perform();
-		}
-
-		if ( ! time ) {
-			this.setAction( null );
+			if ( ! time ) {
+				this.setAction( null );
+			}
 		}
 
 		this.timeout( function() {
 			_this.performAction();
-		}, 100 );
+		}, 200 );
 	},
 
 	attackAction : function( entity ) {
@@ -615,11 +633,11 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	},
 
 	roundTo : function( targetX, targetY ) {
-		this.stopMovement();
+		this.stopTweenMove();
 
 		var callback = this.debugSearchPathing ? function( pos ) {
 			var block = Crafty.e( '2D, Canvas, Color' )
-				.attr({x: pos.x, y: pos.y, w:20, h:20, alpha: 0.6 } )
+				.attr( {x: pos.x, y: pos.y, w:20, h:20, alpha: 0.6} )
 				.color( 'green' );
 
 			setTimeout( function() {
@@ -629,7 +647,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		} : null;
 
 		var paths = Game.battleMap.findPath( this, targetX, targetY, callback );
-		console.log( 'create path length: %d', paths.length );///
+		log( 'create path length: ' + paths.length );///
 
 		if ( ! paths ) {
 			return;
@@ -646,15 +664,17 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			var path = paths[i];
 			if ( ! path ) {
 				this.searchingPath = false;
+				log( 'No path to walk.' );
 				return 0;
 			}
-			//console.log( 'next path, i:' + i + ' path:' + path );///
-			var _action = action;
+			//log( 'next path, i:' + i + ' path:' + path );///
 			var time = _this.rotateAndMoveTo( path, true, function() {
 				i++;
 				if ( i >= paths.length - 1 ) {
 					this.searchingPath = false;
 					action.finish();
+				} else {
+					action.perform();
 				}
 			});
 			return time;
@@ -669,6 +689,8 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var distance = randInt( 10, maxDistance );
 
 		var pos = toAngle( this.x, this.y, angle, distance );
+		pos.x = Math.abs( pos.x );
+		pos.y = Math.abs( pos.y );
 		return pos;
 	},
 

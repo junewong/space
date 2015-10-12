@@ -8,7 +8,9 @@
 	<script src="./js/global.js"></script>
 	<script src="./js/Weapon.js"></script>
 	<script src="./js/material.js"></script>
+	<script src="./js/Action.js"></script>
 	<script src="./js/Actor.js"></script>
+	<script src="./js/game.js"></script>
 </head>
 <body>
 
@@ -16,26 +18,19 @@
 
 <script>
 
-var Game = {};
-
-var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
-Game.battleMap = battleMap;
-
-Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT );
-Crafty.background('rgb(245,245,245)');
-
+Game.init( 'logger' );
 
 var wall = Crafty.e( 'Wall' )
 		.attr({x: 100, y: 160,  w:300, h:200 } );
-battleMap.addEntity( wall );
+Game.battleMap.addEntity( wall );
 
 wall = Crafty.e( 'Wall' )
 		.attr({x: 380, y: 140,  w:80, h:60 } );
-battleMap.addEntity( wall );
+Game.battleMap.addEntity( wall );
 
 wall = Crafty.e( 'Wall' )
 		.attr({x: 280, y: 100,  w:50, h:30 } );
-battleMap.addEntity( wall );
+Game.battleMap.addEntity( wall );
 
 
 var soldier = Crafty.e("Soldier")
@@ -58,7 +53,7 @@ var paths = [];
 setTimeout( function() {
 
 	/*
-	paths = battleMap.findPath( soldier, targetX, targetY, function( pos ) {
+	paths = Game.battleMap.findPath( soldier, targetX, targetY, function( pos ) {
 		Crafty.e( '2D, DOM, Color' )
 			.attr({x: pos.x, y: pos.y, w:20, h:20 } )
 			.color( 'green' );
@@ -80,7 +75,13 @@ setTimeout( function() {
 	*/
 
 	soldier.attr( {z : soldier._globalZ + 1} );
-	soldier.roundTo( targetX, targetY );
+	soldier.wating = true;
+
+	//soldier.roundTo( targetX, targetY );
+	setTimeout( function() {
+		soldier.wating = false;
+		soldier.moveTo( {x: targetX, y:targetY}, true );
+	}, 300 );
 
 }, 100 );
 

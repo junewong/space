@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<script src="./libs/crafty-min.js"></script>
+	<script src="./js/map.js"></script>
+	<script src="./js/global.js"></script>
+	<script src="./js/Weapon.js"></script>
+	<script src="./js/material.js"></script>
+	<script src="./js/Actor.js"></script>
+</head>
+<body>
+
+<div id="game"></div>
+
+<script>
+
+var Game = {};
+
+var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
+Game.battleMap = battleMap;
+
+Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT );
+Crafty.background('rgb(245,245,245)');
+
+// 增加鼠标事件
+Crafty.e( '2D, DOM, Canvas, Color, Mouse' )
+	.attr( {w: CANVAS_WIDTH, h:CANVAS_HEIGHT, alpha:0} )
+	.bind( 'Click', function( e ) {
+		Crafty.trigger( 'CanvasMouseClick', e );
+	})
+	.bind( 'DoubleClick', function( e ) {
+		console.log( e.clientX + ' : ' + e.clientY );
+		Crafty.trigger( 'CanvasMouseDbClick', e );
+	})
+	.bind('MouseUp', function( e ) {
+		if( e.mouseButton == Crafty.mouseButtons.RIGHT ) {
+			Crafty.trigger( 'CanvasMouseRightClick', e );
+		}
+	});
+
+
+var wall = Crafty.e( 'Wall' )
+		.attr({x: 100, y: 160,  w:300, h:200 } );
+battleMap.addEntity( wall );
+
+wall = Crafty.e( 'Wall' )
+		.attr({x: 380, y: 140,  w:80, h:60 } );
+battleMap.addEntity( wall );
+
+wall = Crafty.e( 'Wall' )
+		.attr({x: 280, y: 100,  w:50, h:30 } );
+battleMap.addEntity( wall );
+
+var targetX = 150, targetY = 140;
+
+Crafty.e( '2D, DOM, Color, Canvas' )
+	.attr({x: targetX, y: targetY, w:20, h:20 } )
+	.color( 'red' );
+
+var player = Crafty.e("Player")
+			.attr({x: 10, y: 10} );
+
+
+Crafty.viewport.init( 500, 150, Crafty.stage.elem );
+//Crafty.viewport.bounds = {min:{x:0, y:0}, max:{x:300, y:300}};
+Crafty.viewport.follow( player, 10, 10 );
+//Crafty.viewport.mouselook( true );
+
+
+
+</script>
+
+</body>
+</html>
+
