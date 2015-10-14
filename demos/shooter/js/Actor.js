@@ -10,6 +10,8 @@ Crafty.c( "Actor", {
 	_init: function() {
 		var _root = this;
 
+		this.isDead = false;
+
 		this.maxHP = 100;
 		this.HP = this.maxHP;
 
@@ -110,6 +112,8 @@ Crafty.c( "Actor", {
 
 		var width = ( this.HP < 0 ? 0 : this.HP ) / this.maxHP * this.hpBar.w;
 		this.hpBar.attr( {w: width} );
+
+		log( 'id: ' + this.getId() + ' hp: ' + this.HP + ' damage:' + damage );///
 
 		if ( this.HP <= 0 ) {
 			this.die();
@@ -222,7 +226,7 @@ Crafty.c( "Actor", {
 			angle = this.rotation + 180;
 		}
 
-		var point = toAngle( this.x, this.y, angle, distance );
+		var point = fixPos( toAngle( this.x, this.y, angle, distance ) );
 		return this.moveTo( point, animated, callback, needToRecord );
 	},
 
@@ -250,7 +254,10 @@ Crafty.c( "Actor", {
 	 },
 
 	die: function() {
-		die( this );
+		if ( ! this.isDead ) {
+			this.isDead = true;
+			die( this );
+		}
 	}
 });
 
@@ -356,7 +363,10 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 		this.running = false;
 		this.unbind( 'KeyDown' );
 		this.unbind( 'KeyUp' );
-		die( this );
+		if ( ! this.isDead ) {
+			this.isDead = true;
+			die( this );
+		}
 	}
 
 }) );
@@ -468,6 +478,10 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			}
 		});
 
+		this.bind( 'Unpause', function() {
+			this.timeout( this.performAction, 200 );
+		});
+
 		this.timeout( this.performAction, 200 );
 	},
 
@@ -508,6 +522,11 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	},
 
 	setAction : function( action ) {
+		if ( action !== null && this.action && this.action.performing && this.action.name === action.name ) {
+			log( 'pass action: ' + action.name + ', it\'s performing ' );
+			return;
+		}
+
 		if ( action && this.action && this.action.performing ) {
 			if ( this.action.desire > action.desire ) {
 				log( 'pass action: ' + action.name + ', current action: ' + this.action.name );
@@ -531,6 +550,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	},
 
 	performAction : function() {
+		if ( Crafty.isPaused() ) {
+			return;
+		}
 		var _this = this;
 
 		var time = 0;
@@ -743,15 +765,16 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var _this = this;
 		var execute;
 
-		var distance = attacker.getAttackDistance() / 2;
+		var distance = attacker.getAttackDistance() / 4;
 
 		var seed = randInt( -1, 1 );
 
 		if ( seed === 0 ) {
+			log( 'id: ' + this.getId() + ' shun, try to go back, distance:  ' +  distance );///
 			execute = function() {
 				return _this.goBack( distance, true, function() {
 					action.finish();
-				});
+				} );
 			};
 
 		} else {
@@ -759,7 +782,8 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			var angle = Crafty.math.radToDeg( rad );
 			angle += ( seed * 90 );
 
-			var pos = toAngle( this.x, this.y, angle, distance );
+			var pos = fixPos( toAngle( this.x, this.y, angle, distance ) );
+			log( 'id: ' + this.getId() + ' shun, try to move to x:' +  pos.x + ' y:'  + pos.y );///
 
 			execute = function() {
 				return _this.moveTo( pos, true, function() {

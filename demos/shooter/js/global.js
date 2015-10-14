@@ -11,6 +11,22 @@ function toAngle( x, y , rotation, distance ) {
 	return { x: toX, y: toY };
 }
 
+function fixPos( pox ) {
+	if ( pox.x < 0 ) {
+		pox.x = 0;
+	} else if ( pox.x > CANVAS_WIDTH ) {
+		pox.x = CANVAS_WIDTH;
+	}
+
+	if ( pox.y < 0 ) {
+		pox.y = 0;
+	} else if ( pox.y > CANVAS_HEIGHT ) {
+		pox.y = CANVAS_HEIGHT;
+	}
+
+	return pox;
+}
+
 function die( entity, callback ) {
 	var w = entity.w * 1.2;
 	var h = entity.h * 1.2;

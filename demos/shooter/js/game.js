@@ -20,6 +20,8 @@ var Game = {
 		var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
 		this.battleMap = battleMap;
 
+		console.log( 'try to init, canvas width:' + CANVAS_WIDTH + ', height:' + CANVAS_HEIGHT  );
+
 		Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT );
 		Crafty.background( 'rgb(245,245,245)' );
 
