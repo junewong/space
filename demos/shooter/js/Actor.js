@@ -145,7 +145,7 @@ Crafty.c( "Actor", {
 		return this.calculateMoveTime( pos ) + rotateTime;
 	},
 
-	moveTo : function( point, animated, callback ) {
+	moveTo : function( point, animated, callback, needToRecord ) {
 		 if ( checkCanvasOut( point.x, point.y ) ) {
 			 this.stopMovement();
 			 return 0;
@@ -155,8 +155,10 @@ Crafty.c( "Actor", {
 			 return;
 		 }
 
-		this._targetPosition.x = point.x;
-		this._targetPosition.y = point.y;
+		if ( needToRecord !== false ) {
+			this._targetPosition.x = point.x;
+			this._targetPosition.y = point.y;
+		}
 
 		this.moving = true;
 
@@ -206,7 +208,7 @@ Crafty.c( "Actor", {
 		return time;
 	},
 
-	goBack : function( distance, animated, entity, callback ) {
+	goBack : function( distance, animated, entity, callback, needToRecord ) {
 		distance = distance || this.speed;
 
 		var angle = 0;
@@ -221,7 +223,7 @@ Crafty.c( "Actor", {
 		}
 
 		var point = toAngle( this.x, this.y, angle, distance );
-		return this.moveTo( point, animated, callback );
+		return this.moveTo( point, animated, callback, needToRecord );
 	},
 
 	stopTweenMove : function() {
@@ -346,7 +348,7 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 			this.bind( 'HitMaterial', function( e ) {
 				var _this = this;
 				var entity = e[0].obj;
-				this.goBack( 2 * this.speed, true, entity );
+				this.goBack( 2 * this.speed, true, entity, false );
 			});
 	},
 
@@ -397,7 +399,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			this.goBack( 4 * this.speed, true, entity, function() {
 				var obj = e[0].obj;
 				_this.roundAction( obj );
-			});
+			}, false );
 		});
 		
 		this.bind( 'MeetEnemy', function( hitData ) {
@@ -658,6 +660,10 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 	moveOnPathAction : function( paths ) {
 		var _this = this;
+
+		if ( ! paths || paths.length === 0 ) {
+			return 0;
+		}
 
 		var i = 0;
 		var action = new Action( 'moveOnPath', ACTION_LEVEL_HIGH, function() {

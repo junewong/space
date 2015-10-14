@@ -37,7 +37,6 @@ var soldier = Crafty.e("Soldier")
 			.attr({x: 200, y: 380} )
 			.color( 'purple' );
 soldier.debugSearchPathing = true;
-
 //soldier.waiting = true;
 
 var targetX = 150, targetY = 140;
@@ -75,11 +74,10 @@ setTimeout( function() {
 	*/
 
 	soldier.attr( {z : soldier._globalZ + 1} );
-	soldier.wating = true;
 
 	//soldier.roundTo( targetX, targetY );
 	setTimeout( function() {
-		soldier.wating = false;
+		soldier.waiting = false;
 		soldier.moveTo( {x: targetX, y:targetY}, true );
 	}, 300 );
 
