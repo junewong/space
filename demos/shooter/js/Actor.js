@@ -181,12 +181,12 @@ Crafty.c( "Actor", {
 
 			var time = this.calculateMoveTime( point );
 			this.tween( { x: point.x,  y: point.y }, time );
-			if ( callback ) {
-				this.one( 'TweenEnd', function ( e ) {
-					this.moving = false;
+			this.one( 'TweenEnd', function ( e ) {
+				this.moving = false;
+				if ( callback ) {
 					callback( e );
-				});
-			}
+				}
+			});
 
 			return time;
 		}
@@ -451,7 +451,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		});
 
 		this.bind( 'ActionEnd', function( action ) {
-			log( 'perform end for action: ' + ( action ? action.name : 'null' ) );///
+			log( 'id: ' + this.getId() + ' perform end for action: ' + ( action ? action.name : 'null' ) );///
 			/*
 			if ( action.getCostTime() < 100 ) {
 				this.timeout( function() {
@@ -523,17 +523,17 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 	setAction : function( action ) {
 		if ( action !== null && this.action && this.action.performing && this.action.name === action.name ) {
-			log( 'pass action: ' + action.name + ', it\'s performing ' );
+			log( this.getId() + ' pass action: ' + action.name + ', it\'s performing ' );
 			return;
 		}
 
 		if ( action && this.action && this.action.performing ) {
 			if ( this.action.desire > action.desire ) {
-				log( 'pass action: ' + action.name + ', current action: ' + this.action.name );
+				log( this.getId() + ' pass action: ' + action.name + ', current action: ' + this.action.name );
 				return;
 
 			} else {
-				log( 'action: ' + ( action ? action.name : '' ) );
+				log( this.getId() + ' action: ' + ( action ? action.name : '' ) );
 				this.action.destroy();
 				this.action = action;
 				this.performAction();
@@ -545,7 +545,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			this.searchingPath = false;
 		}
 
-		log( 'action: ' + ( action ? action.name : '' ) );
+		log( this.getId() + 'action: ' + ( action ? action.name : '' ) );
 		this.action = action || null;
 	},
 
@@ -558,11 +558,12 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var time = 0;
 		if ( this.action ) {
 			if ( ! this.action.performing ) {
-				log( 'performing action: ' + ( this.action ? this.action.name : 'null' ) );///
+				log( 'id: ' + this.getId() + ' performing action: ' + ( this.action ? this.action.name : 'null' ) );///
 				time = this.action.perform();
-				this.visibleFrame.resetHitChecks();
 				if ( ! time ) {
 					this.setAction( null );
+				} else {
+					this.visibleFrame.resetHitChecks();
 				}
 			}
 
@@ -574,9 +575,11 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			}
 		}
 
+		time = time || 200;
+
 		this.timeout( function() {
 			_this.performAction();
-		}, 200 );
+		}, time );
 	},
 
 	attackAction : function( entity ) {
@@ -765,9 +768,11 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var _this = this;
 		var execute;
 
-		var distance = attacker.getAttackDistance() / 4;
+		//var distance = attacker.getAttackDistance() / 4;
+		var distance = 100;
 
-		var seed = randInt( -1, 1 );
+		//var seed = randInt( -1, 1 );
+		var seed = randInt( 1, 3 );
 
 		if ( seed === 0 ) {
 			log( 'id: ' + this.getId() + ' shun, try to go back, distance:  ' +  distance );///
@@ -778,7 +783,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			};
 
 		} else {
-			var rad = Math.atan2( attacker.x - this.x, attacker.y - this.y );
+			var rad = Math.atan2( attacker.x - this.x, this.y - attacker.y );
 			var angle = Crafty.math.radToDeg( rad );
 			angle += ( seed * 90 );
 
@@ -786,8 +791,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			log( 'id: ' + this.getId() + ' shun, try to move to x:' +  pos.x + ' y:'  + pos.y );///
 
 			execute = function() {
-				return _this.moveTo( pos, true, function() {
+				return _this.rotateAndMoveTo( pos, true, function() {
 					action.finish();
+					_this.setAction( null );
 				});
 			};
 		}

@@ -3,6 +3,13 @@ function UID() {
     return ++gUID;
 }
 
+function validatePos( pos ) {
+	if ( isNaN( pos.x ) || isNaN( pos.y ) ) {
+		return false;
+	}
+	return true;
+}
+
 function toAngle( x, y , rotation, distance ) {
 	rotation = rotation % 360;
 	var p = Math.PI * 2 * ( rotation - 90 ) / 360;
@@ -57,6 +64,9 @@ function randInt( a, b ) {
 }
 
 function checkCanvasOut( x, y ) {
+	if ( isNaN( x ) || isNaN( y ) ) {
+		return false;
+	}
 	 if ( x <= 0 || x >= CANVAS_WIDTH || y <= 0 || y >= CANVAS_HEIGHT ) {
 		 return true;
 	 }
