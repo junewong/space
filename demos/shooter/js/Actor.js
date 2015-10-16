@@ -465,7 +465,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		});
 
 
-		this.initFsm();
+		this.timeout( this.initFsm, 300 );
 	},
 
 	addVisibleFrame : function() {
@@ -545,8 +545,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var distance = randInt( 10, maxDistance );
 
 		var pos = toAngle( this.x, this.y, angle, distance );
-		pos.x = Math.abs( pos.x );
-		pos.y = Math.abs( pos.y );
+		pos = fixPos( pos );
 		return pos;
 	},
 

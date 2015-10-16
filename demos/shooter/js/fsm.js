@@ -33,7 +33,8 @@ Crafty.c( "ActorFsm", {
 				/**
 				 *
 				 */
-				onfree : function() {
+				onfree : function( event, from, to ) {
+					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 					this.nothingToDo();
 				},
 
@@ -41,7 +42,7 @@ Crafty.c( "ActorFsm", {
 				 *
 				 */
 				onwand: function( event, from, to ) {
-					log( 'event:' + event + ', from:' + from + ', to:' + to );
+					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					if ( this.wanding ) {
 						return;
@@ -49,6 +50,7 @@ Crafty.c( "ActorFsm", {
 
 
 					var pos = _this.randPositionByAngle( _this.rotation - 120, _this.rotation + 120, randInt( 20, CANVAS_WIDTH /2 ) );
+					log( 'id: ' + _this.getId() + ' try to random pos x:' + pos.x + ', pos.y:' + pos.y );///
 
 					this.wanding = true;
 					_this.rotateAndMoveTo( pos, true, function() {
@@ -66,7 +68,7 @@ Crafty.c( "ActorFsm", {
 				 *
 				 */
 				onattack: function( event, from, to, entity ) {
-					log( 'event:' + event + ', from:' + from + ', to:' + to );
+					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					_this.stopTweenMove();
 					var run = function() {
@@ -90,7 +92,7 @@ Crafty.c( "ActorFsm", {
 				 *
 				 */
 				onseek: function( event, from, to, entity ) {
-					log( 'event:' + event + ', from:' + from + ', to:' + to );
+					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 					if ( ! entity ) {
 						return 0;
 					}
@@ -110,7 +112,7 @@ Crafty.c( "ActorFsm", {
 				 *
 				 */
 				onshun: function( event, from, to, attackerId  ) {
-					log( 'event:' + event + ', from:' + from + ', to:' + to );
+					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					if ( this.current === to ) {
 						return;
@@ -124,8 +126,6 @@ Crafty.c( "ActorFsm", {
 					if ( ! attacker ) {
 						return;
 					}
-
-					var _this = this;
 
 					//var distance = attacker.getAttackDistance() / 4;
 					var distance = 100;
@@ -165,7 +165,7 @@ Crafty.c( "ActorFsm", {
 				 *
 				 */
 				onalongPath: function( event, from, to, paths ) {
-					log( 'event:' + event + ', from:' + from + ', to:' + to );
+					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					if ( ! paths || paths.length === 0 ) {
 						return 0;
