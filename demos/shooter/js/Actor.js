@@ -119,7 +119,7 @@ Crafty.c( "Actor", {
 			this.die();
 
 		} else {
-			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId} );
+			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId, targetId: this.getId() } );
 		}
 	},
 
@@ -226,13 +226,14 @@ Crafty.c( "Actor", {
 			angle = this.rotation + 180;
 		}
 
-		var point = fixPos( toAngle( this.x, this.y, angle, distance ) );
+		var point = fixPos( toAngle( this.x, this.y, angle, distance ), this.w, this.y );
 		return this.moveTo( point, animated, callback, needToRecord );
 	},
 
 	stopTweenMove : function() {
 		this.tween( {x:this.x, y:this.y}, 0 );
 		this.moving = false;
+		Crafty.trigger( 'StopMove' );
 	},
 
 	// Stops the movement
@@ -434,7 +435,15 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			this.lastMeetEntity = entity;
 
 			log( this.getId() + ' meet enemy, attackerId:' + entity.getId() );
-			this.fsm.meetEnemy( entity );
+
+			if ( this.fsm ) {
+				this.fsm.meetEnemy( entity );
+			} else {
+				var _this = this;
+				setTimeout( function() {
+					_this.fsm.meetEnemy( entity );
+				}, 300 );
+			}
 		});
 
 		this.bind( 'LostEnemy', function( name ) {
@@ -449,6 +458,10 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 				return;
 			}
 
+			if ( data.targetId !== this.getId() ) {
+				return;
+			}
+
 			var damage = data.damage;
 			if ( this.needToShun( damage ) ) {
 				log( this.getId() + ' be attacked, need to shun, attackerId:' + data.attackerId );
@@ -457,8 +470,15 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		});
 
 		this.bind( 'StopMovement', function() {
-			log( 'event StopMovement ...' );///
-			this.fsm.beStopMovement();
+			//log( 'event StopMovement ...' );///
+			//this.fsm.beStopMovement();
+		});
+
+		this.bind( 'StopMove', function() {
+			log( 'event StopMove ...' );///
+			if ( this.fsm ) {
+				this.fsm.beStopMovement();
+			}
 		});
 
 		this.bind( 'Unpause', function() {
@@ -474,17 +494,16 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var size = this.visibleDistance || this.weapon.config.distance * 0.8;
 
 		//this.visibleFrame = Crafty.e( '2D, Canvas, Collision, WiredHitBox' )
-		this.visibleFrame = Crafty.e( '2D, Canvas, Collision, WiredHitBox' )
+		this.visibleFrame = Crafty.e( '2D, Canvas, Collision' )
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
-		var checkComps = 'Soldier,Player,Rock';
-		this.visibleFrame.checkHits( checkComps )
+		this.visibleFrame.checkHits( 'Rock', 'Soldier', 'Player' )
 				.bind( 'HitOn', function( hitData ) {
 					_this.trigger( 'MeetEnemy', hitData );
-					this.timeout( function() {
-						_this.resetHitChecks( checkComps );
-					}, 200 );
+					setTimeout( function() {
+						_this.resetHitChecks( 'Rock', 'Soldier', 'Player' );
+					}, 300 );
 				})
 				.bind( 'HitOff', function( name ) {
 					_this.trigger( 'LostEnemy', name );
@@ -536,7 +555,13 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			return;
 		}
 
-		this.fsm.beBlocked( paths );
+		if ( this.fsm ) {
+		} else {
+			var _this = this;
+			setTimeout( function() {
+				_this.fsm.beBlocked( paths );
+			}, 300 );
+		}
 	},
 
 
@@ -545,7 +570,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		var distance = randInt( 10, maxDistance );
 
 		var pos = toAngle( this.x, this.y, angle, distance );
-		pos = fixPos( pos );
+		pos = fixPos( pos, this.w, this.y );
 		return pos;
 	},
 

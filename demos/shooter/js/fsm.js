@@ -30,12 +30,33 @@ Crafty.c( "ActorFsm", {
 			],
 
 			callbacks: {
+
+				/**
+				 *
+				 */
+				onbeStopMovement : function( event, from, to ) {
+					log( 'id:' + _this.getId() + ' on event:' + event + ', from:' + from + ', to:' + to );
+					this.wanding = false;
+					this.shuning = false;
+				},
+
+				/**
+				 *
+				 */
+				onshunOver : function( event, from, to ) {
+					log( 'id:' + _this.getId() + ' on event:' + event + ', from:' + from + ', to:' + to );
+					this.shuning = false;
+				},
+
+
 				/**
 				 *
 				 */
 				onfree : function( event, from, to ) {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
-					this.nothingToDo();
+					setTimeout( function() {
+						fsm.nothingToDo();
+					}, 300);
 				},
 
 				/**
@@ -45,19 +66,22 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					if ( this.wanding ) {
+						log( 'wanding, pass.' );
 						return;
 					}
-
+					console.log( 'on wand...');
 
 					var pos = _this.randPositionByAngle( _this.rotation - 120, _this.rotation + 120, randInt( 20, CANVAS_WIDTH /2 ) );
 					log( 'id: ' + _this.getId() + ' try to random pos x:' + pos.x + ', pos.y:' + pos.y );///
 
 					this.wanding = true;
+
 					_this.rotateAndMoveTo( pos, true, function() {
 						fsm.wanding = false;
 						if ( fsm.transition ) {
 							fsm.transition();
 						}
+						log( 'id: ' + _this.getId() + ' try to wand over.' );///
 						fsm.wandOver();
 					});
 
@@ -73,16 +97,16 @@ Crafty.c( "ActorFsm", {
 					_this.stopTweenMove();
 					var run = function() {
 						if ( fsm.current !== to ) {
+							fsm.nothingToDo();
 							return;
 						}
-						if ( ! entity || entity.isDead ) {
+						if ( ! isLiving( entity ) ) {
 							fsm.killEnemy();
 							return;
 						}
 
 						_this.attackTo( entity );
 
-						_this.visibleFrame.resetHitChecks();
 						setTimeout( run, 100 );
 					};
 					run();
@@ -94,7 +118,8 @@ Crafty.c( "ActorFsm", {
 				onseek: function( event, from, to, entity ) {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 					if ( ! entity ) {
-						return 0;
+						fsm.nothingToDo();
+						return;
 					}
 					var time = _this.rotateAndMoveTo( {x:entity.x, y:entity.y}, true, function()  {
 						var distance = Crafty.math.distance( _this.x, _this.y, entity.x, entity.y );
@@ -103,6 +128,17 @@ Crafty.c( "ActorFsm", {
 								fsm.transition();
 							}
 							fsm.enemyLost();
+
+						} else {
+							if ( fsm.transition ) {
+								fsm.transition();
+							}
+
+							if ( entity || entity.isDead ) {
+								fsm.killEnemy();
+							} else {
+								fsm.enemyTryEscape( entity );
+							}
 						}
 					});
 					//return StateMachine.ASYNC();
@@ -114,16 +150,18 @@ Crafty.c( "ActorFsm", {
 				onshun: function( event, from, to, attackerId  ) {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
-					if ( this.current === to ) {
+					if ( this.shuning ) {
 						return;
 					}
 
 					if ( attackerId === undefined ) {
+						shunOver();
 						return;
 					}
 
 					var attacker = Crafty( attackerId );
 					if ( ! attacker ) {
+						shunOver();
 						return;
 					}
 
@@ -132,6 +170,8 @@ Crafty.c( "ActorFsm", {
 
 					//var seed = randInt( -1, 1 );
 					var seed = randInt( 1, 3 );
+
+					this.shuning = true;
 
 					if ( seed === 0 ) {
 						log( 'id: ' + this.getId() + ' shun, try to go back, distance:  ' +  distance );///
@@ -143,11 +183,11 @@ Crafty.c( "ActorFsm", {
 						} );
 
 					} else {
-						var rad = Math.atan2( attacker.x - this.x, this.y - attacker.y );
+						var rad = Math.atan2( attacker.x - _this.x, _this.y - attacker.y );
 						var angle = Crafty.math.radToDeg( rad );
 						angle += ( seed * 90 );
 
-						var pos = fixPos( toAngle( this.x, this.y, angle, distance ) );
+						var pos = fixPos( toAngle( _this.x, _this.y, angle, distance ), _this.w, _this.h );
 						log( 'id: ' + this.getId() + ' shun, try to move to x:' +  pos.x + ' y:'  + pos.y );///
 
 						_this.rotateAndMoveTo( pos, true, function() {
@@ -194,8 +234,7 @@ Crafty.c( "ActorFsm", {
 					};
 					run();
 
-					this.setAction( action );
-					this.searchingPath = true;
+					_this.searchingPath = true;
 				}
 			}
 

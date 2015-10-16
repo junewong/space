@@ -18,17 +18,20 @@ function toAngle( x, y , rotation, distance ) {
 	return { x: toX, y: toY };
 }
 
-function fixPos( pox ) {
+function fixPos( pox, w, h ) {
+	w = w || 0;
+	h = h || 0;
+
 	if ( pox.x < 0 ) {
 		pox.x = 0;
-	} else if ( pox.x > CANVAS_WIDTH ) {
-		pox.x = CANVAS_WIDTH;
+	} else if ( pox.x > CANVAS_WIDTH - w) {
+		pox.x = CANVAS_WIDTH - w;
 	}
 
 	if ( pox.y < 0 ) {
 		pox.y = 0;
-	} else if ( pox.y > CANVAS_HEIGHT ) {
-		pox.y = CANVAS_HEIGHT;
+	} else if ( pox.y > CANVAS_HEIGHT - h) {
+		pox.y = CANVAS_HEIGHT - h;
 	}
 
 	return pox;
@@ -44,11 +47,29 @@ function die( entity, callback ) {
 			}
 			Crafty.trigger( 'Dead', entity );
 			entity.destroy();
+			entity = null;
 			if ( callback ) {
 				callback();
 			}
 		});
 
+}
+
+function isLiving( entity ) {
+	if ( ! entity || ! entity.getId ) {
+		return false;
+	}
+
+	var id = entity.getId();
+	if ( ! id ) {
+		return false;
+	}
+
+	if ( !! Crafty( entity.getId() ).get( 0 ) ) {
+		return true;
+	}
+
+	return false;
 }
 
 function extend( target, obj) {
@@ -67,7 +88,7 @@ function checkCanvasOut( x, y ) {
 	if ( isNaN( x ) || isNaN( y ) ) {
 		return false;
 	}
-	 if ( x <= 0 || x >= CANVAS_WIDTH || y <= 0 || y >= CANVAS_HEIGHT ) {
+	 if ( x < 0 || x > CANVAS_WIDTH || y < 0 || y > CANVAS_HEIGHT ) {
 		 return true;
 	 }
 	 return false;
