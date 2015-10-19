@@ -4,11 +4,13 @@
 	<meta charset="UTF-8">
 	<title></title>
 	<script src="./libs/crafty-min.js"></script>
+	<script src="./libs/state-machine.js"></script>
 	<script src="./js/map.js"></script>
 	<script src="./js/global.js"></script>
 	<script src="./js/Weapon.js"></script>
 	<script src="./js/material.js"></script>
 	<script src="./js/Action.js"></script>
+	<script src="./js/fsm.js"></script>
 	<script src="./js/Actor.js"></script>
 	<script src="./js/game.js"></script>
 </head>
@@ -18,7 +20,19 @@
 
 <script>
 
-Game.init( 'mouse, wall:3, soldier:2, revival, logger' );
+Game.init( 'mouse, wall:3, soldier:2, revival, logger', function() {
+
+		var s1 = Crafty( 'Soldier' ).get(0);
+		var s2 = Crafty( 'Soldier' ).get(1);
+
+		s1.waiting = false;
+		s2.waiting = false;
+
+		setTimeout( function() {
+			s1.fsm.beAttacked( s2.getId() );
+		},  300 );
+
+} );
 
 </script>
 

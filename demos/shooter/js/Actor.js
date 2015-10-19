@@ -438,11 +438,6 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 			if ( this.fsm ) {
 				this.fsm.meetEnemy( entity );
-			} else {
-				var _this = this;
-				setTimeout( function() {
-					_this.fsm.meetEnemy( entity );
-				}, 300 );
 			}
 		});
 
@@ -516,7 +511,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 	updateVisibleFrame : function() {
 		//var size = this.weapon.config.distance;
-		var size = this.visibleDistance > this.weapon.config.distance ? this.visibleDistance : this.weapon.config.distance;
+		var size = this.visibleDistance > this.weapon.config.distance * 0.8 ? this.visibleDistance : this.weapon.config.distance * 0.8;
 
 		var x = this.x + this.w/2 - size/2;
 		var y = this.y + this.h/2 - size/2;

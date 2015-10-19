@@ -188,7 +188,7 @@ Crafty.c( "ActorFsm", {
 						angle += ( seed * 90 );
 
 						var pos = fixPos( toAngle( _this.x, _this.y, angle, distance ), _this.w, _this.h );
-						log( 'id: ' + this.getId() + ' shun, try to move to x:' +  pos.x + ' y:'  + pos.y );///
+						log( 'id: ' + _this.getId() + ' shun, try to move to x:' +  pos.x + ' y:'  + pos.y );///
 
 						_this.rotateAndMoveTo( pos, true, function() {
 							if ( fsm.transition ) {

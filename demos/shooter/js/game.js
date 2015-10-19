@@ -16,7 +16,7 @@ var log = function( text ) {
  */
 var Game = {
 
-	init : function( components ) {
+	init : function( components, callback ) {
 		var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
 		this.battleMap = battleMap;
 
@@ -48,6 +48,10 @@ var Game = {
 				console.log( 'Game pause: ' + Crafty.isPaused() );
 			}
 		});
+
+		if ( callback ) {
+			callback();
+		}
 
 	},
 
