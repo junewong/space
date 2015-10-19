@@ -17,14 +17,15 @@ Crafty.c( "ActorFsm", {
 
 			events: [
 				{ name: 'nothingToDo', from: 'free', to: 'wand' },
-				{ name: 'meetEnemy', from: ['wand', 'free'], to: 'attack' },
+				{ name: 'meetEnemy', from: ['wand', 'free', 'seek'], to: 'attack' },
 				{ name: 'killEnemy', from: ['attack', 'seek'], to: 'free' },
-				{ name: 'enemyTryEscape', from: 'attack', to: 'seek' },
+				{ name: 'enemyTryEscape', from: ['attack', 'seek'], to: 'seek' },
 				{ name: 'enemyLost', from: 'seek', to: 'free' },
 				{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed'], to: 'shun' },
 				{ name: 'beBlocked', from: ['wand', 'shun'], to: 'alongPath' },
 				{ name: 'beStopMovement', from: ['wand', 'shun'], to: 'free' },
 				{ name: 'wandOver', from: 'wand', to: 'free' },
+				{ name: 'attackOver', from: 'attack', to: 'free' },
 				{ name: 'shunOver', from: 'shun', to: 'free' },
 				{ name: 'pathOver', from: 'alongPath', to: 'free' }
 			],
@@ -38,6 +39,15 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' on event:' + event + ', from:' + from + ', to:' + to );
 					this.wanding = false;
 					this.shuning = false;
+				},
+
+				onbeAttacked : function( event, from, to, entity ) {
+					// 一定概率采取还击
+					/*
+					if ( randInt( 1, 8 ) === 8 ) {
+						this.meetEnemy( entity );
+					}
+					*/
 				},
 
 				/**
@@ -95,6 +105,9 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					_this.stopTweenMove();
+
+					var count = randInt( 10, 30 );
+
 					var run = function() {
 						if ( fsm.current !== to ) {
 							fsm.nothingToDo();
@@ -105,7 +118,16 @@ Crafty.c( "ActorFsm", {
 							return;
 						}
 
+						if ( count <= 0 ) {
+							setTimeout( function() {
+								fsm.attackOver();
+							}, 100 );
+							return;
+						}
+
 						_this.attackTo( entity );
+
+						count --;
 
 						setTimeout( run, 100 );
 					};
@@ -134,7 +156,7 @@ Crafty.c( "ActorFsm", {
 								fsm.transition();
 							}
 
-							if ( entity || entity.isDead ) {
+							if ( ! entity || entity.isDead ) {
 								fsm.killEnemy();
 							} else {
 								fsm.enemyTryEscape( entity );

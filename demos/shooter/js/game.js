@@ -196,6 +196,10 @@ var Game = {
 
 	},
 
+	lowFPS : function() {
+		Crafty.timer.FPS( 15 );
+	},
+
 	logger : function() {
 		log =  function( text ) {
 			console.log( text );

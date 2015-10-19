@@ -443,7 +443,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		this.bind( 'LostEnemy', function( name ) {
 			if ( name === 'Player' || name === 'Soldier' ) {
-				this.fsm.enemyTryEscape( this.lastMeetEntity );
+				if ( this.fsm ) {
+					this.fsm.enemyTryEscape( this.lastMeetEntity );
+				}
 			}
 
 		});
@@ -493,15 +495,19 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
-		this.visibleFrame.checkHits( 'Rock', 'Soldier', 'Player' )
+		var checkComponents = 'Soldier, Player, Rock';
+		this.visibleFrame.checkHits( checkComponents )
 				.bind( 'HitOn', function( hitData ) {
 					_this.trigger( 'MeetEnemy', hitData );
 					setTimeout( function() {
-						_this.resetHitChecks( 'Rock', 'Soldier', 'Player' );
+						_this.visibleFrame.resetHitChecks( checkComponents );
 					}, 300 );
 				})
 				.bind( 'HitOff', function( name ) {
 					_this.trigger( 'LostEnemy', name );
+					setTimeout( function() {
+						_this.visibleFrame.resetHitChecks( checkComponents );
+					}, 300 );
 				});
 
 		this.attach( this.visibleFrame );
