@@ -204,5 +204,11 @@ var Game = {
 		log =  function( text ) {
 			console.log( text );
 		};
+	},
+
+	_printFsmStates : function() {
+		Crafty( 'Soldier' ).each( function( i ) {
+			console.log( 'index:' + i + ' id:' + this.getId() + ' x:' + this.x + ' y:' + this.y + ' current state:' + this.fsm.current  );
+		});
 	}
 };

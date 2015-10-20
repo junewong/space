@@ -21,7 +21,7 @@ Crafty.c( "ActorFsm", {
 				{ name: 'killEnemy', from: ['attack', 'seek'], to: 'free' },
 				{ name: 'enemyTryEscape', from: ['attack', 'seek'], to: 'seek' },
 				{ name: 'enemyLost', from: 'seek', to: 'free' },
-				{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed'], to: 'shun' },
+				{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed', 'alongPath'], to: 'shun' },
 				{ name: 'beBlocked', from: ['wand', 'shun', 'free'], to: 'alongPath' },
 				{ name: 'beStopMovement', from: ['wand', 'shun'], to: 'free' },
 				{ name: 'wandOver', from: 'wand', to: 'free' },
@@ -81,7 +81,7 @@ Crafty.c( "ActorFsm", {
 					}
 					console.log( 'on wand...');
 
-					var pos = _this.randPositionByAngle( _this.rotation - 120, _this.rotation + 120, randInt( 20, CANVAS_WIDTH /2 ) );
+					var pos = _this.randPositionByAngle( _this.rotation - 90, _this.rotation + 90, randInt( 20, CANVAS_WIDTH /2 ) );
 					log( 'id: ' + _this.getId() + ' try to random pos x:' + pos.x + ', pos.y:' + pos.y );///
 
 					this.wanding = true;
@@ -247,7 +247,7 @@ Crafty.c( "ActorFsm", {
 							return 0;
 						}
 						//log( 'next path, i:' + i + ' path:' + path );///
-						_this.rotateAndMoveTo( path, true, function() {
+						var time = _this.rotateAndMoveTo( path, true, function() {
 							i++;
 							if ( i >= paths.length - 1 ) {
 								_this.searchingPath = false;
@@ -257,8 +257,27 @@ Crafty.c( "ActorFsm", {
 								run();
 							}
 						});
+
+						// 保护措施，如果是预计时间内还没有完成
+						// 可能有意外(比如被卡住），此时强制停止
+						if ( i === 0 && time > 0 ) {
+							var totalTime = time * ( i + 2 );
+							setTimeout( function() {
+								if ( _this.searchingPath ) {
+									_this.searchingPath = false;
+									fsm.pathOver();
+									return;
+								}
+							}, totalTime );
+
+						}
+
 					};
 					run();
+				},
+
+				onleavealongPath: function( event, from, to, paths ) {
+					_this.searchingPath = false;
 				}
 			}
 

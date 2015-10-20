@@ -109,7 +109,8 @@ function randomCreateEntity( count, map, callback ) {
 			entity = callback( i );
 		}
 
-		var p = randPosition( entity.w, entity.h );
+		var pos = randPosition( entity.w, entity.h );
+		var p = fixPos( pos, entity.w, entity.h );
 
 		if ( ! map || ! map.checkBlock( p.x, p.y, entity.w, entity.h ) ) {
 			entity.attr( {x: p.x, y: p.y} );

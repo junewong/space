@@ -107,7 +107,7 @@ var ScatterGun = function( owner ) {
 		max : 8,
 		distance : 150,
 		time : 500,
-		damage : 3,
+		damage : 4,
 		bulletSize : 4,
 		randRotation : 30 
 	};
@@ -122,9 +122,9 @@ var WhipGun = function( owner ) {
 	var index = 0;
 	var config = {
 		max : max,
-		distance : 100,
-		time : 200,
-		damage : 4,
+		distance : 120,
+		time : 150,
+		damage : 5,
 		bulletSize : 4,
 		rotationCallback : function( rotation ) {
 			index ++;

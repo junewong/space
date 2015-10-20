@@ -24,7 +24,7 @@ Crafty.c( "Actor", {
 			.color('orange');
 
 		this.gunPipe = Crafty.e( '2D, Canvas, Color')
-						.attr( {x: this.x + this.w/2-1, y:this.y-7, w:2, h:12} )
+						.attr( {x: this.x + this.w/2-1, y:this.y-this.h*0.4, w:2, h:this.h*0.7} )
 						.color( 'black' );
 		this.attach( this.gunPipe );
 
@@ -230,10 +230,14 @@ Crafty.c( "Actor", {
 		return this.moveTo( point, animated, callback, needToRecord );
 	},
 
+	stopMoving : function() {
+		this.stopTweenMove();
+		Crafty.trigger( 'StopMove' );
+	},
+
 	stopTweenMove : function() {
 		this.tween( {x:this.x, y:this.y}, 0 );
 		this.moving = false;
-		Crafty.trigger( 'StopMove' );
 	},
 
 	// Stops the movement
@@ -407,7 +411,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 				return;
 			}
 			var _this = this;
-			this.stopTweenMove();
+			this.stopMoving();
 
 			var entity = e[0].obj;
 			this.goBack( 4 * this.speed, true, entity, function() {
@@ -443,7 +447,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		this.bind( 'LostEnemy', function( name ) {
 			if ( name === 'Player' || name === 'Soldier' ) {
-				this.fsm.enemyTryEscape( this.lastMeetEntity );
+				if ( this.fsm ) {
+					this.fsm.enemyTryEscape( this.lastMeetEntity );
+				}
 			}
 
 		});
@@ -460,7 +466,9 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			var damage = data.damage;
 			if ( this.needToShun( damage ) ) {
 				log( this.getId() + ' be attacked, need to shun, attackerId:' + data.attackerId );
-				this.fsm.beAttacked( data.attackerId );
+				if ( this.fsm ) {
+					this.fsm.beAttacked( data.attackerId );
+				}
 			}
 		});
 
@@ -493,15 +501,17 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
-		this.visibleFrame.checkHits( 'Rock', 'Soldier', 'Player' )
+		var checkComponet = 'Rock, Soldier, Player';
+		this.visibleFrame.checkHits( checkComponet )
 				.bind( 'HitOn', function( hitData ) {
 					_this.trigger( 'MeetEnemy', hitData );
 					setTimeout( function() {
-						_this.resetHitChecks( 'Rock', 'Soldier', 'Player' );
+						_this.visibleFrame.resetHitChecks( checkComponet );
 					}, 300 );
 				})
 				.bind( 'HitOff', function( name ) {
 					_this.trigger( 'LostEnemy', name );
+					_this.visibleFrame.resetHitChecks( checkComponet );
 				});
 
 		this.attach( this.visibleFrame );
