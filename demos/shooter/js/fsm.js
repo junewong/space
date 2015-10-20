@@ -22,7 +22,7 @@ Crafty.c( "ActorFsm", {
 				{ name: 'enemyTryEscape', from: ['attack', 'seek'], to: 'seek' },
 				{ name: 'enemyLost', from: 'seek', to: 'free' },
 				{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed'], to: 'shun' },
-				{ name: 'beBlocked', from: ['wand', 'shun'], to: 'alongPath' },
+				{ name: 'beBlocked', from: ['wand', 'shun', 'free'], to: 'alongPath' },
 				{ name: 'beStopMovement', from: ['wand', 'shun'], to: 'free' },
 				{ name: 'wandOver', from: 'wand', to: 'free' },
 				{ name: 'attackOver', from: 'attack', to: 'free' },
@@ -233,6 +233,10 @@ Crafty.c( "ActorFsm", {
 						return 0;
 					}
 
+					_this.stopTweenMove();
+
+					_this.searchingPath = true;
+
 					var i = 0;
 
 					var run = function() {
@@ -255,8 +259,6 @@ Crafty.c( "ActorFsm", {
 						});
 					};
 					run();
-
-					_this.searchingPath = true;
 				}
 			}
 

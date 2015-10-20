@@ -443,9 +443,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		this.bind( 'LostEnemy', function( name ) {
 			if ( name === 'Player' || name === 'Soldier' ) {
-				if ( this.fsm ) {
-					this.fsm.enemyTryEscape( this.lastMeetEntity );
-				}
+				this.fsm.enemyTryEscape( this.lastMeetEntity );
 			}
 
 		});
@@ -495,19 +493,15 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
-		var checkComponents = 'Soldier, Player, Rock';
-		this.visibleFrame.checkHits( checkComponents )
+		this.visibleFrame.checkHits( 'Rock', 'Soldier', 'Player' )
 				.bind( 'HitOn', function( hitData ) {
 					_this.trigger( 'MeetEnemy', hitData );
 					setTimeout( function() {
-						_this.visibleFrame.resetHitChecks( checkComponents );
+						_this.resetHitChecks( 'Rock', 'Soldier', 'Player' );
 					}, 300 );
 				})
 				.bind( 'HitOff', function( name ) {
 					_this.trigger( 'LostEnemy', name );
-					setTimeout( function() {
-						_this.visibleFrame.resetHitChecks( checkComponents );
-					}, 300 );
 				});
 
 		this.attach( this.visibleFrame );
@@ -536,6 +530,11 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 	},
 
 	roundTo : function( targetX, targetY ) {
+		if ( this.searchingPath ) {
+			return;
+		}
+		this.searchingPath = true;
+
 		this.stopTweenMove();
 
 		var callback = this.debugSearchPathing ? function( pos ) {
@@ -553,10 +552,13 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		log( 'create path length: ' + paths.length );///
 
 		if ( ! paths ) {
+			this.searchingPath = false;
 			return;
 		}
 
 		if ( this.fsm ) {
+			this.fsm.beBlocked( paths );
+
 		} else {
 			var _this = this;
 			setTimeout( function() {
