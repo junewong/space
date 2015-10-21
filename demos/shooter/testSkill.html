@@ -21,9 +21,15 @@
 
 <script>
 
-Game.init( 'mouse, rock, wall, weaponPill, soldier, player, skill, revival, shootButton, lowFPS' );
+Game.init( 'mouse, rock:30, player, logger, lowFPS' );
+
+var player = Crafty( 'Player' ).get(0);
+
+player.addSkill( SKILL_LIST[0] ); 
+
 
 </script>
 
 </body>
 </html>
+

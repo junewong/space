@@ -230,6 +230,7 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					if ( ! paths || paths.length === 0 ) {
+						wandOver();
 						return 0;
 					}
 
@@ -242,8 +243,9 @@ Crafty.c( "ActorFsm", {
 					var run = function() {
 						var path = paths[i];
 						if ( ! path ) {
-							_this.searchingPath = false;
 							log( 'No path to walk.' );
+							_this.searchingPath = false;
+							wandOver();
 							return 0;
 						}
 						//log( 'next path, i:' + i + ' path:' + path );///
@@ -261,7 +263,7 @@ Crafty.c( "ActorFsm", {
 						// 保护措施，如果是预计时间内还没有完成
 						// 可能有意外(比如被卡住），此时强制停止
 						if ( i === 0 && time > 0 ) {
-							var totalTime = time * ( i + 2 );
+							var totalTime = time * ( paths.length + 1 );
 							setTimeout( function() {
 								if ( _this.searchingPath ) {
 									_this.searchingPath = false;

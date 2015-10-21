@@ -123,7 +123,7 @@ var WhipGun = function( owner ) {
 	var config = {
 		max : max,
 		distance : 120,
-		time : 150,
+		time : 300,
 		damage : 5,
 		bulletSize : 4,
 		rotationCallback : function( rotation ) {

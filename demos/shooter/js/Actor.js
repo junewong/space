@@ -79,6 +79,9 @@ Crafty.c( "Actor", {
 
 		//this.switchWeapon( 0 );
 		this.switchWeapon( randInt( 0, WEAPON_LIST.length-1 ) );
+
+		this.skills = [];
+		this.skill = null;
 	},
 
 	switchWeapon : function( index ) {
@@ -97,6 +100,14 @@ Crafty.c( "Actor", {
 		this.weapon = new weaponClass( this.getId() );
 
 		this.trigger( 'SwitchWeapon', this.weapon );
+	},
+
+	addSkill : function( skillClass ) {
+		var skill = new skillClass( this.getId() );
+		this.skills.push( skill );
+		if ( ! this.skill ) {
+			this.skill = skill;
+		}
 	},
 
 	hurt: function( damage, attackerId ) {
@@ -138,6 +149,15 @@ Crafty.c( "Actor", {
 		this.rotateTo( entity.x, entity.y, function() {
 			_this.attack();
 		});
+	},
+
+	executeSkill : function() {
+		if ( ! this.skill ) {
+			return;
+		}
+
+		var p = toAngle( this.gunPipe.x, this.gunPipe.y, this.rotation, this.speed + 1 );
+		this.skill.shootTo( p.x, p.y, this.rotation );
 	},
 
 	rotateAndMoveTo : function( pos, animated, callback ) {
@@ -304,6 +324,11 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 				// space
 				} else if ( k == 32 ) {
 					_this.attack();
+
+				// enter, use skill
+				} else if ( k == Crafty.keys.ENTER ) {
+					_this.executeSkill();
+					_this.running = false;
 
 				//  change weapon
 				} else if ( k >= Crafty.keys['0'] && k <= Crafty.keys['9'] ) {
@@ -616,7 +641,6 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 		return false;
 	}
-
 
 
 }) );

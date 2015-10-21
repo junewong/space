@@ -73,9 +73,10 @@ var Game = {
 			});
 	},
 
-	rock : function() {
+	rock : function( count ) {
+		count = count || 6;
 
-		randomCreateEntity( 5, this.battleMap, function( i ) {
+		randomCreateEntity( count, this.battleMap, function( i ) {
 			return Crafty.e( 'Rock' )
 						.color( 'black' );
 
@@ -97,18 +98,19 @@ var Game = {
 		});
 	},
 
-	ball : function() {
+	ball : function( count ) {
+		count = count || 6;
 
-		randomCreateEntity( 6, this.battleMap, function( i ) {
+		randomCreateEntity( count, this.battleMap, function( i ) {
 			return Crafty.e("Ball");
 
 		});
 	},
 
-	weaponPill : function() {
+	weaponPill : function( count ) {
+		count = count || 6;
 
-
-		randomCreateEntity( 6, this.battleMap, function( i ) {
+		randomCreateEntity( count, this.battleMap, function( i ) {
 			var k = randInt( 0, WEAPON_LIST.length -1 );
 
 			var weaponClass = WEAPON_LIST[ k ];
@@ -150,6 +152,12 @@ var Game = {
 		// 创建玩家
 		this._createPlayer();
 
+	},
+
+	skill : function() {
+		Crafty( 'Player' ).each( function() {
+			this.addSkill( SKILL_LIST[0] ); 
+		});
 	},
 
 	revival : function() {
