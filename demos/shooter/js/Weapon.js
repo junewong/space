@@ -52,6 +52,13 @@ var Weapon = function( owner, config ) {
 				_this.total --;
 				this.destroy();
 			})
+			.onHit( "SkillObstacle", function( e ) {
+				var obstacle  = e[0].obj;
+				if ( obstacle &&  obstacle.owner !== this.owner ) {
+					_this.total --;
+					this.destroy();
+				}
+			})
 			.onHit( "Bullet", function() {
 				_this.total --;
 				this.destroy();
@@ -124,7 +131,7 @@ var WhipGun = function( owner ) {
 		max : max,
 		distance : 120,
 		time : 300,
-		damage : 5,
+		damage : 8,
 		bulletSize : 4,
 		rotationCallback : function( rotation ) {
 			index ++;

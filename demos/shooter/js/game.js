@@ -178,9 +178,10 @@ var Game = {
 
 	},
 
-	skill : function() {
+	skill : function( i ) {
+		i = i || 0;
 		Crafty( 'Player' ).each( function() {
-			this.addSkill( SKILL_LIST[0] ); 
+			this.addSkill( SKILL_LIST[i] ); 
 		});
 	},
 

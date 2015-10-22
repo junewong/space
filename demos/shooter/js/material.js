@@ -1,4 +1,7 @@
 
+Crafty.c( 'SkillObstacle', {
+});
+
 Crafty.c( 'Rock', {
 	init: function() {
 		var _this = this;

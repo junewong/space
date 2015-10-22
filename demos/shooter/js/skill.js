@@ -1,8 +1,17 @@
+// 攻击类型
+var SKILL_TYPE_ATTACK = 1;
+// 防御类型
+var SKILL_TYPE_DEFENSE = 2;
+// 治疗类型
+var SKILL_TYPE_CURE = 3;
+// 移动类型
+var SKILL_TYPE_MOVE = 4;
 
-var Skill = function( name, owner, config ) {
+var Skill = function( name, owner, group, config ) {
 	this.name = name;
 
 	this.owner = owner;
+	this.group = group;
 	this.total = 0;
 
 	this.running = false;
@@ -57,10 +66,11 @@ var Skill = function( name, owner, config ) {
  * 技能：烈日光辉
  * AOE类型攻击
  */
-var SunShineSkill = function( owner ) {
+var SunShineSkill = function( owner, group ) {
 
 	var config = {
 
+		type : SKILL_TYPE_ATTACK,
 		distance : 250,
 		damage: 8,
 		circleCount : 24,
@@ -90,6 +100,9 @@ var SunShineSkill = function( owner ) {
 						.onHit( "Wall", function() {
 							this.destroy();
 						})
+						.onHit( "SkillObstacle", function() {
+							this.destroy();
+						})
 						.onHit( "Bullet", function() {
 							this.destroy();
 						});
@@ -108,8 +121,56 @@ var SunShineSkill = function( owner ) {
 		}
 	};
 
-	return new Skill( '烈日光辉', owner, config );
+	return new Skill( '烈日光辉', owner, group, config );
 };
 
 
-var SKILL_LIST = [ SunShineSkill ];
+/**
+ *
+ */
+var SheildSkill = function( owner, group ) {
+
+	var config = {
+
+		type : SKILL_TYPE_DEFENSE,
+		distance : 250,
+		damage: 8,
+		circleCount : 24,
+		time : 1000,
+		effectTime : 6,
+
+		shoot : function( x, y, rotation, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				return;
+			}
+
+			var size = actor.w * 4;
+			var sx = actor.x + actor.w/2 - size/2;
+			var sy = actor.y + actor.h/2 - size/2;
+
+			var sheild = Crafty.e( '2D, Canvas, Color, Collision, SkillObstacle' )
+								.origin( size/2, size/2 )
+								.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner} )
+								.color( 'yellow' );
+
+			actor.attach( sheild );
+
+			// remove:
+			setTimeout( function() {
+				actor.detach( sheild );
+				sheild.destroy();
+				callback();
+
+			}, _this.effectTime * 1000);
+
+		}
+	};
+
+	return new Skill( '光晕守护', owner, group, config );
+};
+
+
+var SKILL_LIST = [ SunShineSkill, SheildSkill ];

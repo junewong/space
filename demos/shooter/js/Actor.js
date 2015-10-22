@@ -44,6 +44,13 @@ Crafty.c( "Actor", {
 			this.stopMovement( e );
 		});
 
+		this.onHit( 'SkillObstacle',  function( e ) {
+			var obstacle  = e[0].obj;
+			if ( obstacle &&  obstacle.owner !== this.getId() ) {
+				this.stopMovement( e );
+			}
+		});
+
 		this.onHit( 'Soldier',  function( e ) {
 			this.stopMovement( e );
 		});
