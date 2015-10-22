@@ -5,6 +5,8 @@ var Skill = function( name, owner, config ) {
 	this.owner = owner;
 	this.total = 0;
 
+	this.running = false;
+
 	this.config = extend( {
 		max : 10,
 		distance : 300,
@@ -17,10 +19,17 @@ var Skill = function( name, owner, config ) {
 	}, config || {} );
 
 	this.shootTo = function( x, y, rotation ) {
+		if ( this.running ) {
+			return;
+		}
+		this.running = true;
 		if ( this.config.showName ) {
 			this.showSkillName( x, y );
 		}
-		return this.config.shoot( x, y, rotation );
+		var _this = this;
+		return this.config.shoot( x, y, rotation, function() {
+			_this.running = false;
+		});
 	};
 
 	this.isOwner = function( bullet ) {
@@ -46,7 +55,7 @@ var Skill = function( name, owner, config ) {
 
 /**
  * 技能：烈日光辉
- * 360度范围炸弹
+ * AOE类型攻击
  */
 var SunShineSkill = function( owner ) {
 
@@ -57,8 +66,7 @@ var SunShineSkill = function( owner ) {
 		circleCount : 24,
 		time : 1000,
 
-
-		shoot : function( x, y, rotation ) {
+		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
 
 			var j = this.max;
@@ -90,6 +98,8 @@ var SunShineSkill = function( owner ) {
 				if ( j > 0 ) {
 					setTimeout( run, 120 );
 					j--;
+				} else {
+					callback();
 				}
 			}
 

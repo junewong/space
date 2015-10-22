@@ -77,9 +77,11 @@ Crafty.c( "Actor", {
 			this.switchWeapon( weaponClass );
 		});
 
+		// 武器
 		//this.switchWeapon( 0 );
 		this.switchWeapon( randInt( 0, WEAPON_LIST.length-1 ) );
 
+		// 技能
 		this.skills = [];
 		this.skill = null;
 	},
@@ -364,8 +366,30 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 				this.moveTo( {x: mouseX, y:mouseY}, true );
 			})
 			.bind( 'CanvasMouseRightClick', function( e ) {
+				var _this = this;
 				var mouseX = e.clientX, mouseY = e.clientY;
-				this.rotateTo( mouseX, mouseY );
+				this.rotateTo( mouseX, mouseY, function() {
+					_this.executeSkill();
+				});
+			})
+			.bind( 'CanvasMouseLongPressDown', function( e ) {
+				var _this = this;
+				this.shooting = true;
+				var mouseX = e.clientX, mouseY = e.clientY;
+
+				this.rotateTo( mouseX, mouseY, function() {
+					_this.attack();
+					var shoot = function() {
+						_this.attack();
+						if ( _this.shooting ) {
+							_this.timeout( shoot, 50 );
+						}
+					};
+					shoot();
+				});
+			})
+			.bind( 'CanvasMouseLongPressUp', function( e ) {
+				this.shooting = false;
 			})
 			.bind( 'ShootButtonDown', function( e ) {
 				this.shooting = true;

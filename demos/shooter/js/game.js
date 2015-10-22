@@ -43,6 +43,7 @@ var Game = {
 		}
 
 		Crafty.bind( 'KeyDown', function( e ) {
+			// Esc:
 			if ( e.keyCode === 27 ) {
 				Crafty.pause();
 				console.log( 'Game pause: ' + Crafty.isPaused() );
@@ -56,19 +57,42 @@ var Game = {
 	},
 
 	mouse : function() {
+		var pressTimer = null;
+
 		// 增加鼠标事件
 		Crafty.e( '2D, Canvas, Color, Mouse' )
 			.attr( {w: CANVAS_WIDTH, h:CANVAS_HEIGHT, alpha:0} )
 			.bind( 'Click', function( e ) {
-				Crafty.trigger( 'CanvasMouseClick', e );
+				//Crafty.trigger( 'CanvasMouseClick', e );
 			})
 			.bind( 'DoubleClick', function( e ) {
 				console.log( e.clientX + ' : ' + e.clientY );
 				Crafty.trigger( 'CanvasMouseDbClick', e );
 			})
+			.bind('MouseDown', function( e ) {
+				if( e.mouseButton == Crafty.mouseButtons.LEFT ) {
+					pressTimer = setTimeout( function() {
+						pressTimer = null;
+						// 长按
+						Crafty.trigger( 'CanvasMouseLongPressDown', e );
+					}, 150 );
+				}
+			})
 			.bind('MouseUp', function( e ) {
-				if( e.mouseButton == Crafty.mouseButtons.RIGHT ) {
+				// 鼠标右键
+				if ( e.mouseButton == Crafty.mouseButtons.RIGHT ) {
 					Crafty.trigger( 'CanvasMouseRightClick', e );
+
+				// 鼠标左键
+				} else {
+					if ( pressTimer ) {
+						clearTimeout( pressTimer );
+						// 点击
+						Crafty.trigger( 'CanvasMouseClick', e );
+					} else {
+						// 长按结束
+						Crafty.trigger( 'CanvasMouseLongPressUp', e );
+					}
 				}
 			});
 	},
