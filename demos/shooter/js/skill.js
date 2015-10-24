@@ -20,6 +20,7 @@ var Skill = function( name, owner, group, config ) {
 
 	this.config = extend( {
 		max : 10,
+		description: '',
 		distance : 300,
 		time : 1000,
 		bulletSize : 4,
@@ -95,6 +96,7 @@ var SunShineSkill = function( owner, group ) {
 	var config = {
 
 		type : SKILL_TYPE_ATTACK,
+		description: '大范围攻击技能',
 		distance : 250,
 		damage: 8,
 		circleCount : 24,
@@ -157,6 +159,7 @@ var SheildSkill = function( owner, group ) {
 	var config = {
 
 		type : SKILL_TYPE_DEFENSE,
+		description: '在一定时间免除伤害',
 		distance : 250,
 		damage: 8,
 		circleCount : 24,
@@ -200,13 +203,14 @@ var SheildSkill = function( owner, group ) {
 };
 
 /**
- *
+ * 减缓速度
  */
 var MarshSkill = function( owner, group ) {
 
 	var config = {
 
 		type : SKILL_TYPE_CONTROL,
+		description: '释放一个沼泽让敌人减慢行走速度',
 		distance : 150,
 		damage: 0,
 		time : 1000,
@@ -275,6 +279,7 @@ var SneakSkill = function( owner, group ) {
 	var config = {
 
 		type : SKILL_TYPE_MOVE,
+		description: '快速瞬移到鼠标右键指定地方，几秒后瞬移返回原点',
 		needTarget : true,
 		distance : 500,
 		damage: 0,
@@ -350,6 +355,7 @@ var CuteSkill = function( owner, group ) {
 	var config = {
 
 		type : SKILL_TYPE_CURE,
+		description: '绿色光环范围内，能治疗自己或团队',
 		distance : 90,
 		damage: 0,
 		time : 1000,
@@ -408,11 +414,111 @@ var CuteSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '春风回疗', owner, group, config );
+	return new Skill( '春风复苏', owner, group, config );
 };
 
 
-var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill ];
+/**
+ * 破甲
+ */
+var PenetrateSkill = function( owner, group ) {
+
+	var config = {
+
+		type : SKILL_TYPE_ATTACK,
+		description: '无视对方防御，造成穿透攻击',
+		distance : 500,
+		damage: 25,
+		time : 400,
+
+		shoot : function( x, y, rotation, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				return;
+			}
+
+			var point = toAngle( x, y, actor.rotation, _this.distance );
+
+			Crafty.e( 'Bullet' )
+				.attr({ x:x, y:y, w:4, h: 40, rotation: actor.rotation, alpha:0.9, owner:owner, damage: _this.damage } )
+				.color( 'orange' )
+				.tween( {x: point.x, y:point.y, alpha:0.3}, _this.time )
+				.one( 'TweenEnd', function() {
+					this.destroy();
+					callback();
+				});
+
+		}
+	};
+
+	return new Skill( '黎明破甲', owner, group, config );
+};
+
+/**
+ * 破甲
+ */
+var DashSkill = function( owner, group ) {
+
+	var config = {
+
+		type : SKILL_TYPE_MOVE,
+		description: '快速冲上去，把敌人都撞开',
+		needTarget : true,
+		distance : 350,
+		damage: 10,
+		time : 150,
+		dash : 20,
+		bufSpeed : 40,
+		effectTime : 0.3,
+
+		check : function( x, y, rotation, targetX, targetY ) {
+			if ( ! targetX && ! targetY ) {
+				return;
+			}
+			var distance = Crafty.math.distance( x, y, targetX, targetY );
+			return distance < this.distance;
+		},
+
+		shoot : function( x, y, rotation, targetX, targetY, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				callback();
+				return;
+			}
+
+			var size = actor.w * 3;
+			var sx = actor.x + actor.w/2 - size/2;
+			var sy = actor.y + actor.h/2 - size/2;
+
+			var bullet = Crafty.e( 'Bullet' )
+						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, damage: _this.damage, dash: _this.dash } )
+						.origin( size/2, size/2 )
+						.color( 'red' );
+
+			actor.attach( bullet );
+
+			var distance = Crafty.math.distance( x, y, targetX, targetY );
+			var point = toAngle( x, y, actor.rotation, distance );
+
+			new Buffer( 'speed', _this.bufSpeed,  _this.effectTime ).appendTo( actor );
+
+			actor.rotateAndMoveTo( point, true, function() {
+				bullet.destroy();
+				callback();
+			});
+
+		}
+	};
+
+	return new Skill( '蛮牛冲锋', owner, group, config );
+};
+
+
+var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill, PenetrateSkill, DashSkill ];
 
 
 /**

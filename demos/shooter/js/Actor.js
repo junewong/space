@@ -82,6 +82,11 @@ Crafty.c( "Actor", {
 			var attackerId = bullet.owner;
 
 			this.hurt( damage, attackerId );
+
+			// 如果子弹带击退效果
+			if ( bullet.dash && bullet.dash > 0 ) {
+				this.goBack( bullet.dash, true );
+			}
 		});
 
 		this.onHit( 'WeaponPill', function( pills ) {
@@ -402,7 +407,7 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 					_this.attack();
 
 				// enter, use skill
-				} else if ( k == Crafty.keys.ENTER || k == Crafty.keys.D ) {
+				} else if ( k == Crafty.keys.ENTER || k == Crafty.keys.F ) {
 					_this.executeSkill();
 					_this.running = false;
 
