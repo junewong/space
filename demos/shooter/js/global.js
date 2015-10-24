@@ -124,3 +124,11 @@ function randomCreateEntity( count, map, callback ) {
 }
 
 
+var Arrays = {
+	shuffle : function( array ) {
+		array.sort( function( a, b ){  
+			return Math.floor(Math.random() * 3) - 1;  
+		}); 
+		return array;
+	}
+};

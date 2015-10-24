@@ -125,7 +125,19 @@ Crafty.c( "ActorFsm", {
 							return;
 						}
 
-						_this.attackTo( entity );
+						// 暂时是随机释放技能
+						// TODO
+						if ( entity.skill && randInt( 0, 25 ) === 10 ) {
+							if ( randInt( 0, 4 ) === 0 ) {
+								// 随机切换技能
+								_this.switchSkill( randInt( 0, _this.skills.length -1 ) );
+							}
+							_this.executeSkillTo( entity );
+
+						} else {
+							_this.attackTo( entity );
+						}
+
 
 						count --;
 

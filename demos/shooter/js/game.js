@@ -156,6 +156,10 @@ var Game = {
 						.color( 'purple' );
 
 		});
+
+		if ( this.shouldAddSkill ) {
+			this.skill( 3, 'Soldier' );
+		}
 	},
 
 	soldier: function( count ) {
@@ -168,8 +172,12 @@ var Game = {
 
 	_createPlayer : function () {
 		var pos = randPosition();
-		Crafty.e("Player")
-			.attr({ x: pos.x, y: pos.y } );
+		var player = Crafty.e("Player")
+				.attr({ x: pos.x, y: pos.y } );
+
+		if ( this.shouldAddSkill ) {
+			this.skill( 3, 'Player' );
+		}
 	},
 
 	player : function() {
@@ -178,10 +186,31 @@ var Game = {
 
 	},
 
-	skill : function( i ) {
-		i = i || 0;
-		Crafty( 'Player' ).each( function() {
-			this.addSkill( SKILL_LIST[i] ); 
+	skill : function( i, compName ) {
+		i = i || 3;
+		i = i > SKILL_LIST.length ? SKILL_LIST.length : i;
+		compName = compName || 'Player';
+
+		this.shouldAddSkill = true;
+		this.skillCount = i;
+
+		var allSkills = Crafty.clone( SKILL_LIST );
+
+		Crafty( compName ).each( function() {
+			Arrays.shuffle( allSkills );
+
+			if ( this.has( 'Player' ) ) {
+				for ( var k in SKILL_LIST ) {
+					this.addSkill( SKILL_LIST[k] ); 
+				}
+
+			} else {
+				for ( var j = 0; j < i; j++ ) {
+					this.addSkill( allSkills[j] ); 
+				}
+			}
+
+			this.switchSkill( randInt( 0, this.skills.length -1 ) );
 		});
 	},
 

@@ -6,6 +6,8 @@ var SKILL_TYPE_DEFENSE = 2;
 var SKILL_TYPE_CURE = 3;
 // 移动类型
 var SKILL_TYPE_MOVE = 4;
+// 控制类型
+var SKILL_TYPE_CONTROL = 4;
 
 var Skill = function( name, owner, group, config ) {
 	this.name = name;
@@ -23,22 +25,44 @@ var Skill = function( name, owner, group, config ) {
 		bulletSize : 4,
 		damage : 2,
 		showName : true,
+		needTarget : false,
+		check : function() { return true; },
 		shoot : function() {}
 
 	}, config || {} );
 
-	this.shootTo = function( x, y, rotation ) {
+	this.shootTo = function( x, y, rotation, targetX, targetY ) {
 		if ( this.running ) {
 			return;
 		}
+
+		if ( this.config.needTarget ) {
+			if ( ! this.config.check( x, y, rotation, targetX, targetY ) ) {
+				return;
+			}
+		} else {
+			if ( ! this.config.check( x, y, rotation ) ) {
+				return;
+			}
+		}
+
 		this.running = true;
 		if ( this.config.showName ) {
 			this.showSkillName( x, y );
 		}
+
 		var _this = this;
-		return this.config.shoot( x, y, rotation, function() {
-			_this.running = false;
-		});
+
+		if ( this.config.needTarget ) {
+			return this.config.shoot( x, y, rotation, targetX, targetY, function() {
+				_this.running = false;
+			});
+
+		} else {
+			return this.config.shoot( x, y, rotation, function() {
+				_this.running = false;
+			});
+		}
 	};
 
 	this.isOwner = function( bullet ) {
@@ -126,7 +150,7 @@ var SunShineSkill = function( owner, group ) {
 
 
 /**
- *
+ * 护盾技能，一定时间之内免受伤害
  */
 var SheildSkill = function( owner, group ) {
 
@@ -151,7 +175,7 @@ var SheildSkill = function( owner, group ) {
 			var sx = actor.x + actor.w/2 - size/2;
 			var sy = actor.y + actor.h/2 - size/2;
 
-			var sheild = Crafty.e( '2D, Canvas, Color, Collision, SkillObstacle' )
+			var sheild = Crafty.e( '2D, Canvas, Color, Collision, Tween, SkillObstacle' )
 								.origin( size/2, size/2 )
 								.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner} )
 								.color( 'yellow' );
@@ -161,16 +185,262 @@ var SheildSkill = function( owner, group ) {
 			// remove:
 			setTimeout( function() {
 				actor.detach( sheild );
-				sheild.destroy();
-				callback();
+				sheild.tween( { alpha: 0 }, 300 )
+					.one( 'TweenEnd', function ( e ) {
+						sheild.destroy();
+						callback();
+					});
 
 			}, _this.effectTime * 1000);
 
 		}
 	};
 
-	return new Skill( '光晕守护', owner, group, config );
+	return new Skill( '叹息守护', owner, group, config );
+};
+
+/**
+ *
+ */
+var MarshSkill = function( owner, group ) {
+
+	var config = {
+
+		type : SKILL_TYPE_CONTROL,
+		distance : 150,
+		damage: 0,
+		time : 1000,
+		bufSpeed : -15,
+		effectTime : 8,
+
+		shoot : function( x, y, rotation, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				return;
+			}
+
+			var size = this.distance * 2;
+
+			var x0 = actor.x + actor.w/2;
+			var y0 = actor.y + actor.h/2;
+
+			var x1 = actor.x + actor.w/2 - this.distance;
+			var y1 = actor.y + actor.h/2 - this.distance;
+
+			var hit = function( e ) {
+				for ( var i = 0; i < e.length; i ++ ) {
+					var entity  = e[i].obj;
+					if ( ! entity || entity.getId() === owner ) {
+						return;
+					}
+					// 不重复debuf
+					if ( entity.buffers.speed < 0 ) {
+						return;
+					}
+					// debuf:
+					new Buffer( 'speed', _this.bufSpeed,  _this.effectTime ).appendTo( entity );
+				}
+			};
+
+			var marsh = Crafty.e( '2D, Canvas, Color, Collision, Tween' )
+								.attr( {x: x0, y: y0, w: 0, h: 0, alpha:0.40, owner: owner} )
+								.color( 'brown' )
+								.onHit( 'Player',  hit )
+								.onHit( 'Soldier',  hit )
+								.tween( { x: x1, y: y1, w: size, h: size }, _this.time );
+
+			// remove:
+			setTimeout( function() {
+				marsh.tween( { alpha: 0 }, 300 )
+					.one( 'TweenEnd', function ( e ) {
+						marsh.destroy();
+						callback();
+					});
+
+			}, _this.effectTime * 1000);
+
+		}
+	};
+
+	return new Skill( '迟缓沼泽', owner, group, config );
+};
+
+/**
+ * 快速瞬移到指定地方，几秒后返回
+ */
+var SneakSkill = function( owner, group ) {
+
+	var config = {
+
+		type : SKILL_TYPE_MOVE,
+		needTarget : true,
+		distance : 500,
+		damage: 0,
+		effectTime : 2,
+
+		check : function( x, y, rotation, targetX, targetY ) {
+			if ( ! targetX && ! targetY ) {
+				return;
+			}
+			var distance = Crafty.math.distance( x, y, targetX, targetY );
+			return distance < this.distance;
+		},
+
+		shoot : function( x, y, rotation, targetX, targetY, callback ) {
+			if ( ! targetX && ! targetY ) {
+				callback();
+				return;
+			}
+
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				callback();
+				return;
+			}
+
+			var x0 = actor.x;
+			var y0 = actor.y;
+
+			var move = function( x, y, targetX, targetY, doneCallback ) {
+				actor.stopTweenMove();
+
+				setTimeout( function() {
+					// 渐隐
+					actor.tween( { alpha: 0 }, 500 )
+						.one( 'TweenEnd', function ( e ) {
+							// 瞬移到目标处
+							actor.attr( {x: targetX, y: targetY } )
+								// 渐现
+								.tween( { alpha: 1 }, 500 )
+								.one( 'TweenEnd', function ( e ) {
+									doneCallback();
+								});
+						});
+				}, 100 );
+			}; 
+
+
+			// 瞬移过去
+			move( x0, y0, targetX, targetY, function() {
+				setTimeout( function() {
+					// 瞬移回原点
+					move( actor.x, actor.y, x0, y0, function() {
+						callback();
+					});
+				}, _this.effectTime * 1000 );
+			});
+
+
+
+		}
+	};
+
+	return new Skill( '潜行千里', owner, group, config );
+};
+
+/**
+ *  医疗技能
+ */
+var CuteSkill = function( owner, group ) {
+
+	var config = {
+
+		type : SKILL_TYPE_CURE,
+		distance : 90,
+		damage: 0,
+		time : 1000,
+		value : 1,
+		effectTime : 5,
+
+		shoot : function( x, y, rotation, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				return;
+			}
+
+			var hit = function( e ) {
+				for ( var i = 0; i < e.length; i ++ ) {
+					var entity  = e[i].obj;
+					if ( ! entity || entity.getId() !== owner ) {
+						continue;
+					}
+					entity.changeHP( _this.value );
+				}
+			};
+
+			var run = function() {
+				var x0 = actor.x + actor.w/2;
+				var y0 = actor.y + actor.h/2;
+
+				var x1 = actor.x + actor.w/2 - _this.distance;
+				var y1 = actor.y + actor.h/2 - _this.distance;
+
+				var size = _this.distance * 2;
+
+				var cuteMask = Crafty.e( '2D, Canvas, Color, Collision, Tween' )
+									.attr( {x: x0, y: y0, w: 0, h: 0, alpha:0.35, owner: owner} )
+									.color( 'green' )
+									.onHit( 'Player',  hit )
+									.onHit( 'Soldier',  hit )
+									.tween( { x: x1, y: y1, w: size, h: size }, _this.time )
+									.one( 'TweenEnd', function ( e ) {
+										cuteMask.tween( { alpha: 0 }, 600 )
+											.one( 'TweenEnd', function ( e ) {
+												cuteMask.destroy();
+											});
+									});
+			};
+
+			var handler = setInterval( run, _this.time );
+
+			// remove:
+			setTimeout( function() {
+				clearInterval( handler );
+				callback();
+			}, _this.effectTime * 1000);
+
+		}
+	};
+
+	return new Skill( '春风回疗', owner, group, config );
 };
 
 
-var SKILL_LIST = [ SunShineSkill, SheildSkill ];
+var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill ];
+
+
+/**
+ * Buf属性
+ */
+var Buffer = function( property, value, timeout ) {
+	this.property = property;
+	this.value = value;
+	this.timeout = timeout;
+
+	var _this = this;
+
+	this.appendTo = function( actor ) {
+		if ( actor.buffers[ property ] === undefined ) {
+			log( 'Buffer error, no buffers property found: ' + property  + ' for acotr, id: ' + actor.getId() );
+			return;
+		}
+
+		actor.buffers[ property ] += value;
+
+		log( 'actor, id: ' + actor.getId() + ' add buffer for ' + property + ' as: ' + actor.buffers[ property ] + ' now.' );
+
+		if ( timeout > 0 ) {
+			setTimeout ( function() {
+				actor.buffers[ property ] -= value;
+				log( 'actor, id: ' + actor.getId() + ' remove buffer for ' + property + ' as: ' + actor.buffers[ property ] + ' now.' );
+			}, timeout * 1000 );
+		}
+	};
+
+};

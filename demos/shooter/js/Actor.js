@@ -15,6 +15,12 @@ Crafty.c( "Actor", {
 		this.maxHP = 100;
 		this.HP = this.maxHP;
 
+		this.buffers = { 
+			speed : 0,
+			damage : 0,
+			hp : 0
+		};
+
 		this.speed = 4;
 		this._movement = { x: 0, y: 0 };
 		this._targetPosition = { x: 0, y: 0 };
@@ -111,6 +117,17 @@ Crafty.c( "Actor", {
 		this.trigger( 'SwitchWeapon', this.weapon );
 	},
 
+	switchSkill : function( index ) {
+		if ( index === undefined ) {
+			return;
+		}
+		if ( index < 0 || index >= this.skills.length ) {
+			return;
+		}
+
+		this.skill = this.skills[ index ];
+	},
+
 	addSkill : function( skillClass ) {
 		var skill = new skillClass( this.getId() );
 		this.skills.push( skill );
@@ -128,19 +145,28 @@ Crafty.c( "Actor", {
 			return;
 		}
 
-		this.HP -= damage;
+		this.changeHP( -1 * damage );
 
-		var width = ( this.HP < 0 ? 0 : this.HP ) / this.maxHP * this.hpBar.w;
+		if ( ! this.isDead ) {
+			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId, targetId: this.getId() } );
+		}
+	},
+
+	changeHP : function( offset ) {
+		this.HP += offset;
+
+		if ( this.HP > this.maxHP ) {
+			this.HP = this.maxHP;
+		}
+
+		var width = ( this.HP < 0 ? 0 : this.HP ) / this.maxHP * this.w;
 		this.hpBar.attr( {w: width} );
-
-		log( 'id: ' + this.getId() + ' hp: ' + this.HP + ' damage:' + damage );///
 
 		if ( this.HP <= 0 ) {
 			this.die();
-
-		} else {
-			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId, targetId: this.getId() } );
 		}
+
+		//log( 'id: ' + this.getId() + ' hp: ' + this.HP + ' damage:' + doffset );///
 	},
 
 	getAttackDistance : function() {
@@ -160,13 +186,31 @@ Crafty.c( "Actor", {
 		});
 	},
 
-	executeSkill : function() {
+	executeSkill : function( targetX, targetY ) {
 		if ( ! this.skill ) {
 			return;
 		}
 
 		var p = toAngle( this.gunPipe.x, this.gunPipe.y, this.rotation, this.speed + 1 );
-		this.skill.shootTo( p.x, p.y, this.rotation );
+
+		if ( targetX !== undefined && targetY !== undefined ) {
+			this.skill.shootTo( p.x, p.y, this.rotation, targetX, targetY );
+		} else {
+			this.skill.shootTo( p.x, p.y, this.rotation );
+		}
+	},
+
+	executeSkillTo : function( entity ) {
+		var _this = this;
+
+		this.rotateTo( entity.x, entity.y, function() {
+			if ( _this.skill && _this.skill.config.needTarget ) {
+				_this.executeSkill( entity.x + randInt( 0, 80 ),  entity.y + randInt( 0, 80 ) );
+
+			} else {
+				_this.executeSkill();
+			}
+		});
 	},
 
 	rotateAndMoveTo : function( pos, animated, callback ) {
@@ -223,7 +267,8 @@ Crafty.c( "Actor", {
 
 	calculateMoveTime : function( point ) {
 		var distance = Crafty.math.distance( this.x, this.y, point.x, point.y );
-		var time = distance / 100 * 1000;
+		// 至少100像素1秒
+		var time = distance / ( 96 + this.speed + this.buffers.speed * 5 ) * 1000;
 		return time;
 	},
 
@@ -231,7 +276,8 @@ Crafty.c( "Actor", {
 		var rad = Math.atan2( x - this.x, this.y - y );
 		var angle = Crafty.math.radToDeg( rad );
 		angle = angle % 360;
-		var time = angle == this.rotation ? 0 : 300;
+		// 默认三百毫秒
+		var time = angle == this.rotation ? 0 : ( 304 - this.speed - this.buffers.speed * 20 );
 		this.tween( { rotation: angle }, time )
 			.one( 'TweenEnd', function( e ) {
 				if ( callback ) {
@@ -302,10 +348,31 @@ Crafty.c( "Actor", {
 Crafty.c( "Player", extend( Crafty.components().Actor, {
 	init: function() {
 		this._init();
+
+		var skillKeys = [
+			Crafty.keys.Z,
+			Crafty.keys.X,
+			Crafty.keys.C,
+			Crafty.keys.V,
+			Crafty.keys.B,
+			Crafty.keys.N,
+			Crafty.keys.M 
+		];
+
+		var isSkillKey = function( k ) {
+			for( var i in skillKeys ) {
+				if ( k === skillKeys[i] ) {
+					return true;
+				}
+			}
+			return false;
+		};
+
 		this.bind( 'KeyDown', function( e ) {
 			this.running = true;
 
 			var _this = this;
+			
 
 			var run = function() {
 				var rotation = _this.rotation  % 360;
@@ -335,7 +402,7 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 					_this.attack();
 
 				// enter, use skill
-				} else if ( k == Crafty.keys.ENTER ) {
+				} else if ( k == Crafty.keys.ENTER || k == Crafty.keys.D ) {
 					_this.executeSkill();
 					_this.running = false;
 
@@ -343,6 +410,11 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 				} else if ( k >= Crafty.keys['0'] && k <= Crafty.keys['9'] ) {
 					var index = k - 49;
 					_this.switchWeapon( index );
+
+				} else if ( isSkillKey( k ) ) {
+					var i = 0;
+					for ( ; i < skillKeys.length && skillKeys[i] !== k; i ++ );
+					_this.switchSkill( i );
 				}
 
 				// continue
@@ -376,7 +448,7 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 				var _this = this;
 				var mouseX = e.clientX, mouseY = e.clientY;
 				this.rotateTo( mouseX, mouseY, function() {
-					_this.executeSkill();
+					_this.executeSkill( mouseX, mouseY );
 				});
 			})
 			.bind( 'CanvasMouseLongPressDown', function( e ) {
