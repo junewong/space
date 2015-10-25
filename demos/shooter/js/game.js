@@ -16,11 +16,16 @@ var log = function( text ) {
  */
 var Game = {
 
+
 	init : function( components, callback ) {
 		var _this = this;
 
 		var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
 		this.battleMap = battleMap;
+
+		this._groupColors = [ 'orange', 'purple', 'RGB(15,121,222)', 'RGB(89,207,40)', 'pink' ];
+		this._groupCount = 0;
+		this._playerColor = 'RGB(216,110,22)';
 
 		console.log( 'try to init, canvas width:' + CANVAS_WIDTH + ', height:' + CANVAS_HEIGHT  );
 
@@ -155,10 +160,19 @@ var Game = {
 		});
 	},
 
-	_createSoldier : function( count, group ) {
+	_createSoldier : function( count, group, color ) {
+		var _this = this;
+
 		randomCreateEntity( count, null, function( i ) {
-			var actor = Crafty.e("Soldier")
-							.color( 'purple' );
+			var actor = Crafty.e("Soldier");
+
+			var index = 1;
+			if ( group ) {
+				index = group > _this._groupColors.length ? 1 : group;
+			}
+
+			color = color || _this._groupColors[ index ];
+			actor.color( color );
 
 			actor.group = group || actor.getId();
 			return actor;
@@ -174,7 +188,14 @@ var Game = {
 		// 多少个战士
 		this.soldierCount = parseInt( count || 6 );
 
-		this._createSoldier( this.soldierCount );
+		if ( this._groupCount && this._groupCount > 1 ) {
+			for ( var i = 1; i <= this._groupCount -1; i++ ) {
+				this._createSoldier( this.soldierCount, i );
+			}
+
+		} else {
+			this._createSoldier( this.soldierCount );
+		}
 
 	},
 
@@ -183,24 +204,31 @@ var Game = {
 		var player = Crafty.e("Player")
 				.attr({ x: pos.x, y: pos.y } );
 
-		player.group = group || player.getId();
+		player.group = group || 9999;
+		player.color( this._playerColor );
 
 		if ( this.shouldAddSkill ) {
 			this.skill( 3, 'Player' );
 		}
+
+		return player;
 	},
 
 	player : function() {
 		// 创建玩家
-		this._createPlayer();
+		var player = this._createPlayer();
+
+		if ( this._groupCount && this._groupCount > 1 ) {
+			this._createSoldier( this.soldierCount-1, player.group, this._groupColors[0] );
+		}
 
 	},
 
 	_createServant : function( leader ) {
 		var actor = Crafty.e("Servant")
 						.color( leader.color() );
-		actor.group = leader.group;
 		actor.leader = leader.getId();
+		actor.group = leader.group;
 
 		var x = leader.x, y = leader.y;
 		x += randInt( -100, 100 );
@@ -285,6 +313,10 @@ var Game = {
 				return false;
 			});
 
+	},
+
+	group : function( count ) {
+		this._groupCount = parseInt( count || 1 );
 	},
 
 	lowFPS : function() {

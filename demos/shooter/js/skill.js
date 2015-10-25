@@ -130,7 +130,7 @@ var SunShineSkill = function( owner, group ) {
 					var point = toAngle( x, y, r, _this.distance );
 
 					Crafty.e( 'Bullet' )
-						.attr( { x:x, y:y, w:_this.bulletSize, h:_this.bulletSize, alpha:1, owner:owner, damage: _this.damage } )
+						.attr( { x:x, y:y, w:_this.bulletSize, h:_this.bulletSize, alpha:1, owner:owner, group: group, damage: _this.damage } )
 						.origin( this.w /2, this.height /2 )
 						.tween( {x: point.x, y:point.y, alpha:0.3}, _this.time )
 						.one( 'TweenEnd', function() {
@@ -390,7 +390,7 @@ var CuteSkill = function( owner, group ) {
 			var hit = function( e ) {
 				for ( var i = 0; i < e.length; i ++ ) {
 					var entity  = e[i].obj;
-					if ( ! entity || ( entity.getId() !== owner && entity.group != actor.group ) ) {
+					if ( ! entity || ( entity.getId() !== owner && entity.group !== actor.group ) ) {
 						continue;
 					}
 					entity.changeHP( _this.value );
@@ -460,7 +460,7 @@ var PenetrateSkill = function( owner, group ) {
 			var point = toAngle( x, y, actor.rotation, _this.distance );
 
 			Crafty.e( 'Bullet' )
-				.attr({ x:x, y:y, w:4, h: 40, rotation: actor.rotation, alpha:0.9, owner:owner, damage: _this.damage } )
+				.attr({ x:x, y:y, w:4, h: 40, rotation: actor.rotation, alpha:0.9, owner:owner, group: group, damage: _this.damage } )
 				.color( 'orange' )
 				.tween( {x: point.x, y:point.y, alpha:0.3}, _this.time )
 				.one( 'TweenEnd', function() {
@@ -518,7 +518,7 @@ var DashSkill = function( owner, group ) {
 			var dash = _this.dash + ( distance / _this.dash ) * 5;
 
 			var bullet = Crafty.e( 'Bullet' )
-						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, damage: _this.damage, dash: dash } )
+						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, group: group, damage: _this.damage, dash: dash } )
 						.origin( size/2, size/2 )
 						.color( 'red' );
 

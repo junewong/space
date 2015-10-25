@@ -39,9 +39,12 @@ var Weapon = function( owner, config ) {
 		if ( _this.total  >= this.config.max ) {
 			return;
 		}
+
+		this.group = this.group || Crafty( owner ).group;
+
 		_this.total ++;
 		Crafty.e( 'Bullet' )
-			.attr({ x:x, y:y, w:_this.config.bulletSize, h:_this.config.bulletSize, alpha:1, owner:_this.owner, damage: this.config.damage } )
+			.attr({ x:x, y:y, w:_this.config.bulletSize, h:_this.config.bulletSize, alpha:1, owner:_this.owner, group:_this.group, damage: this.config.damage } )
 			.origin( this.w /2, this.height /2 )
 			.tween( {x: point.x, y:point.y, alpha:0.3}, _this.config.time )
 			.one( 'TweenEnd', function() {
@@ -67,7 +70,9 @@ var Weapon = function( owner, config ) {
 	};
 
 	this.isOwner = function( bullet ) {
-		return this.owner === bullet.owner;
+		var group = this.group || Crafty( owner ).group;
+		return this.owner === bullet.owner || 
+			(group && bullet.group && group === bullet.group );
 	};
 };
 

@@ -90,9 +90,13 @@ Crafty.c( "ActorBase", {
 			for ( var i in bullets ) {
 				bullet = bullets[i].obj;
 				if ( this.weapon.isOwner( bullet ) ) {
-					return;
+					continue;
 				}
 				damage += bullet.damage;
+			}
+
+			if ( damage === 0 ) {
+				return;
 			}
 
 			var attackerId = bullet.owner;
@@ -154,7 +158,7 @@ Crafty.c( "ActorBase", {
 	},
 
 	addSkill : function( skillClass ) {
-		var skill = new skillClass( this.getId() );
+		var skill = new skillClass( this.getId(), this.group );
 		this.skills.push( skill );
 		if ( ! this.skill ) {
 			this.skill = skill;
