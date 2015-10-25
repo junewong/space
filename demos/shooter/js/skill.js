@@ -8,6 +8,8 @@ var SKILL_TYPE_CURE = 3;
 var SKILL_TYPE_MOVE = 4;
 // 控制类型
 var SKILL_TYPE_CONTROL = 4;
+// 召唤类型
+var SKILL_TYPE_CALL = 5;
 
 var Skill = function( name, owner, group, config ) {
 	this.name = name;
@@ -25,9 +27,17 @@ var Skill = function( name, owner, group, config ) {
 		time : 1000,
 		bulletSize : 4,
 		damage : 2,
+		// 是否显示技能名称
 		showName : true,
+		// 是否需要指定目标地址
 		needTarget : false,
+		// 持续时间
+		effectTime : 0,
+		// 技能冷却时间
+		frozenTime : 3000,
+		// 检查是否符合使用技能要求
 		check : function() { return true; },
+		// 释放技能
 		shoot : function() {}
 
 	}, config || {} );
@@ -54,15 +64,17 @@ var Skill = function( name, owner, group, config ) {
 
 		var _this = this;
 
-		if ( this.config.needTarget ) {
-			return this.config.shoot( x, y, rotation, targetX, targetY, function() {
+		var callback = function() {
+			setTimeout( function() {
 				_this.running = false;
-			});
+			}, _this.config.frozenTime );
+		};
+
+		if ( this.config.needTarget ) {
+			return this.config.shoot( x, y, rotation, targetX, targetY, callback );
 
 		} else {
-			return this.config.shoot( x, y, rotation, function() {
-				_this.running = false;
-			});
+			return this.config.shoot( x, y, rotation, callback );
 		}
 	};
 
@@ -101,6 +113,7 @@ var SunShineSkill = function( owner, group ) {
 		damage: 5,
 		circleCount : 24,
 		time : 1000,
+		frozenTime : 8000,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
@@ -165,6 +178,7 @@ var SheildSkill = function( owner, group ) {
 		circleCount : 24,
 		time : 1000,
 		effectTime : 6,
+		frozenTime : 6000,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
@@ -216,6 +230,7 @@ var MarshSkill = function( owner, group ) {
 		time : 1000,
 		bufSpeed : -15,
 		effectTime : 8,
+		frozenTime : 4000,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
@@ -284,6 +299,7 @@ var SneakSkill = function( owner, group ) {
 		distance : 500,
 		damage: 0,
 		effectTime : 2,
+		frozenTime : 3000,
 
 		check : function( x, y, rotation, targetX, targetY ) {
 			if ( ! targetX && ! targetY ) {
@@ -361,6 +377,7 @@ var CuteSkill = function( owner, group ) {
 		time : 1000,
 		value : 1,
 		effectTime : 5,
+		frozenTime : 10000,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
@@ -373,7 +390,7 @@ var CuteSkill = function( owner, group ) {
 			var hit = function( e ) {
 				for ( var i = 0; i < e.length; i ++ ) {
 					var entity  = e[i].obj;
-					if ( ! entity || entity.getId() !== owner ) {
+					if ( ! entity || ( entity.getId() !== owner && entity.group != actor.group ) ) {
 						continue;
 					}
 					entity.changeHP( _this.value );
@@ -430,6 +447,7 @@ var PenetrateSkill = function( owner, group ) {
 		distance : 500,
 		damage: 25,
 		time : 400,
+		frozenTime : 2000,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
@@ -457,7 +475,7 @@ var PenetrateSkill = function( owner, group ) {
 };
 
 /**
- * 破甲
+ * 冲锋
  */
 var DashSkill = function( owner, group ) {
 
@@ -472,6 +490,7 @@ var DashSkill = function( owner, group ) {
 		dash : 40,
 		bufSpeed : 40,
 		effectTime : 0.3,
+		frozenTime : 2000,
 
 		check : function( x, y, rotation, targetX, targetY ) {
 			if ( ! targetX && ! targetY ) {
@@ -530,6 +549,7 @@ var SpeedUpSkill = function( owner, group ) {
 		damage: 0,
 		bufSpeed : 16,
 		effectTime : 3,
+		frozenTime : 3000,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
@@ -551,7 +571,51 @@ var SpeedUpSkill = function( owner, group ) {
 };
 
 
-var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill, PenetrateSkill, DashSkill, SpeedUpSkill ];
+/**
+ * 召唤一个士兵
+ */
+var ServantSkill = function( owner, group ) {
+
+	var config = {
+
+		type : SKILL_TYPE_CALL,
+		description: '召唤一个士兵',
+		frozenTime : 3000,
+		maxCount : 3,
+
+		check : function( x, y, rotation, callback ) {
+			var count = 0;
+			Crafty( 'Servant' ).each( function() {
+				if ( this.leader === owner ) {
+					count ++;
+				}
+			});
+
+			return  count < this.maxCount;
+		},
+
+		shoot : function( x, y, rotation, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				callback();
+				return;
+			}
+
+			//Crafty.trigger( 'CallServant', actor );
+			Game._createServant( actor );
+
+			callback();
+
+		}
+	};
+
+	return new Skill( '勇士召唤', owner, group, config );
+};
+
+
+var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill, PenetrateSkill, DashSkill, SpeedUpSkill, ServantSkill ];
 
 
 /**

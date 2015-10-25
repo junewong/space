@@ -17,6 +17,8 @@ var log = function( text ) {
 var Game = {
 
 	init : function( components, callback ) {
+		var _this = this;
+
 		var battleMap = new Map( 10, CANVAS_WIDTH, CANVAS_HEIGHT );
 		this.battleMap = battleMap;
 
@@ -48,6 +50,9 @@ var Game = {
 				Crafty.pause();
 				console.log( 'Game pause: ' + Crafty.isPaused() );
 			}
+		})
+		.bind( 'CallServant', function( actor ) {
+			_this._createServant( actor );
 		});
 
 		if ( callback ) {
@@ -150,10 +155,13 @@ var Game = {
 		});
 	},
 
-	_createSoldier : function( count ) {
+	_createSoldier : function( count, group ) {
 		randomCreateEntity( count, null, function( i ) {
-			return Crafty.e("Soldier")
-						.color( 'purple' );
+			var actor = Crafty.e("Soldier")
+							.color( 'purple' );
+
+			actor.group = group || actor.getId();
+			return actor;
 
 		});
 
@@ -170,10 +178,12 @@ var Game = {
 
 	},
 
-	_createPlayer : function () {
+	_createPlayer : function ( group ) {
 		var pos = randPosition();
 		var player = Crafty.e("Player")
 				.attr({ x: pos.x, y: pos.y } );
+
+		player.group = group || player.getId();
 
 		if ( this.shouldAddSkill ) {
 			this.skill( 3, 'Player' );
@@ -184,6 +194,23 @@ var Game = {
 		// 创建玩家
 		this._createPlayer();
 
+	},
+
+	_createServant : function( leader ) {
+		var actor = Crafty.e("Servant")
+						.color( leader.color() );
+		actor.group = leader.group;
+		actor.leader = leader.getId();
+
+		var x = leader.x, y = leader.y;
+		x += randInt( -100, 100 );
+		y += randInt( -100, 100 );
+
+		actor.attr( {x: x, y: y} );
+
+		if ( this.shouldAddSkill ) {
+			this.skill( 3, actor.getId() );
+		}
 	},
 
 	skill : function( i, compName ) {
@@ -214,23 +241,25 @@ var Game = {
 		});
 	},
 
-	revival : function() {
+	revival : function( components ) {
 		var _this = this;
+
+		components = components || 'Soldier, Player';
 
 		// 复活 
 		Crafty.bind( 'Dead', function( entity ) {
-			if ( entity.has( 'Soldier' ) ) {
+			if ( components.indexOf( 'Soldier' ) > -1 && entity.has( 'Soldier' ) ) {
 				setTimeout( function() {
 					if ( Crafty( 'Soldier' ).length <  _this.soldierCount ) {
-						_this._createSoldier( 1 );
+						_this._createSoldier( 1, entity.group );
 					}
 				}, 1000 );
 			}
 
-			if ( entity.has( 'Player' ) ) {
+			if ( components.indexOf( 'Player' ) > -1 && entity.has( 'Player' ) ) {
 				setTimeout( function() {
 					if ( Crafty( 'Player' ).length <  1 ) {
-						_this._createPlayer();
+						_this._createPlayer( entity.group );
 					}
 				}, 1000 );
 			}

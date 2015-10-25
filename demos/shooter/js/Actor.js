@@ -1,18 +1,34 @@
 
+Crafty.c( "Actor" );
+
 /**
  * 可被继承的角色
  */
-Crafty.c( "Actor", {
-	init: function() {
-		this._init();
+Crafty.c( "ActorBase", {
+	init: function( config ) {
+		this._init( config );
 	},
 
-	_init: function() {
+	_init: function( config ) {
 		var _root = this;
+
+		this.config = extend( {
+			w : 20,
+			h : 20,
+			speed : 4,
+			maxHP : 100,
+			leader: 0,
+			group : 0
+
+		}, config || {} );
+
 
 		this.isDead = false;
 
-		this.maxHP = 100;
+		this.group = this.config.group;
+		this.leader = this.config.leader;
+
+		this.maxHP = this.config.maxHP;
 		this.HP = this.maxHP;
 
 		this.buffers = { 
@@ -21,12 +37,12 @@ Crafty.c( "Actor", {
 			hp : 0
 		};
 
-		this.speed = 4;
+		this.speed = this.config.speed;
 		this._movement = { x: 0, y: 0 };
 		this._targetPosition = { x: 0, y: 0 };
 
-		this.requires( '2D, Canvas, Color, Tween, Collision, Mouse' )
-			.attr( {x:100, y:100, w:20, h:20, rotation:0, running:false} )
+		this.requires( 'Actor, 2D, Canvas, Color, Tween, Collision, Mouse' )
+			.attr( { x:100, y:100, w:_root.config.w, h:_root.config.h, rotation:0, running:false } )
 			.color('orange');
 
 		this.gunPipe = Crafty.e( '2D, Canvas, Color')
@@ -35,7 +51,7 @@ Crafty.c( "Actor", {
 		this.attach( this.gunPipe );
 
 		this.hpBar = Crafty.e( '2D, Canvas, Color')
-						.attr( {x: this.x, y:this.y+18, w:20, h:2} )
+						.attr( {x: this.x, y:this.y+_root.h-2, w:_root.w, h:2} )
 						.color( 'red' );
 		this.attach( this.hpBar );
 
@@ -290,7 +306,7 @@ Crafty.c( "Actor", {
 		var angle = Crafty.math.radToDeg( rad );
 		angle = angle % 360;
 		// 默认三百毫秒
-		var time = angle == this.rotation ? 0 : ( 304 - this.speed - this.buffers.speed * 20 );
+		var time = angle == this.rotation ? 0 : ( 304 - this.speed - this.buffers.speed * 10 );
 		this.tween( { rotation: angle }, time )
 			.one( 'TweenEnd', function( e ) {
 				if ( callback ) {
@@ -358,9 +374,19 @@ Crafty.c( "Actor", {
 		Crafty.trigger( 'StopMovement' );
 	 },
 
+	killServants : function() {
+		var _this = this;
+		Crafty( 'Servant' ).each( function() {
+			if ( this.leader === _this.getId() ) {
+				this.die();
+			}
+		});
+	},
+
 	die: function() {
 		if ( ! this.isDead ) {
 			this.isDead = true;
+			this.killServants();
 			die( this );
 		}
 	}
@@ -370,9 +396,9 @@ Crafty.c( "Actor", {
 /**
  * 玩家控制的战士
  */
-Crafty.c( "Player", extend( Crafty.components().Actor, {
-	init: function() {
-		this._init();
+Crafty.c( "Player", extend( Crafty.components().ActorBase, {
+	init: function( config ) {
+		this._init( config );
 
 		var skillKeys = [
 			Crafty.keys.Z,
@@ -455,54 +481,38 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 
 			run();
 
-			})
-			.bind( 'KeyUp', function( e ) {
-				this.running = false;
+		})
+		.bind( 'KeyUp', function( e ) {
+			this.running = false;
 
-				this._movement.x = 0;
-				this._movement.y = 0;
-			})
-			.bind( 'CanvasMouseClick', function( e ) {
-				var _this = this;
-				var mouseX = e.clientX, mouseY = e.clientY;
-				this.rotateTo( mouseX, mouseY, function() {
-					_this.attack();
-				});
-			})
-			.bind( 'CanvasMouseDbClick', function( e ) {
-				var mouseX = e.clientX, mouseY = e.clientY;
-				this.rotateTo( mouseX, mouseY );
-				this.moveTo( {x: mouseX, y:mouseY}, true );
-			})
-			.bind( 'CanvasMouseRightClick', function( e ) {
-				var _this = this;
-				var mouseX = e.clientX, mouseY = e.clientY;
-				this.rotateTo( mouseX, mouseY, function() {
-					_this.executeSkill( mouseX, mouseY );
-				});
-			})
-			.bind( 'CanvasMouseLongPressDown', function( e ) {
-				var _this = this;
-				this.shooting = true;
-				var mouseX = e.clientX, mouseY = e.clientY;
+			this._movement.x = 0;
+			this._movement.y = 0;
+		})
+		.bind( 'CanvasMouseClick', function( e ) {
+			var _this = this;
+			var mouseX = e.clientX, mouseY = e.clientY;
+			this.rotateTo( mouseX, mouseY, function() {
+				_this.attack();
+			});
+		})
+		.bind( 'CanvasMouseDbClick', function( e ) {
+			var mouseX = e.clientX, mouseY = e.clientY;
+			this.rotateAndMoveTo( {x: mouseX, y:mouseY}, true );
+		})
+		.bind( 'CanvasMouseRightClick', function( e ) {
+			var _this = this;
+			var mouseX = e.clientX, mouseY = e.clientY;
+			this.rotateTo( mouseX, mouseY, function() {
+				_this.executeSkill( mouseX, mouseY );
+			});
+		})
+		.bind( 'CanvasMouseLongPressDown', function( e ) {
+			var _this = this;
+			this.shooting = true;
+			var mouseX = e.clientX, mouseY = e.clientY;
 
-				this.rotateTo( mouseX, mouseY, function() {
-					_this.attack();
-					var shoot = function() {
-						_this.attack();
-						if ( _this.shooting ) {
-							_this.timeout( shoot, 50 );
-						}
-					};
-					shoot();
-				});
-			})
-			.bind( 'CanvasMouseLongPressUp', function( e ) {
-				this.shooting = false;
-			})
-			.bind( 'ShootButtonDown', function( e ) {
-				this.shooting = true;
-				var _this = this;
+			this.rotateTo( mouseX, mouseY, function() {
+				_this.attack();
 				var shoot = function() {
 					_this.attack();
 					if ( _this.shooting ) {
@@ -510,16 +520,31 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 					}
 				};
 				shoot();
-			})
-			.bind( 'ShootButtonUp', function( e ) {
-				this.shooting = false;
 			});
+		})
+		.bind( 'CanvasMouseLongPressUp', function( e ) {
+			this.shooting = false;
+		})
+		.bind( 'ShootButtonDown', function( e ) {
+			this.shooting = true;
+			var _this = this;
+			var shoot = function() {
+				_this.attack();
+				if ( _this.shooting ) {
+					_this.timeout( shoot, 50 );
+				}
+			};
+			shoot();
+		})
+		.bind( 'ShootButtonUp', function( e ) {
+			this.shooting = false;
+		});
 
-			this.bind( 'HitMaterial', function( e ) {
-				var _this = this;
-				var entity = e[0].obj;
-				this.goBack( 2 * this.speed, true, entity, false );
-			});
+		this.bind( 'HitMaterial', function( e ) {
+			var _this = this;
+			var entity = e[0].obj;
+			this.goBack( 2 * this.speed, true, entity, false );
+		});
 	},
 
 	die: function() {
@@ -528,6 +553,7 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 		this.unbind( 'KeyUp' );
 		if ( ! this.isDead ) {
 			this.isDead = true;
+			this.killServants();
 			die( this );
 		}
 	}
@@ -537,9 +563,9 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 /**
  *  AI控制的战士
  */
-Crafty.c( "Soldier", extend( Crafty.components().Actor, {
-	init: function() {
-		this._init();
+Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
+	init: function( config ) {
+		this._init( config );
 
 		var _this = this;
 
@@ -594,6 +620,10 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 				return;
 			}
 
+			if ( this.group && entity.group && entity.group === this.group ) {
+				return;
+			}
+
 			this.lastMeetEntity = entity;
 
 			log( this.getId() + ' meet enemy, attackerId:' + entity.getId() );
@@ -604,7 +634,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 		});
 
 		this.bind( 'LostEnemy', function( name ) {
-			if ( name === 'Player' || name === 'Soldier' ) {
+			if ( name === 'Actor' ) {
 				if ( this.fsm ) {
 					this.fsm.enemyTryEscape( this.lastMeetEntity );
 				}
@@ -618,6 +648,10 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 			}
 
 			if ( data.targetId !== this.getId() ) {
+				return;
+			}
+
+			if ( Crafty( data.attackerId ).group === this.group ) {
 				return;
 			}
 
@@ -659,7 +693,7 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
-		var checkComponet = 'Rock, Soldier, Player';
+		var checkComponet = 'Rock, Actor';
 		this.visibleFrame.checkHits( checkComponet )
 				.bind( 'HitOn', function( hitData ) {
 					_this.trigger( 'MeetEnemy', hitData );
@@ -777,3 +811,19 @@ Crafty.c( "Soldier", extend( Crafty.components().Actor, {
 
 
 }) );
+
+/**
+ *  AI控制的召唤出来的仆人
+ */
+Crafty.c( "Servant", extend( Crafty.components().Soldier, {
+	init: function() {
+		var config = {
+			w : 10,
+			h : 10,
+			maxHP : 50
+		};
+		this.superInit( config );
+	}
+
+}) );
+

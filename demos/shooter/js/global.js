@@ -1,4 +1,4 @@
-var gUID =  0;
+var gUID =  1;
 function UID() {
     return ++gUID;
 }
@@ -75,7 +75,10 @@ function isLiving( entity ) {
 function extend( target, obj) {
 	var newObj = Crafty.clone( target );
 	for (var key in obj) {
-		newObj[key] = obj[key];
+		if ( key === 'init' ) {
+			newObj.superInit = newObj[ key ];
+		}
+		newObj[ key ] = obj[ key ];
 	}
 	return newObj;
 }
