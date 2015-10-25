@@ -85,7 +85,11 @@ Crafty.c( "Actor", {
 
 			// 如果子弹带击退效果
 			if ( bullet.dash && bullet.dash > 0 ) {
-				this.goBack( bullet.dash, true );
+				var _this = this;
+				this.stopTweenMove();
+				this.dashBack( bullet.dash, Crafty( bullet.owner), function() {
+					_this.beAttacked( damage, attackerId );
+				});
 			}
 		});
 
@@ -151,7 +155,11 @@ Crafty.c( "Actor", {
 		}
 
 		this.changeHP( -1 * damage );
+		this.beAttacked();
 
+	},
+
+	beAttacked : function( damage, attackerId ) {
 		if ( ! this.isDead ) {
 			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId, targetId: this.getId() } );
 		}
@@ -306,8 +314,20 @@ Crafty.c( "Actor", {
 			angle = this.rotation + 180;
 		}
 
-		var point = fixPos( toAngle( this.x, this.y, angle, distance ), this.w, this.y );
+		var point = fixPos( toAngle( this.x, this.y, angle, distance ), this.w, this.h );
 		return this.moveTo( point, animated, callback, needToRecord );
+	},
+
+	dashBack : function( distance, entity, callback ) {
+		if ( ! entity ) {
+			return;
+		}
+		var point = fixPos( toAngle( this.x, this.y, entity.rotation, distance ), this.w, this.h );
+		return this.moveTo( point, true, function() {
+			if ( callback ) {
+				callback();
+			}
+		});
 	},
 
 	stopMoving : function() {
@@ -361,7 +381,12 @@ Crafty.c( "Player", extend( Crafty.components().Actor, {
 			Crafty.keys.V,
 			Crafty.keys.B,
 			Crafty.keys.N,
-			Crafty.keys.M 
+			Crafty.keys.M,
+			Crafty.keys.L,
+			Crafty.keys.K,
+			Crafty.keys.J,
+			Crafty.keys.H,
+			Crafty.keys.G
 		];
 
 		var isSkillKey = function( k ) {

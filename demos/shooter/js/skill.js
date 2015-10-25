@@ -98,7 +98,7 @@ var SunShineSkill = function( owner, group ) {
 		type : SKILL_TYPE_ATTACK,
 		description: '大范围攻击技能',
 		distance : 250,
-		damage: 8,
+		damage: 5,
 		circleCount : 24,
 		time : 1000,
 
@@ -467,9 +467,9 @@ var DashSkill = function( owner, group ) {
 		description: '快速冲上去，把敌人都撞开',
 		needTarget : true,
 		distance : 350,
-		damage: 10,
+		damage: 12,
 		time : 150,
-		dash : 20,
+		dash : 40,
 		bufSpeed : 40,
 		effectTime : 0.3,
 
@@ -494,15 +494,16 @@ var DashSkill = function( owner, group ) {
 			var sx = actor.x + actor.w/2 - size/2;
 			var sy = actor.y + actor.h/2 - size/2;
 
+			var distance = Crafty.math.distance( x, y, targetX, targetY );
+			var point = toAngle( x, y, actor.rotation, distance );
+			var dash = _this.dash + ( distance / _this.dash ) * 5;
+
 			var bullet = Crafty.e( 'Bullet' )
-						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, damage: _this.damage, dash: _this.dash } )
+						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, damage: _this.damage, dash: dash } )
 						.origin( size/2, size/2 )
 						.color( 'red' );
 
 			actor.attach( bullet );
-
-			var distance = Crafty.math.distance( x, y, targetX, targetY );
-			var point = toAngle( x, y, actor.rotation, distance );
 
 			new Buffer( 'speed', _this.bufSpeed,  _this.effectTime ).appendTo( actor );
 
@@ -517,14 +518,46 @@ var DashSkill = function( owner, group ) {
 	return new Skill( '蛮牛冲锋', owner, group, config );
 };
 
+/**
+ * 加快行走速度
+ */
+var SpeedUpSkill = function( owner, group ) {
 
-var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill, PenetrateSkill, DashSkill ];
+	var config = {
+
+		type : SKILL_TYPE_MOVE,
+		description: '加快自己的移动速度',
+		damage: 0,
+		bufSpeed : 16,
+		effectTime : 3,
+
+		shoot : function( x, y, rotation, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				callback();
+				return;
+			}
+
+			new Buffer( 'speed', _this.bufSpeed,  _this.effectTime, function() {
+					callback();
+			} ).appendTo( actor );
+
+		}
+	};
+
+	return new Skill( '身轻如燕', owner, group, config );
+};
+
+
+var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill, PenetrateSkill, DashSkill, SpeedUpSkill ];
 
 
 /**
  * Buf属性
  */
-var Buffer = function( property, value, timeout ) {
+var Buffer = function( property, value, timeout, callback ) {
 	this.property = property;
 	this.value = value;
 	this.timeout = timeout;
@@ -545,6 +578,9 @@ var Buffer = function( property, value, timeout ) {
 			setTimeout ( function() {
 				actor.buffers[ property ] -= value;
 				log( 'actor, id: ' + actor.getId() + ' remove buffer for ' + property + ' as: ' + actor.buffers[ property ] + ' now.' );
+				if ( callback ) {
+					callback();
+				}
 			}, timeout * 1000 );
 		}
 	};
