@@ -10,6 +10,8 @@ var SKILL_TYPE_MOVE = 4;
 var SKILL_TYPE_CONTROL = 4;
 // 召唤类型
 var SKILL_TYPE_CALL = 5;
+// 召唤类型
+var SKILL_TYPE_PENETRATE = 6;
 
 var Skill = function( name, owner, group, config ) {
 	this.name = name;
@@ -21,6 +23,8 @@ var Skill = function( name, owner, group, config ) {
 	this.running = false;
 
 	this.config = extend( {
+		// 类型，可以是数组或者数字
+		type : null,
 		max : 10,
 		description: '',
 		distance : 300,
@@ -46,18 +50,20 @@ var Skill = function( name, owner, group, config ) {
 		if ( this.running ) {
 			return;
 		}
+		this.running = true;
 
 		if ( this.config.needTarget ) {
 			if ( ! this.config.check( x, y, rotation, targetX, targetY ) ) {
+				this.running = false;
 				return;
 			}
 		} else {
 			if ( ! this.config.check( x, y, rotation ) ) {
+				this.running = false;
 				return;
 			}
 		}
 
-		this.running = true;
 		if ( this.config.showName ) {
 			this.showSkillName( x, y );
 		}
@@ -78,8 +84,26 @@ var Skill = function( name, owner, group, config ) {
 		}
 	};
 
+	this.isEnabled = function() {
+		return ! this.running;
+	};
+
 	this.isOwner = function( bullet ) {
 		return this.owner === bullet.owner;
+	};
+
+	this.isType = function( type ) {
+		if ( this.config.type instanceof Array ) {
+			for ( var i in this.config.type ) {
+				if ( this.config.type[ i ] === type ) {
+					return true;
+				}
+			}
+			return false;
+
+		} else {
+			return this.config.type === type;
+		}
 	};
 
 	var _this = this;
@@ -293,7 +317,7 @@ var SneakSkill = function( owner, group ) {
 
 	var config = {
 
-		type : SKILL_TYPE_MOVE,
+		type : [ SKILL_TYPE_MOVE, SKILL_TYPE_ATTACK ],
 		description: '快速瞬移到鼠标右键指定地方，几秒后瞬移返回原点',
 		needTarget : true,
 		distance : 500,
@@ -442,7 +466,7 @@ var PenetrateSkill = function( owner, group ) {
 
 	var config = {
 
-		type : SKILL_TYPE_ATTACK,
+		type : [ SKILL_TYPE_ATTACK, SKILL_TYPE_PENETRATE ],
 		description: '无视对方防御，造成穿透攻击',
 		distance : 500,
 		damage: 25,
@@ -481,7 +505,7 @@ var DashSkill = function( owner, group ) {
 
 	var config = {
 
-		type : SKILL_TYPE_MOVE,
+		type : [ SKILL_TYPE_MOVE, SKILL_TYPE_ATTACK ],
 		description: '快速冲上去，把敌人都撞开',
 		needTarget : true,
 		distance : 350,
@@ -650,3 +674,94 @@ var Buffer = function( property, value, timeout, callback ) {
 	};
 
 };
+
+
+Crafty.c( "Skill", {
+	init: function( config ) {
+		// 技能
+		this.skills = [];
+		this.skill = null;
+	},
+
+	/**
+	 * 切换技能
+	 * @param index : 索引或者技能对象
+	 */
+	switchSkill : function( index ) {
+		if ( index === undefined ) {
+			return;
+		}
+		if ( typeof index === 'number' ) {
+			if ( index < 0 || index >= this.skills.length ) {
+				return;
+			}
+			this.skill = this.skills[ index ];
+
+		} else {
+			var skill = index;
+			this.skill = skill;
+		}
+	},
+
+	addSkill : function( skillClass ) {
+		var skill = new skillClass( this.getId(), this.group );
+		this.skills.push( skill );
+		if ( ! this.skill ) {
+			this.skill = skill;
+		}
+	},
+
+	hasEnableSkillWithType : function( type ) {
+		return !! this.getSkillWithType( type );
+	},
+
+	getSkillWithType : function( type ) {
+		if ( ! this.skills ) {
+			return null;
+		}
+
+		var options = [];
+		for ( var i in this.skills ) {
+			var skill = this.skills[i];
+			if ( skill.isType( type ) && skill.isEnabled() ) {
+				options.push( skill );
+			}
+		}
+
+		if ( options.length === 1 ) {
+			return options[ 0 ];
+		}
+
+		// 从合适的技能中随机抽取一个
+		if ( options.length > 1 ) {
+			return Crafty.math.randomElementOfArray( options );
+		}
+
+		return null;
+	},
+
+	switchSkillWithType : function( type ) {
+		var skill = this.getSkillWithType( type );
+		if ( ! skill ) {
+			return false;
+		}
+		this.switchSkill( skill );
+		return true;
+	},
+
+	/**
+	 * 根据类型选择可用的技能
+	 *
+	 * @return 如果有则返回true，否则返回false
+	 */
+	shootWithType : function( type, x, y, rotation, targetX, targetY  ) {
+		var skill = this.getSkillWithType( type );
+		if ( ! skill ) {
+			return false;
+		}
+
+		skill.shootTo( x, y, rotation, targetX, targetY );
+		return true;
+	}
+
+});

@@ -41,7 +41,7 @@ Crafty.c( "ActorBase", {
 		this._movement = { x: 0, y: 0 };
 		this._targetPosition = { x: 0, y: 0 };
 
-		this.requires( 'Actor, 2D, Canvas, Color, Tween, Collision, Mouse' )
+		this.requires( 'Actor, Skill, 2D, Canvas, Color, Tween, Collision, Mouse' )
 			.attr( { x:100, y:100, w:_root.config.w, h:_root.config.h, rotation:0, running:false } )
 			.color('orange');
 
@@ -123,9 +123,6 @@ Crafty.c( "ActorBase", {
 		//this.switchWeapon( 0 );
 		this.switchWeapon( randInt( 0, WEAPON_LIST.length-1 ) );
 
-		// 技能
-		this.skills = [];
-		this.skill = null;
 	},
 
 	switchWeapon : function( index ) {
@@ -144,25 +141,6 @@ Crafty.c( "ActorBase", {
 		this.weapon = new weaponClass( this.getId() );
 
 		this.trigger( 'SwitchWeapon', this.weapon );
-	},
-
-	switchSkill : function( index ) {
-		if ( index === undefined ) {
-			return;
-		}
-		if ( index < 0 || index >= this.skills.length ) {
-			return;
-		}
-
-		this.skill = this.skills[ index ];
-	},
-
-	addSkill : function( skillClass ) {
-		var skill = new skillClass( this.getId(), this.group );
-		this.skills.push( skill );
-		if ( ! this.skill ) {
-			this.skill = skill;
-		}
 	},
 
 	hurt: function( damage, attackerId ) {
@@ -220,7 +198,7 @@ Crafty.c( "ActorBase", {
 	},
 
 	executeSkill : function( targetX, targetY ) {
-		if ( ! this.skill ) {
+		if ( ! this.skill || ! this.skill.isEnabled() ) {
 			return;
 		}
 
@@ -234,6 +212,10 @@ Crafty.c( "ActorBase", {
 	},
 
 	executeSkillTo : function( entity ) {
+		if ( ! this.skill ) {
+			return;
+		}
+
 		var _this = this;
 
 		this.rotateTo( entity.x, entity.y, function() {
