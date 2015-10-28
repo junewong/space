@@ -45,7 +45,12 @@ function die( entity, callback ) {
 			if ( Game.battleMap ) {
 				Game.battleMap.removeBlock( entity.x, entity.y, entity.w, entity.h );
 			}
+
+			if ( entity.has( 'Actor' ) ) {
+				Crafty.trigger( 'ActorDead', entity );
+			}
 			Crafty.trigger( 'Dead', entity );
+
 			entity.destroy();
 			entity = null;
 			if ( callback ) {

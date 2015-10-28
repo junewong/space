@@ -78,7 +78,7 @@ Crafty.c( "ActorFsm", {
 					}
 
 					// 可能会释放召唤技能
-					if ( randInt( 1, 25 ) === 1 ) {
+					if ( randInt( 1, 10 ) === 1 ) {
 						_this.switchSkillWithType( SKILL_TYPE_CALL );
 						_this.executeSkill();
 					}
@@ -98,7 +98,7 @@ Crafty.c( "ActorFsm", {
 						log( 'wanding, pass.' );
 						return;
 					}
-					console.log( 'on wand...');
+					log( 'on wand...');
 
 					var pos = _this.randPositionByAngle( _this.rotation - 90, _this.rotation + 90, randInt( 20, CANVAS_WIDTH /2 ) );
 					log( 'id: ' + _this.getId() + ' try to random pos x:' + pos.x + ', pos.y:' + pos.y );///
@@ -146,7 +146,7 @@ Crafty.c( "ActorFsm", {
 
 						// 一定几率释放攻击技能
 						var hasSkill = false;
-						if ( randInt( 0, 30 ) === 10 ) {
+						if ( randInt( 0, 40 ) === 10 ) {
 							hasSkill = _this.switchSkillWithType( SKILL_TYPE_ATTACK );
 							_this.executeSkillTo( entity );
 						}
@@ -172,7 +172,7 @@ Crafty.c( "ActorFsm", {
 						return;
 					}
 
-					// 可能会释放召唤技能
+					// 可能会释放控制技能
 					if ( randInt( 1, 5 ) === 1 ) {
 						_this.switchSkillWithType( SKILL_TYPE_CONTROL );
 						_this.executeSkill();
@@ -180,7 +180,7 @@ Crafty.c( "ActorFsm", {
 
 					// 一定几率释放移动技能
 					var hasSkill = false;
-					if ( randInt( 1, 5 ) === 1 ) {
+					if ( randInt( 1, 4 ) === 1 ) {
 						hasSkill = _this.switchSkillWithType( SKILL_TYPE_MOVE );
 						_this.executeSkillTo( entity );
 					}
@@ -214,6 +214,36 @@ Crafty.c( "ActorFsm", {
 				onshun: function( event, from, to, attackerId  ) {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
+					// 医疗技能，掉一半血以下考虑释放治疗技能
+					if ( randint( 1, 4 ) === 1 ) {
+						if ( _this.hp / _this.maxhp <= 0.5 ) {
+							_this.switchskillwithtype( skill_type_cure );
+							_this.executeskill();
+						}
+					}
+
+					// 可能会释放控制技能阻挡对手，有利于逃跑
+					if ( randInt( 1, 10 ) === 1 ) {
+						_this.switchSkillWithType( SKILL_TYPE_CONTROL );
+						_this.executeSkill();
+					}
+
+					// 一定几率释放防御技能
+					var hasSkill = false;
+					if ( Math.random() < 0.33 ) {
+						hasSkill = _this.switchSkillWithType( SKILL_TYPE_DEFENSE );
+						_this.executeSkill();
+					}
+
+					// 有防御技能则不需要躲避了
+					if ( hasSkill ) {
+						setTimeout( function() {
+							fsm.shunOver();
+						}, 500 );
+						return;
+					}
+
+					// 不重复执行
 					if ( this.shuning ) {
 						return;
 					}
@@ -229,34 +259,6 @@ Crafty.c( "ActorFsm", {
 						return;
 					}
 
-					// 医疗技能，掉一半血以下考虑释放治疗技能
-					if ( randint( 1, 4 ) === 1 ) {
-						if ( _this.hp / _this.maxhp <= 0.5 ) {
-							_this.switchskillwithtype( skill_type_cure );
-							_this.executeskill();
-						}
-					}
-
-					// 一定几率释放防御技能
-					var hasSkill = false;
-					if ( randInt( 1, 3 ) === 1 ) {
-						hasSkill = _this.switchSkillWithType( SKILL_TYPE_DEFENSE );
-						_this.executeSkill();
-					}
-
-					// 有防御技能则不需要躲避了
-					if ( hasSkill ) {
-						setTimeout( function() {
-							fsm.shunOver();
-						}, 500 );
-						return;
-					}
-
-					// 可能会释放控制技能阻挡对手，有利于逃跑
-					if ( randInt( 1, 25 ) === 1 ) {
-						_this.switchSkillWithType( SKILL_TYPE_CONTROL );
-						_this.executeSkill();
-					}
 
 					// 普通情况,进行躲避：
 

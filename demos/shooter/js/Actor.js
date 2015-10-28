@@ -86,11 +86,14 @@ Crafty.c( "ActorBase", {
 		});
 
 		this.onHit( 'Bullet', function( bullets ) {
-			var damage = 0, bullet;
+			var damage = 0, bullet, dashBullet;
 			for ( var i in bullets ) {
 				bullet = bullets[i].obj;
 				if ( this.weapon.isOwner( bullet ) ) {
 					continue;
+				}
+				if ( bullet.dash ) {
+					dashBullet = bullet;
 				}
 				damage += bullet.damage;
 			}
@@ -104,12 +107,14 @@ Crafty.c( "ActorBase", {
 			this.hurt( damage, attackerId );
 
 			// 如果子弹带击退效果
-			if ( bullet.dash && bullet.dash > 0 ) {
+			if ( dashBullet && dashBullet.dash > 0 && ! dashBullet.running ) {
+				dashBullet.running = true;
 				var _this = this;
 				this.stopTweenMove();
-				this.dashBack( bullet.dash, Crafty( bullet.owner), function() {
+				this.dashBack( dashBullet.dash, Crafty( dashBullet.owner ), function() {
 					_this.beAttacked( damage, attackerId );
 				});
+				dashBullet.destroy();
 			}
 		});
 
@@ -584,8 +589,11 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 			this.stopMoving();
 
 			var entity = e[0].obj;
+
+			this.searchingPath = true;
 			this.goBack( 4 * this.speed, true, entity, function() {
 				var obj = e[0].obj;
+				_this.searchingPath = false;
 				_this.roundAction( obj );
 
 			}, false );
@@ -666,7 +674,11 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 		});
 
 
-		this.timeout( this.initFsm, 300 );
+		this.timeout( function() {
+			if ( ! _this.waiting ) {
+				this.initFsm();
+			}
+		}, 300 );
 	},
 
 	addVisibleFrame : function() {

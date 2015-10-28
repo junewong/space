@@ -275,7 +275,7 @@ var MarshSkill = function( owner, group ) {
 			var hit = function( e ) {
 				for ( var i = 0; i < e.length; i ++ ) {
 					var entity  = e[i].obj;
-					if ( ! entity || entity.getId() === owner ) {
+					if ( ! entity || entity.getId() === owner || entity.group === group ) {
 						return;
 					}
 					// 不重复debuf
@@ -542,7 +542,7 @@ var DashSkill = function( owner, group ) {
 			var dash = _this.dash + ( distance / _this.dash ) * 5;
 
 			var bullet = Crafty.e( 'Bullet' )
-						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, group: group, damage: _this.damage, dash: dash } )
+						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, group: group, damage: _this.damage, dash: dash, running: false } )
 						.origin( size/2, size/2 )
 						.color( 'red' );
 
@@ -550,10 +550,14 @@ var DashSkill = function( owner, group ) {
 
 			new Buffer( 'speed', _this.bufSpeed,  _this.effectTime ).appendTo( actor );
 
-			actor.rotateAndMoveTo( point, true, function() {
+			var time = actor.rotateAndMoveTo( point, true ); 
+
+			// remove:
+			setTimeout( function() {
+				bullet.hit( 'Actor' );
 				bullet.destroy();
 				callback();
-			});
+			}, time + 300 );
 
 		}
 	};
@@ -762,6 +766,14 @@ Crafty.c( "Skill", {
 
 		skill.shootTo( x, y, rotation, targetX, targetY );
 		return true;
+	},
+
+	getSkillString : function() {
+		var names = [];
+		for ( var i in this.skills ) {
+			names.push( this.skills[i].name );
+		}
+		return 'Actor(' + this.getId() + ') 技能：' + names.join( ',' );
 	}
 
 });
