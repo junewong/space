@@ -162,21 +162,21 @@ var Game = {
 		});
 	},
 
-	_createSoldier : function( count, group, color ) {
+	_createSoldier : function( count, groupId, color ) {
 		var _this = this;
 
 		randomCreateEntity( count, null, function( i ) {
 			var actor = Crafty.e("Soldier");
 
 			var index = 1;
-			if ( group ) {
-				index = group > _this._groupColors.length ? 1 : group;
+			if ( groupId ) {
+				index = groupId > _this._groupColors.length ? 1 : groupId;
 			}
 
 			color = color || _this._groupColors[ index ];
 			actor.color( color );
 
-			actor.group = group || actor.getId();
+			actor.groupId = groupId || actor.getId();
 			return actor;
 
 		});
@@ -201,14 +201,14 @@ var Game = {
 
 	},
 
-	_getSoldierCount : function( group ) {
-		if ( ! group ) {
+	_getSoldierCount : function( groupId ) {
+		if ( ! groupId ) {
 			return Crafty( 'Soldier').length;
 
 		} else {
 			var count = 0;
 			Crafty( 'Soldier' ).each( function() {
-				if ( this.group === group ) {
+				if ( this.groupId === groupId ) {
 					count ++;
 				}
 			});
@@ -216,12 +216,12 @@ var Game = {
 		}
 	},
 
-	_createPlayer : function ( group ) {
+	_createPlayer : function ( groupId ) {
 		var pos = randPosition();
 		var player = Crafty.e("Player")
 				.attr({ x: pos.x, y: pos.y } );
 
-		player.group = group || 9999;
+		player.groupId = groupId || 9999;
 		player.color( this._playerColor );
 
 		if ( this.shouldAddSkill ) {
@@ -236,7 +236,7 @@ var Game = {
 		var player = this._createPlayer();
 
 		if ( this._groupCount && this._groupCount > 1 ) {
-			this._createSoldier( this.soldierCount-1, player.group, this._groupColors[0] );
+			this._createSoldier( this.soldierCount-1, player.groupId, this._groupColors[0] );
 		}
 
 	},
@@ -245,7 +245,7 @@ var Game = {
 		var actor = Crafty.e("Servant")
 						.color( leader.color() );
 		actor.leader = leader.getId();
-		actor.group = leader.group;
+		actor.groupId = leader.groupId;
 
 		var x = leader.x, y = leader.y;
 		x += randInt( -100, 100 );
@@ -296,21 +296,21 @@ var Game = {
 
 		// 复活 
 		Crafty.bind( 'ActorDead', function( entity ) {
-			var group = entity.group;
+			var groupId = entity.groupId;
 			if ( components.indexOf( 'Soldier' ) > -1 && entity.has( 'Soldier' ) ) {
-				var group = entity.group;
+				var groupId = entity.groupId;
 				setTimeout( function() {
-					if ( _this._getSoldierCount( group ) <  _this.soldierCount ) {
-						_this._createSoldier( 1, group );
+					if ( _this._getSoldierCount( groupId ) <  _this.soldierCount ) {
+						_this._createSoldier( 1, groupId );
 					}
 				}, 1000 );
 			}
 
 			if ( components.indexOf( 'Player' ) > -1 && entity.has( 'Player' ) ) {
-				var group = entity.group;
+				var groupId = entity.groupId;
 				setTimeout( function() {
 					if ( Crafty( 'Player' ).length <  1 ) {
-						_this._createPlayer( group );
+						_this._createPlayer( groupId );
 					}
 				}, 1000 );
 			}

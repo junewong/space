@@ -51,7 +51,7 @@ Map.prototype = {
 		var h = Math.floor( h0 / this.tileSize );
 		for ( var i = x,  xLen = x + w; i < xLen; i ++ ) {
 			for ( var j = y, yLen = y + h; j < yLen; j ++ ) {
-				if ( i < this.tiles.length && j < this.tiles[i].length ) {
+				if ( this.tiles && i < this.tiles.length && j < this.tiles[i].length ) {
 					this.tiles[i][j] = value;
 					//console.log( 'set tiles, x: ' + i + ' y: ' + j + ' value: ' + value + ' x0:' + x0 + ', y0:' + y0 + ', w0:' + w0 + ', h0:' + h0 );///
 				}

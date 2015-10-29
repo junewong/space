@@ -25,6 +25,8 @@ var Skill = function( name, owner, group, config ) {
 	this.config = extend( {
 		// 类型，可以是数组或者数字
 		type : null,
+		// 不能在该类型触发
+		notInType : null,
 		max : 10,
 		description: '',
 		distance : 300,
@@ -88,10 +90,15 @@ var Skill = function( name, owner, group, config ) {
 		return ! this.running;
 	};
 
+	this.isRunning = function() {
+		return this.running;
+	};
+
 	this.isOwner = function( bullet ) {
 		return this.owner === bullet.owner;
 	};
 
+	// 是否属于某种类型的技能
 	this.isType = function( type ) {
 		if ( this.config.type instanceof Array ) {
 			for ( var i in this.config.type ) {
@@ -132,8 +139,9 @@ var SunShineSkill = function( owner, group ) {
 	var config = {
 
 		type : SKILL_TYPE_ATTACK,
+		notInType : SKILL_TYPE_DEFENSE,
 		description: '大范围攻击技能',
-		distance : 250,
+		distance : 200,
 		damage: 5,
 		circleCount : 24,
 		time : 1000,
@@ -541,8 +549,10 @@ var DashSkill = function( owner, group ) {
 			var point = toAngle( x, y, actor.rotation, distance );
 			var dash = _this.dash + ( distance / _this.dash ) * 5;
 
-			var bullet = Crafty.e( 'Bullet' )
-						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45, owner: owner, group: group, damage: _this.damage, dash: dash, running: false } )
+			var bullet = Crafty.e( 'Bullet, SkillObstacle' )
+						.attr( {x: sx, y: sy, w: size, h: size, rotation: actor.rotation, alpha:0.45,
+							owner: owner, group: group,
+							damage: _this.damage, dash: dash, running: false } )
 						.origin( size/2, size/2 )
 						.color( 'red' );
 
@@ -728,6 +738,9 @@ Crafty.c( "Skill", {
 		for ( var i in this.skills ) {
 			var skill = this.skills[i];
 			if ( skill.isType( type ) && skill.isEnabled() ) {
+				if ( skill.config.notInType && this.isRunningWithType( skill.config.notInType ) ) {
+					continue;
+				}
 				options.push( skill );
 			}
 		}
@@ -768,6 +781,25 @@ Crafty.c( "Skill", {
 		return true;
 	},
 
+	/**
+	 * 是否处于执行难某种技能的状态当中
+	 */
+	isRunningWithType : function( type ) {
+		if ( ! this.skills ) {
+			return false;
+		}
+		for ( var i in this.skills ) {
+			var skill = this.skills[i];
+			if ( skill.isRunning() && skill.isType( type ) ) {
+				return true;
+			}
+		}
+		return false;
+	},
+
+	/**
+	 * 获取所有技能名称的字符串
+	 */
 	getSkillString : function() {
 		var names = [];
 		for ( var i in this.skills ) {

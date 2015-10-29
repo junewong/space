@@ -18,14 +18,14 @@ Crafty.c( "ActorBase", {
 			speed : 4,
 			maxHP : 100,
 			leader: 0,
-			group : 0
+			groupId : 0
 
 		}, config || {} );
 
 
 		this.isDead = false;
 
-		this.group = this.config.group;
+		this.groupId = this.config.groupId;
 		this.leader = this.config.leader;
 
 		this.maxHP = this.config.maxHP;
@@ -158,7 +158,7 @@ Crafty.c( "ActorBase", {
 		}
 
 		this.changeHP( -1 * damage );
-		this.beAttacked();
+		this.beAttacked( damage, attackerId );
 
 	},
 
@@ -614,7 +614,7 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 				return;
 			}
 
-			if ( this.group && entity.group && entity.group === this.group ) {
+			if ( this.groupId && entity.groupId && entity.groupId === this.groupId ) {
 				return;
 			}
 
@@ -628,7 +628,7 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 		});
 
 		this.bind( 'LostEnemy', function( name ) {
-			if ( name === 'Actor' ) {
+			if ( name === 'Actor' || name === 'Soldier' || name === 'Player' ) {
 				if ( this.fsm ) {
 					this.fsm.enemyTryEscape( this.lastMeetEntity );
 				}
@@ -645,7 +645,7 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 				return;
 			}
 
-			if ( Crafty( data.attackerId ).group === this.group ) {
+			if ( Crafty( data.attackerId ).groupId === this.groupId ) {
 				return;
 			}
 
@@ -691,7 +691,7 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
-		var checkComponet = 'Rock, Actor';
+		var checkComponet = 'Actor, Soldier, Rock';
 		this.visibleFrame.checkHits( checkComponet )
 				.bind( 'HitOn', function( hitData ) {
 					_this.trigger( 'MeetEnemy', hitData );
@@ -701,7 +701,9 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 				})
 				.bind( 'HitOff', function( name ) {
 					_this.trigger( 'LostEnemy', name );
-					_this.visibleFrame.resetHitChecks( checkComponet );
+					setTimeout( function() {
+						_this.visibleFrame.resetHitChecks( checkComponet );
+					}, 300 );
 				});
 
 		this.attach( this.visibleFrame );
@@ -794,13 +796,12 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 		this.lastDamageTime = now;
 
 		if ( isTimeout ) {
-			this.lastDamageTime = now;
-			lastDamage = 0;
+			this.lastDamage = 0;
 			return false;
 		}
 
 		if ( this.lastDamage > this.maxHP / 10 ) {
-			lastDamage = 0;
+			this.lastDamage = 0;
 			return true;
 		}
 

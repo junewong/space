@@ -22,8 +22,9 @@ Crafty.c( "ActorFsm", {
 				{ name: 'enemyTryEscape', from: ['attack', 'seek'], to: 'seek' },
 				{ name: 'enemyLost', from: 'seek', to: 'free' },
 				{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed', 'alongPath'], to: 'shun' },
+				{ name: 'attackNotEffect', from: 'attack', to: 'shun' },
 				{ name: 'beBlocked', from: ['wand', 'shun', 'free'], to: 'alongPath' },
-				{ name: 'beStopMovement', from: ['wand', 'shun'], to: 'free' },
+				{ name: 'beStopMovement', from: ['wand', 'shun', 'alongPath' ], to: 'free' },
 				{ name: 'wandOver', from: 'wand', to: 'free' },
 				{ name: 'attackOver', from: 'attack', to: 'free' },
 				{ name: 'shunOver', from: 'shun', to: 'free' },
@@ -72,15 +73,17 @@ Crafty.c( "ActorFsm", {
 					// 医疗技能，掉一半血以下考虑释放治疗技能
 					if ( randInt( 1, 10 ) === 1 ) {
 						if ( _this.HP / _this.maxHP <= 0.5 ) {
-							_this.switchSkillWithType( SKILL_TYPE_CURE );
-							_this.executeSkill();
+							if ( _this.switchSkillWithType( SKILL_TYPE_CURE ) ) {
+								_this.executeSkill();
+							}
 						}
 					}
 
 					// 可能会释放召唤技能
 					if ( randInt( 1, 10 ) === 1 ) {
-						_this.switchSkillWithType( SKILL_TYPE_CALL );
-						_this.executeSkill();
+						if ( _this.switchSkillWithType( SKILL_TYPE_CALL ) ) {
+							_this.executeSkill();
+						}
 					}
 
 					setTimeout( function() {
@@ -147,8 +150,20 @@ Crafty.c( "ActorFsm", {
 						// 一定几率释放攻击技能
 						var hasSkill = false;
 						if ( randInt( 0, 40 ) === 10 ) {
-							hasSkill = _this.switchSkillWithType( SKILL_TYPE_ATTACK );
-							_this.executeSkillTo( entity );
+							// 对方属于防御技能状态，使用穿透技能，否则普通的攻击技能
+							var isDefensing =  entity.has( 'Actor' ) && entity.isRunningWithType( SKILL_TYPE_DEFENSE );
+							hasSkill = isDefensing ? _this.switchSkillWithType( SKILL_TYPE_PENETRATE ) :
+													_this.switchSkillWithType( SKILL_TYPE_ATTACK );
+
+							if ( hasSkill ) {
+								_this.executeSkillTo( entity );
+
+							} else if ( ! hasSkill && ! isDefensing ) {
+								// 如果对方在防御但却没有穿透技能可以对付，则取消攻击
+								fsm.attackNotEffect( entity.getId() );
+								return;
+							}
+
 						}
 
 						if ( ! hasSkill ) {
@@ -174,15 +189,18 @@ Crafty.c( "ActorFsm", {
 
 					// 可能会释放控制技能
 					if ( randInt( 1, 5 ) === 1 ) {
-						_this.switchSkillWithType( SKILL_TYPE_CONTROL );
-						_this.executeSkill();
+						if ( _this.switchSkillWithType( SKILL_TYPE_CONTROL ) ) {
+							_this.executeSkill();
+						}
 					}
 
 					// 一定几率释放移动技能
 					var hasSkill = false;
 					if ( randInt( 1, 4 ) === 1 ) {
 						hasSkill = _this.switchSkillWithType( SKILL_TYPE_MOVE );
-						_this.executeSkillTo( entity );
+						if ( hasSkill ) {
+							_this.executeSkillTo( entity );
+						}
 					}
 
 					var time = _this.rotateAndMoveTo( {x:entity.x, y:entity.y}, true, function()  {
@@ -215,24 +233,28 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					// 医疗技能，掉一半血以下考虑释放治疗技能
-					if ( randint( 1, 4 ) === 1 ) {
-						if ( _this.hp / _this.maxhp <= 0.5 ) {
-							_this.switchskillwithtype( skill_type_cure );
-							_this.executeskill();
+					if ( randInt( 1, 4 ) === 1 ) {
+						if ( _this.HP / _this.maxHP <= 0.5 ) {
+							if ( _this.switchSkillWithType( SKILL_TYPE_CURE ) ) {
+								_this.executeSkill();
+							}
 						}
 					}
 
 					// 可能会释放控制技能阻挡对手，有利于逃跑
 					if ( randInt( 1, 10 ) === 1 ) {
-						_this.switchSkillWithType( SKILL_TYPE_CONTROL );
-						_this.executeSkill();
+						if ( _this.switchSkillWithType( SKILL_TYPE_CONTROL ) ) {
+							_this.executeSkill();
+						}
 					}
 
 					// 一定几率释放防御技能
 					var hasSkill = false;
 					if ( Math.random() < 0.33 ) {
 						hasSkill = _this.switchSkillWithType( SKILL_TYPE_DEFENSE );
-						_this.executeSkill();
+						if ( hasSkill ) {
+							_this.executeSkill();
+						}
 					}
 
 					// 有防御技能则不需要躲避了
@@ -262,20 +284,16 @@ Crafty.c( "ActorFsm", {
 
 					// 普通情况,进行躲避：
 
-					var distance = ranInt( 100, 200 );
+					var distance = randInt( 100, 200 );
 
-					var seed = randInt( 1, 3 );
+					var seed = randInt( -1, 1 );
 
 					this.shuning = true;
 
+					var time = 0;
 					if ( seed === 0 ) {
-						log( 'id: ' + this.getId() + ' shun, try to go back, distance:  ' +  distance );///
-						_this.goBack( distance, true, function() {
-							if ( fsm.transition ) {
-								fsm.transition();
-							}
-							fsm.shunOver();
-						} );
+						log( 'id: ' + _this.getId() + ' shun, try to go back, distance:  ' +  distance );///
+						time = _this.goBack( distance, true );
 
 					} else {
 						var rad = Math.atan2( attacker.x - _this.x, _this.y - attacker.y );
@@ -285,15 +303,16 @@ Crafty.c( "ActorFsm", {
 						var pos = fixPos( toAngle( _this.x, _this.y, angle, distance ), _this.w, _this.h );
 						log( 'id: ' + _this.getId() + ' shun, try to move to x:' +  pos.x + ' y:'  + pos.y );///
 
-						if ( ! hasSkill ) {
-							_this.rotateAndMoveTo( pos, true, function() {
-								if ( fsm.transition ) {
-									fsm.transition();
-								}
-								fsm.shunOver();
-							});
-						}
+						time = _this.rotateAndMoveTo( pos, true );
 					}
+
+					setTimeout( function() {
+						if ( fsm.transition ) {
+							fsm.transition();
+						}
+						fsm.shunOver();
+					}, time );
+
 
 					//return StateMachine.ASYNC;
 				},
