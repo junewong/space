@@ -153,7 +153,7 @@ Crafty.c( "ActorBase", {
 			this.trigger( 'HitMaterial', e ); 
 		});
 
-		this.onHit( 'Life',  function( e ) {
+		this.onHit( 'Actor',  function( e ) {
 			this.stopMovement( e );
 		});
 

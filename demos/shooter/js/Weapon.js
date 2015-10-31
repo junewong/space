@@ -51,6 +51,10 @@ var Weapon = function( owner, config ) {
 				_this.total --;
 				this.destroy();
 			})
+			.onHit( "BaseBuilding", function() {
+				_this.total --;
+				this.destroy();
+			})
 			.onHit( "Obstacle", function() {
 				_this.total --;
 				this.destroy();

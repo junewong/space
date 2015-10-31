@@ -168,6 +168,9 @@ var SunShineSkill = function( owner, group ) {
 						.one( 'TweenEnd', function() {
 							this.destroy();
 						})
+						.onHit( "BaseBuilding", function() {
+							this.destroy();
+						})
 						.onHit( "Obstacle", function() {
 							this.destroy();
 						})

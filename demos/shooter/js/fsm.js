@@ -89,7 +89,7 @@ Crafty.c( "ActorFsm", {
 					// 查看是否有任务可执行，否则随意
 					var hasTask = false;
 
-					if ( Math.random() < 0.4 ) {
+					if ( Math.random() < 0.6 ) {
 						hasTask = _this.taskManager.execute( _this, function() {
 							fsm.nothingToDo();
 						});

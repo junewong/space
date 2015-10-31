@@ -139,7 +139,7 @@ var BaseBuildingFightTask = Class( TaskBase, {
 		}
 
 		var offset = 100;
-		var pos = besidePos( building.x, building.y, offset, me.w, me.h );
+		var pos = besidePos( building.x, building.y, offset, building.w, building.h );
 
 		me.rotateAndMoveTo( pos, true, function() {
 			if ( callback && typeof callback === 'function' ) {
