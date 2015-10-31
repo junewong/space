@@ -86,9 +86,22 @@ Crafty.c( "ActorFsm", {
 						}
 					}
 
-					setTimeout( function() {
-						fsm.nothingToDo();
-					}, 300);
+					// 查看是否有任务可执行，否则随意
+					var hasTask = false;
+
+					if ( Math.random() < 0.4 ) {
+						hasTask = _this.taskManager.execute( _this, function() {
+							fsm.nothingToDo();
+						});
+					}
+
+					if ( ! hasTask ) {
+						setTimeout( function() {
+							fsm.nothingToDo();
+						}, 300);
+					}
+
+
 				},
 
 				/**

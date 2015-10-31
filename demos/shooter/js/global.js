@@ -3,6 +3,17 @@ function UID() {
     return ++gUID;
 }
 
+/**
+ * 将arguments对象转换成数组
+ */
+function argumentsToArray( args ) {
+	var array = [];
+	for( var i in args ) {
+		array.push( args[i] );
+	}
+	return array;
+}
+
 function validatePos( pos ) {
 	if ( isNaN( pos.x ) || isNaN( pos.y ) ) {
 		return false;
@@ -18,23 +29,26 @@ function toAngle( x, y , rotation, distance ) {
 	return { x: toX, y: toY };
 }
 
-function fixPos( pox, w, h ) {
+function fixPos( pos, w, h ) {
 	w = w || 0;
 	h = h || 0;
 
-	if ( pox.x < 0 ) {
-		pox.x = 0;
-	} else if ( pox.x > CANVAS_WIDTH - w) {
-		pox.x = CANVAS_WIDTH - w;
+	if ( pos.x < 0 ) {
+		pos.x = 0;
+	} else if ( pos.x > CANVAS_WIDTH - w) {
+		pos.x = CANVAS_WIDTH - w;
 	}
 
-	if ( pox.y < 0 ) {
-		pox.y = 0;
-	} else if ( pox.y > CANVAS_HEIGHT - h) {
-		pox.y = CANVAS_HEIGHT - h;
+	if ( pos.y < 0 ) {
+		pos.y = 0;
+	} else if ( pos.y > CANVAS_HEIGHT - h) {
+		pos.y = CANVAS_HEIGHT - h;
 	}
 
-	return pox;
+	pos.x = pos.x || 0;
+	pos.y = pos.y || 0;
+
+	return pos;
 }
 
 function die( entity, callback ) {

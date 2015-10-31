@@ -27,6 +27,8 @@ var Game = {
 		this._groupCount = 0;
 		this._playerColor = 'RGB(216,110,22)';
 
+		this._taskKey = null;
+
 		console.log( 'try to init, canvas width:' + CANVAS_WIDTH + ', height:' + CANVAS_HEIGHT  );
 
 		Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT );
@@ -177,8 +179,10 @@ var Game = {
 			actor.color( color );
 
 			actor.groupId = groupId || actor.getId();
-			return actor;
 
+			_this._addTask( actor );
+
+			return actor;
 		});
 
 		if ( this.shouldAddSkill ) {
@@ -228,6 +232,8 @@ var Game = {
 			this.skill( 3, 'Player' );
 		}
 
+		this._addTask( player );
+
 		return player;
 	},
 
@@ -256,6 +262,8 @@ var Game = {
 		if ( this.shouldAddSkill ) {
 			this.skill( 3, actor.getId() );
 		}
+
+		this._addTask( actor );
 	},
 
 	skill : function( i, compName ) {
@@ -340,6 +348,20 @@ var Game = {
 
 	group : function( count ) {
 		this._groupCount = parseInt( count || 1 );
+	},
+
+	task : function( taskKey ) {
+		this._taskKey = taskKey;
+	},
+
+	_addTask : function( actor ) {
+		if ( !this._taskKey || ! actor ) {
+			return;
+		}
+
+		var taskClass = TASK_MAPS[ this._taskKey ];
+		var task = new taskClass();
+		actor.taskManager.add( task );
 	},
 
 	lowFPS : function() {

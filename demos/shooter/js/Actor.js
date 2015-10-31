@@ -22,6 +22,7 @@ Crafty.c( "ActorBase", {
 
 		}, config || {} );
 
+		this.taskManager = new TaskManager();
 
 		this.isDead = false;
 
