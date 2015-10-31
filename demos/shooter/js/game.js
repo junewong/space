@@ -6,6 +6,8 @@ var CANVAS_HEIGHT = window.innerHeight -20 || 420;
 
 var TILE_SIZE = 10;
 
+var PLAYER_DEFAULT_GROUP_ID = 99;
+
 
 var log = function( text ) {
 	// pass;
@@ -63,6 +65,13 @@ var Game = {
 		.bind( 'CallServant', function( actor ) {
 			_this._createServant( actor );
 		});
+
+		/*
+		var canvas = document.querySelector('canvas');
+		var canvas_context = canvas.getContext("2d");
+		canvas_context.textBaseline = 'middle';
+		canvas_context.textAlign = 'center';
+		*/
 
 		if ( callback ) {
 			callback();
@@ -225,7 +234,7 @@ var Game = {
 		var player = Crafty.e("Player")
 				.attr({ x: pos.x, y: pos.y } );
 
-		player.groupId = groupId || 9999;
+		player.groupId = groupId || PLAYER_DEFAULT_GROUP_ID;
 		player.color( this._playerColor );
 
 		if ( this.shouldAddSkill ) {
@@ -264,6 +273,33 @@ var Game = {
 		}
 
 		this._addTask( actor );
+	},
+
+	base : function( count ) {
+		count = parseInt( count || 2 );
+
+		if ( this._groupCount ) {
+			randomCreateEntity( this._groupCount -1, this.battleMap, function( i ) {
+				var building = Crafty.e("BaseBuilding");
+				building.setGroupId( i + 1 );
+				return building;
+			});
+
+			if ( Crafty( 'Player' ).length ) {
+				randomCreateEntity( 1, this.battleMap, function( i ) {
+					var building = Crafty.e("BaseBuilding");
+					building.setGroupId( Crafty( 'Player' ).get(0).groupId );
+					return building;
+				});
+			}
+
+		} else {
+
+			randomCreateEntity( count, this.battleMap, function( i ) {
+				return Crafty.e("BaseBuilding");
+			});
+		}
+
 	},
 
 	skill : function( i, compName ) {

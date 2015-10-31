@@ -122,6 +122,16 @@ function randPosition( w, h ) {
 	return {x:x, y:y };
 }
 
+function besidePos( x, y, offset, w, h ) {
+	w = w || 0;
+	h = h || 0;
+	x = x + randInt( -offset, offset );
+	y = y + randInt( -offset, offset );
+
+	var pos = fixPos( {x: x, y: y}, w, h );
+	return pos;
+}
+
 function randomCreateEntity( count, map, callback ) {
 	var i = 0;
 	var entity = null;

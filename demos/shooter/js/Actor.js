@@ -1,5 +1,102 @@
 
-Crafty.c( "Actor" );
+Crafty.c( "Actor", {
+	init: function() {
+		this.groupId = 0;
+		this.leader = 0;
+	}
+
+});
+
+Crafty.c( "Life", {
+	init: function( config ) {
+		this.requires( 'Tween' )
+
+		this.maxHP = 100;
+		this.HP = this.maxHP;
+
+		this.isDead = false;
+	},
+
+	addHPBar : function() {
+		this.hpBar = Crafty.e( '2D, Canvas, Color')
+						.attr( {x: this.x, y:this.y+this.h-2, w:this.w, h:2} )
+						.color( 'red' );
+		this.attach( this.hpBar );
+	},
+
+	changeHP : function( offset ) {
+		this.HP += offset;
+
+		if ( this.HP > this.maxHP ) {
+			this.HP = this.maxHP;
+		}
+
+		var width = ( this.HP < 0 ? 0 : this.HP ) / this.maxHP * this.w;
+		this.hpBar.attr( {w: width} );
+
+		if ( this.HP <= 0 ) {
+			this.die();
+		}
+	},
+
+	hurt: function( damage, attackerId ) {
+		if ( damage <= 0 ) {
+			return;
+		}
+
+		if ( attackerId === this.getId() ) {
+			return;
+		}
+
+		this.changeHP( -1 * damage );
+		this.beAttacked( damage, attackerId );
+
+	},
+
+	beAttacked : function( damage, attackerId ) {
+		if ( ! this.isDead ) {
+			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId, targetId: this.getId() } );
+		}
+	},
+
+	lastDamage : 0,
+	lastDamageTime : + new Date(),
+
+	/**
+	 * 遭受足够的攻击
+	 */
+	damageEnough : function( damage, standard ) {
+		var now = + new Date();
+		var isTimeout = ( now - this.lastDamageTime ) / 1000 > 3;
+
+		this.lastDamage += damage;
+		this.lastDamageTime = now;
+
+		if ( isTimeout ) {
+			this.lastDamage = 0;
+			return false;
+		}
+
+		if ( this.lastDamage > standard ) {
+			this.lastDamage = 0;
+			return true;
+		}
+
+		return false;
+	},
+
+	_destroy : function() {
+	},
+
+	die: function() {
+		if ( ! this.isDead ) {
+			this._destroy();
+			this.isDead = true;
+			die( this );
+		}
+	}
+
+});
 
 /**
  * 可被继承的角色
@@ -24,13 +121,8 @@ Crafty.c( "ActorBase", {
 
 		this.taskManager = new TaskManager();
 
-		this.isDead = false;
-
 		this.groupId = this.config.groupId;
 		this.leader = this.config.leader;
-
-		this.maxHP = this.config.maxHP;
-		this.HP = this.maxHP;
 
 		this.buffers = { 
 			speed : 0,
@@ -42,7 +134,7 @@ Crafty.c( "ActorBase", {
 		this._movement = { x: 0, y: 0 };
 		this._targetPosition = { x: 0, y: 0 };
 
-		this.requires( 'Actor, Skill, 2D, Canvas, Color, Tween, Collision, Mouse' )
+		this.requires( 'Actor, Life, Skill, 2D, Canvas, Color, Tween, Collision, Mouse' )
 			.attr( { x:100, y:100, w:_root.config.w, h:_root.config.h, rotation:0, running:false } )
 			.color('orange');
 
@@ -51,19 +143,17 @@ Crafty.c( "ActorBase", {
 						.color( 'black' );
 		this.attach( this.gunPipe );
 
-		this.hpBar = Crafty.e( '2D, Canvas, Color')
-						.attr( {x: this.x, y:this.y+_root.h-2, w:_root.w, h:2} )
-						.color( 'red' );
-		this.attach( this.hpBar );
+		this.maxHP = this.config.maxHP;
+		this.HP = this.maxHP;
+		this.addHPBar();
 
 		this.origin( this.w /2, this.h /2 );
 
-		this.onHit( 'Wall',  function( e ) {
-			//this.stopMovement( e );
+		this.onHit( 'Obstacle',  function( e ) { //Wall, Building
 			this.trigger( 'HitMaterial', e ); 
 		});
 
-		this.onHit( 'Player',  function( e ) {
+		this.onHit( 'Life',  function( e ) {
 			this.stopMovement( e );
 		});
 
@@ -72,10 +162,6 @@ Crafty.c( "ActorBase", {
 			if ( obstacle &&  obstacle.owner !== this.getId() ) {
 				this.stopMovement( e );
 			}
-		});
-
-		this.onHit( 'Soldier',  function( e ) {
-			this.stopMovement( e );
 		});
 
 		this.onHit( 'Rock', function() {
@@ -112,9 +198,7 @@ Crafty.c( "ActorBase", {
 				dashBullet.running = true;
 				var _this = this;
 				this.stopTweenMove();
-				this.dashBack( dashBullet.dash, Crafty( dashBullet.owner ), function() {
-					_this.beAttacked( damage, attackerId );
-				});
+				this.dashBack( dashBullet.dash, Crafty( dashBullet.owner ) );
 				dashBullet.destroy();
 			}
 		});
@@ -147,43 +231,6 @@ Crafty.c( "ActorBase", {
 		this.weapon = new weaponClass( this.getId() );
 
 		this.trigger( 'SwitchWeapon', this.weapon );
-	},
-
-	hurt: function( damage, attackerId ) {
-		if ( damage <= 0 ) {
-			return;
-		}
-
-		if ( attackerId === this.getId() ) {
-			return;
-		}
-
-		this.changeHP( -1 * damage );
-		this.beAttacked( damage, attackerId );
-
-	},
-
-	beAttacked : function( damage, attackerId ) {
-		if ( ! this.isDead ) {
-			Crafty.trigger( 'BeAttacked', {damage: damage, attackerId: attackerId, targetId: this.getId() } );
-		}
-	},
-
-	changeHP : function( offset ) {
-		this.HP += offset;
-
-		if ( this.HP > this.maxHP ) {
-			this.HP = this.maxHP;
-		}
-
-		var width = ( this.HP < 0 ? 0 : this.HP ) / this.maxHP * this.w;
-		this.hpBar.attr( {w: width} );
-
-		if ( this.HP <= 0 ) {
-			this.die();
-		}
-
-		//log( 'id: ' + this.getId() + ' hp: ' + this.HP + ' damage:' + doffset );///
 	},
 
 	getAttackDistance : function() {
@@ -651,7 +698,7 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 			}
 
 			var damage = data.damage;
-			if ( this.needToShun( damage ) ) {
+			if ( this.damageEnough( damage, this.maxHP / 10 ) ) {
 				log( this.getId() + ' be attacked, need to shun, attackerId:' + data.attackerId );
 				if ( this.fsm ) {
 					this.fsm.beAttacked( data.attackerId );
@@ -692,7 +739,7 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 								.origin( 'center' )
 								.attr( {w: size, h: size} );
 
-		var checkComponet = 'Actor, Soldier, Rock';
+		var checkComponet = 'Actor, Soldier, Rock, BaseBuilding';
 		this.visibleFrame.checkHits( checkComponet )
 				.bind( 'HitOn', function( hitData ) {
 					_this.trigger( 'MeetEnemy', hitData );
@@ -784,29 +831,6 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 	hasObstacle: function( obj ) {
 		var exist = Game.battleMap.checkObstacal( this.x, this.y, obj.x, obj.y );
 		return exist;
-	},
-
-	lastDamage : 0,
-	lastDamageTime : + new Date(),
-
-	needToShun : function( damage ) {
-		var now = + new Date();
-		var isTimeout = ( now - this.lastDamageTime ) / 1000 > 3;
-
-		this.lastDamage += damage;
-		this.lastDamageTime = now;
-
-		if ( isTimeout ) {
-			this.lastDamage = 0;
-			return false;
-		}
-
-		if ( this.lastDamage > this.maxHP / 10 ) {
-			this.lastDamage = 0;
-			return true;
-		}
-
-		return false;
 	}
 
 
@@ -826,4 +850,92 @@ Crafty.c( "Servant", extend( Crafty.components().Soldier, {
 	}
 
 }) );
+
+/**
+ *  基地建筑
+ */
+Crafty.c( "BaseBuilding",  {
+	init: function() {
+		var _this = this;
+
+		this.groupId = 0;
+
+		this.size = 86;
+		this.requires( 'Life, 2D, Canvas, Color, Collision, Text' )
+			.color('DARKKHAKI')
+			.textFont( { size: '48px', weight: 'bold' } )
+			.text( 'B' )
+			.attr( { w:this.size, h:this.size } );
+
+		this.maxHP = 2000;
+		this.HP = this.maxHP;
+
+		this.addHPBar();
+
+		this.onHit( 'Bullet', function( bullets ) {
+			var damage = 0, bullet;
+			for ( var i in bullets ) {
+				bullet = bullets[i].obj;
+				if ( this.groupId === bullet.groupId ) {
+					continue;
+				}
+				damage += bullet.damage;
+			}
+
+			if ( damage === 0 ) {
+				return;
+			}
+
+			var attackerId = bullet.owner;
+			this.hurt( damage, attackerId );
+		});
+
+		this.bind( 'BeAttacked', function( data ) {
+			if ( data.attackerId === this.getId() ) {
+				return;
+			}
+
+			if ( data.targetId !== this.getId() ) {
+				return;
+			}
+
+			if ( Crafty( data.attackerId ).groupId === this.groupId ) {
+				return;
+			}
+
+			var damage = data.damage;
+			if ( this.damageEnough( damage, this.maxHP / 20 ) ) {
+				log( this.getId() + ' be attacked, need to save attackerId:' + data.attackerId );
+				Crafty.trigger( 'BaseBuildingBeAttacked', data );
+			}
+		});
+
+		// 每秒回血
+		this.cureHP = 40;
+
+		this._cureHandle = setInterval( function() {
+			if ( _this.HP < _this.maxHP ) {
+				_this.changeHP( _this.cureHP );
+			}
+		}, 1000 );
+
+		this._destroy = this._destroy_override;
+	},
+
+	setGroupId : function( groupId ) {
+		this.groupId = groupId;
+		this.text( 'B' + groupId )
+			.attr( { w:this.size, h:this.size } );
+	},
+
+	// @Override
+	_destroy_override : function() {
+		if ( this._cureHandle ) {
+			clearInterval( this._cureHandle );
+		}
+		Crafty.trigger( 'BaseBuildingDestroy', this );
+	}
+
+
+});
 

@@ -1,4 +1,7 @@
 
+Crafty.c( 'Obstacle', {
+});
+
 Crafty.c( 'SkillObstacle', {
 });
 
@@ -18,7 +21,7 @@ Crafty.c( 'Rock', {
 
 Crafty.c('Wall', {
 	init: function() {
-		this.requires('2D, Canvas, Color')
+		this.requires('Obstacle, 2D, Canvas, Color')
 		.color('gray');
 	}
 });

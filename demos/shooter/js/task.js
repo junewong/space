@@ -15,18 +15,24 @@ TaskManager.prototype = {
 		if ( ! len  ) {
 			return null;
 		}
-		var task = this.tasks[ len -1 ];
+		var task, i = len;
+		while ( --i >= 0 ) {
+			task = this.tasks[ i ];
+			if ( task && task.check.apply( task, arguments ) ) {
+				break;
+			}
+		}
 		return task;
 	},
 	
 	execute : function() {
 		var task = this.getTask.apply( this, arguments );
-		if ( task && task.check() ) {
+		if ( task ) {
 			// 如果最后一个是回调函数，则将它替换成新准备的callback函数，
 			// 等task的excute里回调该callback函数之后，
 			// 才调用这个真正的回调函数
 			var args = argumentsToArray( arguments );
-			var len = args.length
+			var len = args.length;
 			var last = len > 0 ? args[ len - 1 ] : null;
 			if ( last && typeof last === 'function'  ) {
 				args = args.slice( 0, len - 1 );
@@ -77,11 +83,7 @@ var RandomFightTask = Class( TaskBase, {
 		}
 
 		var offset = 100;
-
-		var x = actor.x + randInt( -offset, offset );
-		var y = actor.y + randInt( -offset, offset );
-
-		var pos = fixPos( {x: x, y: y}, me.w, me.h );
+		var pos = besidePos( actor.x, actor.y, offset, me.w, me.h );
 
 		me.rotateAndMoveTo( pos, true, function() {
 			if ( callback && typeof callback === 'function' ) {
@@ -108,6 +110,61 @@ var RandomFightTask = Class( TaskBase, {
 	}
 });
 
+/**
+ * 攻击对方的基地，保卫自己的基地
+ */
+var BaseBuildingFightTask = Class( TaskBase, {
+	init : function( ) {
+		Crafty.bind( 'BaseBuildingDestroy', function( building ) {
+			var groupId = building.groupId;
+			var text = '第' + groupId + '组取得胜利！';
+			Crafty.e( '2D, Canvas, Text')
+					.textFont( { size: '80px', weight: 'bold' } )
+					.text( text )
+					.attr( { x:CANVAS_WIDTH/2 - 300, y: CANVAS_HEIGHT/2, w:CANVAS_WIDTH, h:CANVAS_HEIGHT } );
+			setTimeout( function() {
+				Crafty.pause();
+			}, 500 );
+		});
+	},
+
+	check : function( me ) {
+		return !! this._getTargetBaseBuilding( me );
+	},
+
+	execute : function( me, callback )  {
+		var building = this._getTargetBaseBuilding( me );
+		if ( ! building ) {
+			return false;
+		}
+
+		var offset = 100;
+		var pos = besidePos( building.x, building.y, offset, me.w, me.h );
+
+		me.rotateAndMoveTo( pos, true, function() {
+			if ( callback && typeof callback === 'function' ) {
+				callback();
+			}
+		});
+		return true;
+	},
+
+	_getTargetBaseBuilding : function( me )  {
+		var building;
+		Crafty( 'BaseBuilding' ).each( function() {
+			if ( this.groupId > 0 && this.groupId === me.groupId ) {
+				return;
+			}
+			if ( ! building ) {
+				building = this;
+			}
+		});
+
+		return building;
+	}
+});
+
 var TASK_MAPS = {
-	'randomFight' : RandomFightTask
+	'randomFight' : RandomFightTask,
+	'baseBuildingFight' : BaseBuildingFightTask
 };

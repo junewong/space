@@ -168,7 +168,7 @@ var SunShineSkill = function( owner, group ) {
 						.one( 'TweenEnd', function() {
 							this.destroy();
 						})
-						.onHit( "Wall", function() {
+						.onHit( "Obstacle", function() {
 							this.destroy();
 						})
 						.onHit( "SkillObstacle", function() {
@@ -676,14 +676,14 @@ var Buffer = function( property, value, timeout, callback ) {
 
 		log( 'actor, id: ' + actor.getId() + ' add buffer for ' + property + ' as: ' + actor.buffers[ property ] + ' now.' );
 
-		if ( timeout > 0 ) {
+		if ( this.timeout > 0 ) {
 			setTimeout ( function() {
 				actor.buffers[ property ] -= value;
 				log( 'actor, id: ' + actor.getId() + ' remove buffer for ' + property + ' as: ' + actor.buffers[ property ] + ' now.' );
 				if ( callback ) {
 					callback();
 				}
-			}, timeout * 1000 );
+			}, this.timeout * 1000 );
 		}
 	};
 
