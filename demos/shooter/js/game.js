@@ -66,12 +66,15 @@ var Game = {
 			_this._createServant( actor );
 		});
 
+		this._changeZIndex();
+
 		/*
 		var canvas = document.querySelector('canvas');
 		var canvas_context = canvas.getContext("2d");
 		canvas_context.textBaseline = 'middle';
 		canvas_context.textAlign = 'center';
 		*/
+
 
 		if ( callback ) {
 			callback();
@@ -187,7 +190,7 @@ var Game = {
 			color = color || _this._groupColors[ index ];
 			actor.color( color );
 
-			actor.groupId = groupId || actor.getId();
+			actor.setGroupId( groupId || actor.getId() );
 
 			_this._addTask( actor );
 
@@ -408,6 +411,12 @@ var Game = {
 		log =  function( text ) {
 			console.log( text );
 		};
+	},
+
+	_changeZIndex : function() {
+		Crafty( 'Actor' ).each( function() {
+			this.attr( {z : this._globalZ + 1} );
+		});
 	},
 
 	_printFsmStates : function() {

@@ -23,17 +23,17 @@
 
 <script>
 
-var targetX = 450, targetY = 450;
+var targetX = 450, targetY = 20;
 
 
-Game.init( 'wall:60, logger' );
+Game.init( 'wall:40, logger' );
 
 Crafty.e( '2D, DOM, Color' )
 	.attr({x: targetX, y: targetY, w:20, h:20 } )
 	.color( 'red' );
 
 var soldier = Crafty.e("Soldier")
-			.attr({x: 20, y: 20} )
+			.attr({x: 520, y: 250} )
 			.color( 'purple' );
 //soldier.waiting = true;
 soldier.debugSearchPathing = true;
@@ -43,7 +43,8 @@ setTimeout( function() {
 	//soldier.attr( {x: 10, y:10 } );
 	soldier.waiting = false;
 	soldier.stopTweenMove();
-	soldier.moveTo( {x: targetX, y:targetY}, true );
+	//soldier.moveTo( {x: targetX, y:targetY}, true );
+	soldier.roundTo( {x: targetX, y:targetY}, true );
 }, 300);
 
 </script>

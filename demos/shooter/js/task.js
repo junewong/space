@@ -1,12 +1,23 @@
 /**
  * 任务管理器
  */
-var TaskManager = function () {
+var TaskManager = function ( owner, groupId ) {
+	this.groupId = groupId;
+	this.owner = owner;
 	this.tasks = [];
 };
 TaskManager.prototype = {
 
+	setGroupId : function( groupId ) {
+		this.groupId = groupId;
+		for ( var i in this.tasks ) {
+			this.tasks[i].groupId = groupId;
+		}
+	},
+
 	add : function( task ) {
+		task.owner = this.owner;
+		task.groupId = this.groupId;
 		this.tasks.push( task );
 	},
 
@@ -53,6 +64,9 @@ TaskManager.prototype = {
  * 任务的基类
  */
 var TaskBase = Class({
+	owner : 0,
+	groupId : 0,
+
 	init : function() {
 	},
 
@@ -115,9 +129,13 @@ var RandomFightTask = Class( TaskBase, {
  */
 var BaseBuildingFightTask = Class( TaskBase, {
 	init : function( ) {
+		var _this = this;
+
+
+		// 基地被摧毁
 		Crafty.bind( 'BaseBuildingDestroy', function( building ) {
 			var groupId = building.groupId;
-			var text = '第' + groupId + '组取得胜利！';
+			var text = '第' + groupId + '组基地被摧毁！';
 			Crafty.e( '2D, Canvas, Text')
 					.textFont( { size: '80px', weight: 'bold' } )
 					.text( text )
@@ -126,14 +144,73 @@ var BaseBuildingFightTask = Class( TaskBase, {
 				Crafty.pause();
 			}, 500 );
 		});
+
+		this.checking = false;
+
+		Crafty.bind( 'BaseBuildingBeAttacked', function( data ) {
+			var building = Crafty( data.targetId );
+			if ( ! building || building.groupId != _this.groupId ) {
+				return;
+			}
+			if ( _this.checking ) {
+				return;
+			}
+			_this.checking = true;
+			_this._checkDefense( Crafty( _this.owner ), function() {
+				_this.checking = false;
+			});
+		});
 	},
+
 
 	check : function( me ) {
 		return !! this._getTargetBaseBuilding( me );
 	},
 
 	execute : function( me, callback )  {
+		if ( this._checkDefense( me, callback ) ) {
+			return true;
+		}
+		return this._attackToBase( me, callback );
+	},
+
+	_checkDefense : function( me, callback ) {
+		var building = this._getMyBaseBuilding( me );
+		if ( ! building ) {
+			return;
+		}
+		if ( building.isInWarningState() ) {
+			if ( Math.random() < 0.3 ) {
+				return this._defenseToBase( me, callback );
+			}
+		}
+		if ( building.isInDangerState() ) {
+			if ( Math.random() < 0.85 ) {
+				return this._defenseToBase( me, callback );
+			}
+		}
+		return false;
+	},
+
+	_attackToBase : function( me, callback ) {
 		var building = this._getTargetBaseBuilding( me );
+		if ( ! building ) {
+			return false;
+		}
+
+		var offset = 100;
+		var pos = besidePos( building.x, building.y, offset, building.w, building.h );
+
+		me.rotateAndMoveTo( pos, true, function() {
+			if ( callback && typeof callback === 'function' ) {
+				callback();
+			}
+		});
+		return true;
+	},
+
+	_defenseToBase : function( me, callback ) {
+		var building = this._getMyBaseBuilding( me );
 		if ( ! building ) {
 			return false;
 		}
@@ -157,6 +234,18 @@ var BaseBuildingFightTask = Class( TaskBase, {
 			}
 			if ( ! building ) {
 				building = this;
+			}
+		});
+
+		return building;
+	},
+
+	_getMyBaseBuilding : function( me )  {
+		var building;
+		Crafty( 'BaseBuilding' ).each( function() {
+			if ( this.groupId > 0 && this.groupId === me.groupId ) {
+				building = this;
+				return;
 			}
 		});
 

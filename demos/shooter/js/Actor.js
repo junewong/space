@@ -119,10 +119,11 @@ Crafty.c( "ActorBase", {
 
 		}, config || {} );
 
-		this.taskManager = new TaskManager();
 
 		this.groupId = this.config.groupId;
 		this.leader = this.config.leader;
+
+		this.taskManager = new TaskManager( this.getId(), this.groupId );
 
 		this.buffers = { 
 			speed : 0,
@@ -213,6 +214,11 @@ Crafty.c( "ActorBase", {
 		//this.switchWeapon( 0 );
 		this.switchWeapon( randInt( 0, WEAPON_LIST.length-1 ) );
 
+	},
+
+	setGroupId : function( groupId ) {
+		this.groupId = groupId;
+		this.taskManager.setGroupId( groupId );
 	},
 
 	switchWeapon : function( index ) {
@@ -426,6 +432,7 @@ Crafty.c( "ActorBase", {
 		if ( ! this.isDead ) {
 			this.isDead = true;
 			this.killServants();
+			delete this.taskManager;
 			die( this );
 		}
 	}
@@ -870,6 +877,9 @@ Crafty.c( "BaseBuilding",  {
 		this.maxHP = 2000;
 		this.HP = this.maxHP;
 
+		this.isSafeState = true;
+		this.isAttacked = false;
+
 		this.addHPBar();
 
 		this.onHit( 'Bullet', function( bullets ) {
@@ -906,7 +916,13 @@ Crafty.c( "BaseBuilding",  {
 			var damage = data.damage;
 			if ( this.damageEnough( damage, this.maxHP / 20 ) ) {
 				log( this.getId() + ' be attacked, need to save attackerId:' + data.attackerId );
+				this.isAttacked = true;
+				this.isSafeState = ! this.isInWarningState();
 				Crafty.trigger( 'BaseBuildingBeAttacked', data );
+
+			} else {
+				this.isAttacked = false;
+
 			}
 		});
 
@@ -920,6 +936,14 @@ Crafty.c( "BaseBuilding",  {
 		}, 1000 );
 
 		this._destroy = this._destroy_override;
+	},
+
+	isInWarningState : function() {
+		return this.HP / this.maxHP < 0.7;
+	},
+
+	isInDangerState : function() {
+		return this.HP / this.maxHP < 0.2;
 	},
 
 	setGroupId : function( groupId ) {
