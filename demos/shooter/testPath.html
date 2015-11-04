@@ -5,9 +5,12 @@
 	<title></title>
 	<script src="./libs/crafty-min.js"></script>
 	<script src="./libs/state-machine.min.js"></script>
+	<script src="./js/base.js"></script>
 	<script src="./js/map.js"></script>
 	<script src="./js/global.js"></script>
 	<script src="./js/Weapon.js"></script>
+	<script src="./js/skill.js"></script>
+	<script src="./js/task.js"></script>
 	<script src="./js/material.js"></script>
 	<script src="./js/Action.js"></script>
 	<script src="./js/fsm.js"></script>
@@ -39,7 +42,7 @@ var soldier = Crafty.e("Soldier")
 			.attr({x: 200, y: 380} )
 			.color( 'purple' );
 soldier.debugSearchPathing = true;
-soldier.waiting = true;
+//soldier.waiting = true;
 
 var targetX = 150, targetY = 140;
 

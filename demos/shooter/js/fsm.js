@@ -25,7 +25,7 @@ Crafty.c( "ActorFsm", {
 				{ name: 'attackNotEffect', from: 'attack', to: 'shun' },
 				{ name: 'beBlocked', from: ['wand', 'shun', 'free'], to: 'alongPath' },
 				{ name: 'beStopMovement', from: ['wand', 'shun', 'alongPath' ], to: 'free' },
-				{ name: 'wandOver', from: 'wand', to: 'free' },
+				{ name: 'wandOver', from: ['wand', 'alongPath'], to: 'free' },
 				{ name: 'attackOver', from: 'attack', to: 'free' },
 				{ name: 'shunOver', from: 'shun', to: 'free' },
 				{ name: 'pathOver', from: 'alongPath', to: 'free' }
@@ -337,7 +337,7 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					if ( ! paths || paths.length === 0 ) {
-						wandOver();
+						fsm.wandOver();
 						return 0;
 					}
 
@@ -357,7 +357,7 @@ Crafty.c( "ActorFsm", {
 						if ( ! path ) {
 							log( 'No path to walk.' );
 							_this.searchingPath = false;
-							wandOver();
+							fsm.wandOver();
 							return 0;
 						}
 						//log( 'next path, i:' + i + ' path:' + path );///
