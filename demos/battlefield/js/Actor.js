@@ -3,7 +3,7 @@ Crafty.c( "Actor", {
 	init: function() {
 		this.groupId = 0;
 		this.leader = 0;
-	}
+	},
 
 });
 
@@ -136,7 +136,7 @@ Crafty.c( "ActorBase", {
 		this._targetPosition = { x: 0, y: 0 };
 
 		this.requires( 'Actor, Life, Skill, 2D, Canvas, Color, Tween, Collision, Mouse, Box2D' )
-			.attr( { x:100, y:100, w:_root.config.w, h:_root.config.h, rotation:0, running:false } )
+			.attr( { x:0, y:0, w:_root.config.w, h:_root.config.h, rotation:0, running:false } )
 			.color('orange');
 
 		this.box2d({
@@ -220,14 +220,20 @@ Crafty.c( "ActorBase", {
 		});
 
 		// 武器
-		//this.switchWeapon( 0 );
-		this.switchWeapon( randInt( 0, WEAPON_LIST.length-1 ) );
+		this.switchWeapon( 0 );
+		//this.switchWeapon( randInt( 0, WEAPON_LIST.length-1 ) );
 
 	},
 
 	setGroupId : function( groupId ) {
 		this.groupId = groupId;
 		this.taskManager.setGroupId( groupId );
+	},
+
+	changeZIndex: function( z ) {
+		this.attr( {z : z} );
+		this.gunPipe.attr( {z : z + 1} );
+		this.hpBar.attr( {z : z + 2} );
 	},
 
 	switchWeapon : function( index ) {
@@ -777,6 +783,20 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 		this.updateVisibleFrame();
 	},
 
+	checkVisitEnemy : function() {
+		var checkComponet = ['Actor', 'Soldier', 'Rock', 'BaseBuilding'];
+		for ( var i in checkComponet ) {
+			var all = this.visibleFrame.hit( checkComponet[i] );
+			for ( var j in all ) {
+				var o = all[j];
+				if ( o !== this || ( o.groupId && o.groupId !== this.groupId ) ) {
+					return o;
+				}
+			}
+		}
+		return false;
+	},
+
 	updateVisibleFrame : function() {
 		//var size = this.weapon.config.distance;
 		var size = this.visibleDistance > this.weapon.config.distance * 0.8 ? this.visibleDistance : this.weapon.config.distance * 0.8;
@@ -825,12 +845,12 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 		}
 
 		if ( this.fsm ) {
-			this.fsm.beBlocked( paths );
+			//this.fsm.beBlocked( paths );
 
 		} else {
 			var _this = this;
 			setTimeout( function() {
-				_this.fsm.beBlocked( paths );
+				//_this.fsm.beBlocked( paths );
 			}, 300 );
 		}
 	},
@@ -869,6 +889,9 @@ Crafty.c( "Servant", extend( Crafty.components().Soldier, {
 
 }) );
 
+Crafty.c( "BuildingBase",  {
+});
+
 /**
  *  基地建筑
  */
@@ -879,7 +902,7 @@ Crafty.c( "BaseBuilding",  {
 		this.groupId = 0;
 
 		this.size = 86;
-		this.requires( 'Life, 2D, Canvas, Color, Collision, Text' )
+		this.requires( 'BuildingBase, Life, ActorCreator, 2D, Canvas, Color, Collision, Text' )
 			.color('DARKKHAKI')
 			.textFont( { size: '48px', weight: 'bold' } )
 			.text( 'B' )
@@ -937,6 +960,14 @@ Crafty.c( "BaseBuilding",  {
 			}
 		});
 
+		//startCute();
+
+		this.initCreateActorTimer();
+
+		this._destroy = this._destroy_override;
+	},
+
+	startCute : function() {
 		// 每秒回血
 		this.cureHP = 20;
 
@@ -945,8 +976,6 @@ Crafty.c( "BaseBuilding",  {
 				_this.changeHP( _this.cureHP );
 			}
 		}, 1000 );
-
-		this._destroy = this._destroy_override;
 	},
 
 	isInWarningState : function() {
@@ -968,9 +997,47 @@ Crafty.c( "BaseBuilding",  {
 		if ( this._cureHandle ) {
 			clearInterval( this._cureHandle );
 		}
+		if ( this.clearCreateActorHandler ) {
+			this.clearCreateActorHandler();
+		}
 		Crafty.trigger( 'BaseBuildingDestroy', this );
 	}
 
 
 });
 
+
+/**
+ * 造兵功能
+ */
+Crafty.c( "ActorCreator",  {
+
+	_createActorHandler : null,
+
+	_maxCreateActor : 20,
+
+	_currentCreateActor : 0,
+
+	createActor : function( count ) {
+		var actor = Game._createSoldier( count, this.groupId );
+	},
+
+	initCreateActorTimer : function() {
+		var _this = this;
+		this._createActorHandler = setInterval( function() {
+			_this.createActor( 1 );
+			_this._currentCreateActor ++;
+
+			if ( _this._currentCreateActor >= _this._maxCreateActor ) {
+				_this.clearCreateActorHandler();
+			}
+		}, 4000 );
+	},
+
+	clearCreateActorHandler : function() {
+		if ( this._createActorHandler ) {
+			clearInterval( this._createActorHandler );
+		}
+	}
+
+});
