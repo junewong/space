@@ -179,11 +179,20 @@ var Game = {
 		});
 	},
 
-	_createSoldier : function( count, groupId, color ) {
+	_createSoldier : function( count, groupId, color, pos ) {
 		var _this = this;
+		
+		var building = this._getBaseBuildingByGroupId( groupId );
 
 		randomCreateEntity( count, null, function( i ) {
 			var actor = Crafty.e("Soldier");
+
+			if ( building ) {
+				pos = besidePos( building.x, building.y, 40, building.w, building.h );
+			}
+			if ( pos ) {
+				actor.attr( pos );
+			}
 
 			var index = 1;
 			if ( groupId ) {
@@ -282,12 +291,23 @@ var Game = {
 	},
 
 	base : function( count ) {
+		var _this = this;
+
 		count = parseInt( count || 2 );
 
-		if ( this._groupCount ) {
+		var names = [ 'left', 'right', 'top', 'bottom' ];
+
+		if ( this._groupCount > 1 ) {
 			randomCreateEntity( this._groupCount -1, this.battleMap, function( i ) {
 				var building = Crafty.e("BaseBuilding");
 				building.setGroupId( i + 1 );
+				var posName = names[ i ];
+				if ( posName ) {
+					var pos = _this._getPosByName( posName, building.w, building.h );
+					if ( pos ) {
+						building.attr( pos );
+					}
+				}
 				return building;
 			});
 
@@ -348,7 +368,7 @@ var Game = {
 		Crafty.bind( 'ActorDead', function( entity ) {
 			var groupId = entity.groupId;
 			if ( components.indexOf( 'Soldier' ) > -1 && entity.has( 'Soldier' ) ) {
-				var groupId = entity.groupId;
+				groupId = entity.groupId;
 				setTimeout( function() {
 					if ( _this._getSoldierCount( groupId ) <  _this.soldierCount ) {
 						_this._createSoldier( 1, groupId );
@@ -357,7 +377,7 @@ var Game = {
 			}
 
 			if ( components.indexOf( 'Player' ) > -1 && entity.has( 'Player' ) ) {
-				var groupId = entity.groupId;
+				groupId = entity.groupId;
 				setTimeout( function() {
 					if ( Crafty( 'Player' ).length <  1 ) {
 						_this._createPlayer( groupId );
@@ -416,9 +436,51 @@ var Game = {
 		};
 	},
 
+	_getBaseBuildingByGroupId : function( groupId )  {
+		var building;
+		Crafty( 'BaseBuilding' ).each( function() {
+			if ( this.groupId > 0 && this.groupId === groupId ) {
+				building = this;
+			}
+		});
+
+		return building;
+	},
+
+	_getPosByName : function( name, w, h ) {
+		w = w || 0;
+		h = h || 0;
+		var padding = 30;
+		var x, y;
+		if ( name === 'left' ) {
+			x = padding;
+			y = ( CANVAS_HEIGHT - h  )/2;
+
+		} else if ( name === 'right' ) {
+			x = CANVAS_WIDTH - w - padding ;
+			y = ( CANVAS_HEIGHT - h  )/2;
+
+		} else if ( name === 'top' ) {
+			x = ( CANVAS_WIDTH - w ) /2;
+			y = padding;
+
+		} else if ( name === 'bottom' ) {
+			x = ( CANVAS_WIDTH - w ) /2;
+			y = CANVAS_HEIGHT - padding - h;
+		}
+		
+		if ( x === undefined || y === undefined ) {
+			return null;
+		}
+
+		return point(x, y );
+
+	},
+
+
 	_changeZIndex : function() {
 		Crafty( 'Actor' ).each( function() {
-			this.attr( {z : this._globalZ + 1} );
+			this.changeZIndex( this._globalZ + 1 );
 		});
 	},
 
