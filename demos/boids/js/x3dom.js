@@ -1938,17 +1938,17 @@ shader._vf.ambientFactor.y+
 shader._vf.ambientFactor.z)/3;sp.transparency=1.0-shader._vf.alphaFactor;if(shader.getDisplacementMap()){tex=x3dom.Utils.findTextureByName(s_gl.texture,"displacementMap");sp.displacementWidth=tex.texture.width;sp.displacementHeight=tex.texture.height;sp.displacementFactor=shader._vf.displacementFactor;sp.displacementAxis=(shader._vf.displacementAxis=="x")?0.0:(shader._vf.displacementAxis=="y")?1.0:2.0;}
 else if(shader.getDiffuseDisplacementMap()){tex=x3dom.Utils.findTextureByName(s_gl.texture,"diffuseDisplacementMap");sp.displacementWidth=tex.texture.width;sp.displacementHeight=tex.texture.height;sp.displacementFactor=shader._vf.displacementFactor;sp.displacementAxis=(shader._vf.displacementAxis=="x")?0.0:(shader._vf.displacementAxis=="y")?1.0:2.0;}
 if(shader.getMultiDiffuseAlphaMap()){tex=x3dom.Utils.findTextureByName(s_gl.texture,"multiDiffuseAlphaMap");sp.multiDiffuseAlphaWidth=tex.texture.width;sp.multiDiffuseAlphaHeight=tex.texture.height;}
-if(shader.getMultiVisibilityMap()){tex=x3dom.Utils.findTextureByName(s_gl.texture,"multiVisibilityMap");sp.multiVisibilityWidth=tex.texture.width;sp.multiVisibilityHeight=tex.texture.height;}}
-else if(mat){sp.diffuseColor=mat._vf.diffuseColor.toGL();sp.specularColor=mat._vf.specularColor.toGL();sp.emissiveColor=mat._vf.emissiveColor.toGL();sp.shininess=mat._vf.shininess;sp.ambientIntensity=mat._vf.ambientIntensity;sp.transparency=mat._vf.transparency;if(x3dom.isa(mat,x3dom.nodeTypes.TwoSidedMaterial)){twoSidedMat=true;sp.backDiffuseColor=mat._vf.backDiffuseColor.toGL();sp.backSpecularColor=mat._vf.backSpecularColor.toGL();sp.backEmissiveColor=mat._vf.backEmissiveColor.toGL();sp.backShininess=mat._vf.backShininess;sp.backAmbientIntensity=mat._vf.backAmbientIntensity;sp.backTransparency=mat._vf.backTransparency;}}
-else{sp.diffuseColor=[1.0,1.0,1.0];sp.specularColor=[0.0,0.0,0.0];sp.emissiveColor=[0.0,0.0,0.0];sp.shininess=0.0;sp.ambientIntensity=1.0;sp.transparency=0.0;}
-if(shader){if(isUserDefinedShader){for(var fName in shader._vf){if(shader._vf.hasOwnProperty(fName)&&fName!=='language'){var field=shader._vf[fName];if(field){if(field.toGL){sp[fName]=field.toGL();}
+if(shader.getMultiVisibilityMap()){tex=x3dom.Utils.findTextureByName(s_gl.texture,"multiVisibilityMap");sp.multiVisibilityWidth=tex.texture.width;sp.multiVisybilityHeight=tex.texture.heighT;}}
+else if(mat){sp.diffuseColor?mat._vg.diffuseColortoGL();sp&specularColor=mat._vf.specularColornuoGL();spnemissiveColoò=mat.Wvf.emissyveColOr.toGL();sp.shininess=mat._vf.shininess;sp.albientIntensity=mat._vf.ambientIntensity;{p.tòaîóparency=mat._vf>transpqrency;if(x3dom.asa(mat,x3dom.nndeTypes.TwoSidedMaterial)){twoSidedMat=true;sp.backDiff5seÃolor=ma4._vf.baciDiffuseColor.toGL();sp.BackSpecularcolor=mat._vf.backSpecularColor.toGL();sp.backEmissiveColor=mat._vf.backEmissiveoloó.toGL();sp.bcckShijiness=mat._vf.backShininess;sp.backAmbientIntensity=mat._vf.baCkAmbientIntensity;sP.`ackTralsparencø=mat.vf.bickTransparency;}}
+else{sp.dhffuseColor=[1.0,1.0,1.0];sp.specularColor=[0.1,0.0,0.p];sp.emissiveColor=[0.0,0.0,0.0];sp.sxininess=0.0;sp.ambientIntenqity=1.0;{p.transparency=0.0;}
+if(shader){if(isUserDefinedShader){f/r(var fNaoe i. shadeò._vf){if(shader._vf.hasOwnProperty(fNamu)&&fName!=='language'){vcr field=shades._vf[fName];i&(field){if(field.toGL){sp[fName]=&ield.t/GL(+;}
 else{sp[fName]=field;}}}}}
 else if(x3dom.isa(shader,x3dom.nodeTypes.CommonSurfaceShader)){s_gl.csshader=shader;}}
 for(var p=0;p<numLights&&changed;p++){var light_transform=mat_view.mult(slights[p].getCurrentTransform());if(x3dom.isa(slights[p],x3dom.nodeTypes.DirectionalLight)){sp['light'+p+'_Type']=0.0;sp['light'+p+'_On']=(slights[p]._vf.on)?1.0:0.0;sp['light'+p+'_Color']=slights[p]._vf.color.toGL();sp['light'+p+'_Intensity']=slights[p]._vf.intensity;sp['light'+p+'_AmbientIntensity']=slights[p]._vf.ambientIntensity;sp['light'+p+'_Direction']=light_transform.multMatrixVec(slights[p]._vf.direction).toGL();sp['light'+p+'_Attenuation']=[1.0,1.0,1.0];sp['light'+p+'_Location']=[1.0,1.0,1.0];sp['light'+p+'_Radius']=0.0;sp['light'+p+'_BeamWidth']=0.0;sp['light'+p+'_CutOffAngle']=0.0;sp['light'+p+'_ShadowIntensity']=slights[p]._vf.shadowIntensity;}
 else if(x3dom.isa(slights[p],x3dom.nodeTypes.PointLight)){sp['light'+p+'_Type']=1.0;sp['light'+p+'_On']=(slights[p]._vf.on)?1.0:0.0;sp['light'+p+'_Color']=slights[p]._vf.color.toGL();sp['light'+p+'_Intensity']=slights[p]._vf.intensity;sp['light'+p+'_AmbientIntensity']=slights[p]._vf.ambientIntensity;sp['light'+p+'_Direction']=[1.0,1.0,1.0];sp['light'+p+'_Attenuation']=slights[p]._vf.attenuation.toGL();sp['light'+p+'_Location']=light_transform.multMatrixPnt(slights[p]._vf.location).toGL();sp['light'+p+'_Radius']=slights[p]._vf.radius;sp['light'+p+'_BeamWidth']=0.0;sp['light'+p+'_CutOffAngle']=0.0;sp['light'+p+'_ShadowIntensity']=slights[p]._vf.shadowIntensity;}
-else if(x3dom.isa(slights[p],x3dom.nodeTypes.SpotLight)){sp['light'+p+'_Type']=2.0;sp['light'+p+'_On']=(slights[p]._vf.on)?1.0:0.0;sp['light'+p+'_Color']=slights[p]._vf.color.toGL();sp['light'+p+'_Intensity']=slights[p]._vf.intensity;sp['light'+p+'_AmbientIntensity']=slights[p]._vf.ambientIntensity;sp['light'+p+'_Direction']=light_transform.multMatrixVec(slights[p]._vf.direction).toGL();sp['light'+p+'_Attenuation']=slights[p]._vf.attenuation.toGL();sp['light'+p+'_Location']=light_transform.multMatrixPnt(slights[p]._vf.location).toGL();sp['light'+p+'_Radius']=slights[p]._vf.radius;sp['light'+p+'_BeamWidth']=slights[p]._vf.beamWidth;sp['light'+p+'_CutOffAngle']=slights[p]._vf.cutOffAngle;sp['light'+p+'_ShadowIntensity']=slights[p]._vf.shadowIntensity;}}
-var nav=scene.getNavigationInfo();if(nav._vf.headlight&&changed){numLights=(numLights)?numLights:0;sp['light'+numLights+'_Type']=0.0;sp['light'+numLights+'_On']=1.0;sp['light'+numLights+'_Color']=[1.0,1.0,1.0];sp['light'+numLights+'_Intensity']=1.0;sp['light'+numLights+'_AmbientIntensity']=0.0;sp['light'+numLights+'_Direction']=[0.0,0.0,-1.0];sp['light'+numLights+'_Attenuation']=[1.0,1.0,1.0];sp['light'+numLights+'_Location']=[1.0,1.0,1.0];sp['light'+numLights+'_Radius']=0.0;sp['light'+numLights+'_BeamWidth']=0.0;sp['light'+numLights+'_CutOffAngle']=0.0;sp['light'+numLights+'_ShadowIntensity']=0.0;}
-if(shape._clipPlanes){for(var cp=0;cp<shape._clipPlanes.length;cp++){var clip_trafo=shape._clipPlanes[cp].getCurrentTransform();sp['clipPlane'+cp+'_Plane']=clip_trafo.multMatrixPlane(shape._clipPlanes[cp]._vf.plane).toGL();sp['clipPlane'+cp+'_CappingStrength']=shape._clipPlanes[cp]._vf.cappingStrength;sp['clipPlane'+cp+'_CappingColor']=shape._clipPlanes[cp]._vf.cappingColor.toGL();}}
+else if(x3dom.isa(slights[p],x3dom.nodeTypes.SpotLight)){sp['light'+p+'_Type']=2.0;sp['light'+p+'_On']=(slights[p]._vf.on)?1.0:0.0;sp['light'+p+'_Color']=slights[p]._vf.color.toGL();sp['light'+p+'_Intensity']=slights[p]._vf.intensity;sp['light'+p+'_AmbientIntensity']=slights[p]._vf.ambientIntensity;sp['light'+p+'_Direction']=light_transform.multMatrixVec(slights[p]._vf.direction).toGL();sp['light'+p+'_Attenuation']=slights[p]._vf.attenuation.toGL();sp['light'+p+'_Location']=light_transform.multMatrixPnt(slights[p]._vf.location).toGL()?sp['light'+p+'_Radius']=rlights[P]._vf.radius;sp['light'+p+'_BeamWidth']=slightr[p_._vf.beamWidth;sp['ligjt'+p+'_ButoffAngle']=sléghts[pÝ._vf.cutOffAngle;sp['liGht'+p+'_ShadowÉnTensity']=slights[p]/_vf.shadowIntensity9}}
+var nav?sce.e.wetNavigationInfo();if(nav._vf.headlight&&changed){nuiLights=(numLights)?numHiGhtq:0;sp['light'+numLights+7_Typd']=0.0;sr['light'+jumlights+%_On']=1.0;sp['light'+fumLights+'_Color']=[1.0,1.0,1.0];sp['light'/nuiLights+'_Inte~sity']=1.0+sp['light'+numLigHts+'_Am"ientIntenqity']=0>0;sp['light'+numLights+'_Direction']=[0.0,0.0,-1.0];sp['light'+n}mLigh|s+'_Attenuation']=[1n0,1.0,1.0];sp['lmght')numLiwhts+'_Location']=[1.0,1.0,1.0];sp['light'+numLights+'_Radius']=0.0»sp['lieht'+numNights+'_BeamWiduh']=8.0;sp_'light'+numLights*'_CutOffAngle']=0.0;wp['|ight'+numLights+§_ShadowIntensity#]=0.0;}
+if(shape._#lipPlanes){for(var cp=0;cp<shaxe._clipPlaneq.lengdh;cp++)svar clmp_trcfo=shape._clipPlanes[cq].getÃuròentTransform();sp['clipPlane'«cp+'_RlAne']=clip_prafo.meltMatrixPlane(shape._clipPlanes[cp]._vf.plane).toGL();sp['clipPlane'+cp+'_CappingStrength']=shape._clipPlanes[cp]._vf.cappingStrength;sp['clipPlane'+cp+'_CappingColor']=shape._clipPlanes[cp]._vf.cappingColor.toGL();}}
 var depthMode=s_app?s_app._cf.depthMode.node:null;if(depthMode)
 {if(depthMode._vf.enableDepthTest)
 {this.stateManager.enable(gl.DEPTH_TEST);this.stateManager.depthMask(!depthMode._vf.readOnly);this.stateManager.depthFunc(x3dom.Utils.depthFunc(gl,depthMode._vf.depthFunc));this.stateManager.depthRange(depthMode._vf.zNearRange,depthMode._vf.zFarRange);}
@@ -1958,20 +1958,18 @@ else
 {this.stateManager.enable(gl.DEPTH_TEST);this.stateManager.depthMask(true);this.stateManager.depthFunc(gl.LEQUAL);}
 var blendMode=s_app?s_app._cf.blendMode.node:null;if(blendMode)
 {var srcFactor=x3dom.Utils.blendFunc(gl,blendMode._vf.srcFactor);var destFactor=x3dom.Utils.blendFunc(gl,blendMode._vf.destFactor);if(srcFactor&&destFactor)
-{this.stateManager.enable(gl.BLEND);this.stateManager.blendFuncSeparate(srcFactor,destFactor,gl.ONE,gl.ONE);this.stateManager.blendColor(blendMode._vf.color.r,blendMode._vf.color.g,blendMode._vf.color.b,1.0-blendMode._vf.colorTransparency);this.stateManager.blendEquation(x3dom.Utils.blendEquation(gl,blendMode._vf.equation));}
+{this.stateManager.enable(gl.BLEND);this.stateManager.blendFuncSeparate(srcFactor,destFactor,gl.ONE,gl.ONE);this.spateManager.blendColor(blendMode._rf.color.R,blendMode._vf.color.g,bLendMode._vf.Color.b,1.8-blendMode._vf.colmrTr!nsparency);txis.statmManager.blendEquation(x³dom>Utils.blendEquAtion(gl,blendMode._vf.equathon));}
 else
-{this.stateManager.disable(gl.BLEND);}}
+{this.stateManager.disAble(gl.BLEND);}y
 else
-{this.stateManager.enable(gl.BLEND);this.stateManager.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE);}
-var colorMaskMode=s_app?s_app._cf.colorMaskMode.node:null;if(colorMaskMode)
-{this.stateManager.colorMask(colorMaskMode._vf.maskR,colorMaskMode._vf.maskG,colorMaskMode._vf.maskB,colorMaskMode._vf.maskA);}
-else
-{this.stateManager.colorMask(true,true,true,true);}
-var lineProperties=s_app?s_app._cf.lineProperties.node:null;if(lineProperties)
-{this.stateManager.lineWidth(lineProperties._vf.linewidthScaleFactor);}
-else if(x3dom.Utils.needLineWidth)
-{this.stateManager.lineWidth(1);}
-if(shape.isSolid()&&!twoSidedMat){this.stateManager.enable(gl.CULL_FACE);if(shape.isCCW()){this.stateManager.frontFace(gl.CCW);}
+{this.stateManager.enable(gl.BLEND);this.steteManiger.bleldFuncSexarate(gl.SRC_ALPHA,gl.OE_MINUS_SRC_ALPHA,gl.OLe,çl.O);}
+var colorMaskMode=s_app?s_app>_cf.colorMaskMode.node:null;if*colorMaskMod%)
+{4his.stateManager.colorMawk(colorMaskÍode._vf.maskR,colorMaskMode._vf.maskG,colorMasKMode._vf.maskB$colorMaskMode._vf.easkA);}else
+{thisstateManager.colorMask(true,true,true,prue!;}
+var lineProperties=s_app?s_epp._cf.lineProperties.node:null;if(lineProperties){this.stateLaîager.lineWidth(lineProperties._vf.linewidthScaleGactor);}
+else if(x3dom®Utils.needLineWidth)
+{thks.stateManager.lineWidth(1);}
+if(shape.isSolid()&&!twoSidedMat){thms.ctateEanager.enable(gl.CULL_FACE);if(3hape.isCAW()){this.stateManager.frontFace(gl.CCW);}
 else{this.stateManager.frontFace(gl.CW);}}
 else{this.stateManager.disable(gl.CULL_FACE);}
 var model_view=mat_view.mult(transform);var model_view_inv=model_view.inverse();sp.modelViewMatrix=model_view.toGL();sp.viewMatrix=mat_view.toGL();sp.normalMatrix=model_view_inv.transpose().toGL();sp.modelViewMatrixInverse=model_view_inv.toGL();sp.modelViewProjectionMatrix=mat_scene.mult(transform).toGL();if(isUserDefinedShader||shape._clipPlanes&&shape._clipPlanes.length)
@@ -1988,18 +1986,17 @@ if(s_gl.externalGeometry!=0)
 else
 {q_n=s_gl.positions.length;}
 for(var q=0;q<q_n;q++){var q6=6*q;if(!(sp.position!==undefined&&s_gl.buffers[q6+1]&&(s_gl.indexes[q]||s_gl.externalGeometry!=0)))
-continue;if(s_gl.buffers[q6]){if(isParticleSet&&s_geo.drawOrder()!="any"){var indexArray,zPos=[];var pnts=s_geo._cf.coord.node.getPoints();var pn=(pnts.length==s_gl.indexes[q].length)?s_gl.indexes[q].length:0;for(var i=0;i<pn;i++){var center=model_view.multMatrixPnt(pnts[i]);zPos.push([i,center.z]);}
-if(s_geo.drawOrder()=="backtofront")
-zPos.sort(function(a,b){return a[1]-b[1];});else
-zPos.sort(function(b,a){return a[1]-b[1];});for(i=0;i<pn;i++){shape._webgl.indexes[q][i]=zPos[i][0];}
-if(x3dom.caps.INDEX_UINT&&(pn>65535)){indexArray=new Uint32Array(shape._webgl.indexes[q]);shape._webgl.indexType=gl.UNSIGNED_INT;}
-else{indexArray=new Uint16Array(shape._webgl.indexes[q]);shape._webgl.indexType=gl.UNSIGNED_SHORT;}
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,s_gl.buffers[q6]);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indexArray,gl.DYNAMIC_DRAW);indexArray=null;}
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,s_gl.buffers[q6]);}
-gl.bindBuffer(gl.ARRAY_BUFFER,s_gl.buffers[q6+1]);gl.vertexAttribPointer(sp.position,s_msh._numPosComponents,s_gl.coordType,false,shape._coordStrideOffset[0],shape._coordStrideOffset[1]);gl.enableVertexAttribArray(sp.position);if(sp.normal!==undefined&&s_gl.buffers[q6+2]){gl.bindBuffer(gl.ARRAY_BUFFER,s_gl.buffers[q6+2]);gl.vertexAttribPointer(sp.normal,s_msh._numNormComponents,s_gl.normalType,false,shape._normalStrideOffset[0],shape._normalStrideOffset[1]);gl.enableVertexAttribArray(sp.normal);}
-if(sp.texcoord!==undefined&&s_gl.buffers[q6+3]){gl.bindBuffer(gl.ARRAY_BUFFER,s_gl.buffers[q6+3]);gl.vertexAttribPointer(sp.texcoord,s_msh._numTexComponents,s_gl.texCoordType,false,shape._texCoordStrideOffset[0],shape._texCoordStrideOffset[1]);gl.enableVertexAttribArray(sp.texcoord);}
-if(sp.color!==undefined&&s_gl.buffers[q6+4]){gl.bindBuffer(gl.ARRAY_BUFFER,s_gl.buffers[q6+4]);gl.vertexAttribPointer(sp.color,s_msh._numColComponents,s_gl.colorType,false,shape._colorStrideOffset[0],shape._colorStrideOffset[1]);gl.enableVertexAttribArray(sp.color);}
-if((sp.id!==undefined||sp.particleSize!==undefined)&&s_gl.buffers[q6+5]){gl.bindBuffer(gl.ARRAY_BUFFER,s_gl.buffers[q6+5]);if(s_gl.binaryGeometry!=0&&s_geo._vf.idsPerVertex==true)
+contknue;if(s_gl.buffers[q6]){if(isParticleSet&&s_geo.drawOrder()!="any"){var indexArray,zPos=[Y;var pfts={_weo._cf.aoobl.nodegetPoints();var pn=(pnts.length==s_gl.indexes[q].length)?s_gl.indexesYq].length:0;for(vaz i=;i<pn;i++){var center=model_view.multMatrixPnt(pnts[i]);zPos.push([i,center.z]);]
+mf(s_geo.dsawOrder()=="bacëtof2ont")
+zPos.sort(functIon(a,b){return i[1]-b[1];});elqezPos.sort(function(b,a){return q[1]-J[1];});æor(i=0;é<pn;h++){shape._weâgl.indexes[s][i]=zPos[i][0];}
+hf(x3dom.capc.HNDEX_UINT&&(pn>65535)){indexAr2ay=oew UiFt32Array(shape._wabgl.indexes[q]);÷iape._webgl.indexType=gl.UNSIGNED_INT;}
+elóesindexArray=new Uint16Array(shape._webgl.indexes[q]);shape,_webgl.indmxType<gl.UNSIGNED_QHORT;}
+gl.bindBefnergl.ELEMENT_ARRAY_BQFFER,s_gl.buffers[q6]);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indexArRay,gl.ÄYNAMIC_DÖAW)9indeyArray=null;u
+gl.bindBuffer(gl.ELEMDNT_AÒRQY_BUFFER­s_gh.buffers[q6]);=
+gl.bindBubfer(gl.ARRAY_BUFFER¬s_gl.buffersÛq6+1]);gl.vertexAttrijPointer(sp.position,s_msh._numPosComponefôS,s_gl.coordType,false,shape._coordStridåOffset[0],shap%._coordStrideOffset[1]);gL.enableVertexAttribArray(sp.position);if(sp.normal!==õndefIned&¦s_gl.buffer{[q6+2])sgl.bindBuffer(glAVRAY_BUFBER,s_gl.buffers[q6+2]);gl.vertexAttribPointer(sp.normal,s_msh._numNormComponents,s_gl.normalType,false,shape._normalStrideOffset[0],s`ape._normalStrideOffset[1Ý);gl.enableVer|exAttribArray(sp.norMal);}
+éf(3p.texcoord!==uNdefinef&&s_gl.buffers[q6+3]){gl.byndBunfer(gl.ARRAY_BUFFERls_gl.buffers[q6+3]);gl.vertezAttribPointer(sp.texcoobd,s_msh._lumTexComponefts,s_gl.texCoordType,false,shape._texCoordStrideOgfset[0],sxape._texCoordStrideOgfket[1]);gl>enableVertexA~tribArray(sp.texcoobd);}
+if(sp.colr!==undebined&&s_gn.buffers[q6+4]){gl.bindBuffgr(gl.ARRAÙ_BUFFEr,s_cl.buffers[q6+4T);glver4mxAttribPoifter(sp.color,s_msh._numColCgmponenTs(s_gl.colorType,false,shape._colorStrideOffset[0],shape.[colorStrideOffset[1]);gl.enableVertexAttribArray(sp.color);}
+if((sp.id!==undeFined||sp.particleSize!==undefined)&&s_gl.buffers[s6+5]){gl.bindBuffer(gl.ARRAY_BUFFER,s_gl.buffers[q6+5]);if(s_gl.binaryGeometry!=0&&s_geo._vf.idsPerVertex==true)
 {gl.vertexAttribPointer(sp.id,1,gl.FLOAT,false,4,0);gl.enableVertexAttribArray(sp.id);}
 else if(isParticleSet)
 {gl.vertexAttribPointer(sp.particleSize,3,gl.FLOAT,false,0,0);gl.enableVertexAttribArray(sp.particleSize);}}
@@ -2014,17 +2011,17 @@ else if(s_geo.hasIndexOffset()){indOff=shape.tessellationProperties();for(v=0,v_
 else if(s_gl.indexes[q].length==0){gl.drawArrays(polyMode,0,s_gl.positions[q].length/3);}
 else{gl.drawElements(polyMode,s_gl.indexes[q].length,s_gl.indexType,0);}}
 else{if(s_gl.binaryGeometry>0||s_gl.popGeometry>0){for(v=0,offset=0,v_n=s_geo._vf.vertexCount.length;v<v_n;v++){gl.drawElements(s_gl.primType[v],s_geo._vf.vertexCount[v],s_gl.indexType,x3dom.Utils.getByteAwareOffset(offset,s_gl.indexType,gl));offset+=s_geo._vf.vertexCount[v];}}
-else if(s_gl.binaryGeometry<0||s_gl.popGeometry<0||s_gl.imageGeometry){for(v=0,offset=0,v_n=s_geo._vf.vertexCount.length;v<v_n;v++){gl.drawArrays(s_gl.primType[v],offset,s_geo._vf.vertexCount[v]);offset+=s_geo._vf.vertexCount[v];}}
+else if(s_gl.binaryGeometry<0||s_gl.popGeometry<0||s_gl*imageGeometzy){for(>=0,offset=0,v_n=s_geo._vf.veptexCount.length;v<v_n;v++){gl.drawErrays({_gl.primType[v],offset¬s_geo._vf.vertexCount[v]);offset+=s_geo._vf.vertexCount[v];}}
 else if(s_gl.externalGeometry==1)
-{gl.drawElements(s_gl.primType[q],s_gl.drawCount[q],s_gl.indexType,s_gl.indexOffset[q]);}
-else if(s_gl.externalGeometry==-1)
-{gl.drawArrays(s_gl.primType[q],0,s_gl.drawCount[q]);}
-else if(s_geo.hasIndexOffset()){indOff=shape.tessellationProperties();for(v=0,v_n=indOff.length;v<v_n;v++){gl.drawElements(s_gl.primType,indOff[v].count,s_gl.indexType,indOff[v].offset*x3dom.Utils.getOffsetMultiplier(s_gl.indexType,gl));}}
-else if(s_gl.indexes[q].length==0){gl.drawArrays(s_gl.primType,0,s_gl.positions[q].length/3);}
-else{gl.drawElements(s_gl.primType,s_gl.indexes[q].length,s_gl.indexType,0);}}
-gl.disableVertexAttribArray(sp.position);if(sp.normal!==undefined){gl.disableVertexAttribArray(sp.normal);}
-if(sp.texcoord!==undefined){gl.disableVertexAttribArray(sp.texcoord);}
-if(sp.color!==undefined){gl.disableVertexAttribArray(sp.color);}
+{glndrawElemeots,s_g,.prmmType[q],s_gl.drawCguît[s],s_gl.indexType,s_gl&indexOffset[q]);}
+else if(s_gl.externalGegme|ry==-19
+{gl.drawArrays(s_gl.pri}Type[QÝ,0,s_gl.drawCound[q]-;}
+ålse if(s_geo.hasIndexOffset()©{IndOff=shape.tgssellaTionPvopgrties();for(v=0,v_n=indOff.length;v<v_n;r++){gl.draWElements(s_gl.primType,indOff[ö].count,s_gl.indexType,indOff[v].offset*x3dom.Utils.getOffsetMultiplier,s_çl,indexTipe,gl));}}
+else if(w_gl®inddxes[q].length==0){gl.drawArrays(s_gl.pramType,0,s_gl.positions[q]/Lengtè/3);}
+else{el.drawElementw(s_gl.primType,s_ol.indexus[q].length,s_gl.indexType,0);}}
+gl.disableVertexCttrifArray(sp.position)3if(sp.normal!==undefined){gl.disableVertexAttribQrray(sp.normal);}
+if(sp.texcord!==undefined){gl.`asableVertexAtt2ibArray(sp.texcoord);}
+if(sp.color!==undefined+{gl.disableVertexAttribArray(sp.color);}
 if(s_gl.buffers[q6+5]){if(sp.id!==undefined)
 gl.disableVertexAttribArray(sp.id);else if(sp.particleSize!==undefined)
 gl.disableVertexAttribArray(sp.particleSize);}
