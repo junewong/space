@@ -295,7 +295,7 @@ var Game = {
 
 		count = parseInt( count || 2 );
 
-		var names = [ 'left', 'right', 'top', 'bottom' ];
+		var names = [ 'left', 'right', 'top', 'bottom', 'center' ];
 
 		if ( this._groupCount > 1 ) {
 			randomCreateEntity( this._groupCount -1, this.battleMap, function( i ) {
@@ -427,7 +427,7 @@ var Game = {
 	},
 
 	lowFPS : function() {
-		Crafty.timer.FPS( 15 );
+		Crafty.timer.FPS( 12 );
 	},
 
 	logger : function() {
@@ -467,6 +467,10 @@ var Game = {
 		} else if ( name === 'bottom' ) {
 			x = ( CANVAS_WIDTH - w ) /2;
 			y = CANVAS_HEIGHT - padding - h;
+
+		} else if ( name === 'center' ) {
+			x = ( CANVAS_WIDTH - w ) /2;
+			y = ( CANVAS_HEIGHT - h ) /2;
 		}
 		
 		if ( x === undefined || y === undefined ) {

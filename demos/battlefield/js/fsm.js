@@ -22,15 +22,15 @@ Crafty.c( "ActorFsm", {
 				{ name: 'enemyTryEscape', from: ['attack', 'seek'], to: 'free' },
 				//{ name: 'enemyTryEscape', from: ['attack', 'seek'], to: 'seek' },
 				//{ name: 'enemyLost', from: 'seek', to: 'free' },
-				{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed', 'alongPath'], to: 'defense' },
-				//{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed', 'alongPath'], to: 'shun' },
+				//{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed', 'alongPath'], to: 'defense' },
+				{ name: 'beAttacked', from: ['free', 'wand', 'attack', 'seed', 'alongPath'], to: 'shun' },
 				//{ name: 'attackNotEffect', from: 'attack', to: 'shun' },
 				//{ name: 'beBlocked', from: ['wand', 'shun', 'free'], to: 'alongPath' },
 				{ name: 'beStopMovement', from: ['wand', 'shun', 'alongPath' ], to: 'free' },
 				{ name: 'wandOver', from: ['wand', 'alongPath'], to: 'free' },
 				{ name: 'attackOver', from: 'attack', to: 'free' },
-				{ name: 'defenseOver', from: 'defense', to: 'free' },
-				//{ name: 'shunOver', from: 'shun', to: 'free' },
+				//{ name: 'defenseOver', from: 'defense', to: 'free' },
+				{ name: 'shunOver', from: 'shun', to: 'free' },
 				//{ name: 'pathOver', from: 'alongPath', to: 'free' }
 			],
 
@@ -215,39 +215,6 @@ Crafty.c( "ActorFsm", {
 				onshun: function( event, from, to, attackerId  ) {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
-					// 医疗技能，掉一半血以下考虑释放治疗技能
-					if ( randInt( 1, 4 ) === 1 ) {
-						if ( _this.HP / _this.maxHP <= 0.5 ) {
-							if ( _this.switchSkillWithType( SKILL_TYPE_CURE ) ) {
-								_this.executeSkill();
-							}
-						}
-					}
-
-					// 可能会释放控制技能阻挡对手，有利于逃跑
-					if ( randInt( 1, 10 ) === 1 ) {
-						if ( _this.switchSkillWithType( SKILL_TYPE_CONTROL ) ) {
-							_this.executeSkill();
-						}
-					}
-
-					// 一定几率释放防御技能
-					var hasSkill = false;
-					if ( Math.random() < 0.33 ) {
-						hasSkill = _this.switchSkillWithType( SKILL_TYPE_DEFENSE );
-						if ( hasSkill ) {
-							_this.executeSkill();
-						}
-					}
-
-					// 有防御技能则不需要躲避了
-					if ( hasSkill ) {
-						setTimeout( function() {
-							fsm.shunOver();
-						}, 500 );
-						return;
-					}
-
 					// 不重复执行
 					if ( this.shuning ) {
 						return;
@@ -267,7 +234,7 @@ Crafty.c( "ActorFsm", {
 
 					// 普通情况,进行躲避：
 
-					var distance = randInt( 100, 200 );
+					var distance = randInt( 50, 120 );
 
 					var seed = randInt( -1, 1 );
 
