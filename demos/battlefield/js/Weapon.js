@@ -61,11 +61,13 @@ var Weapon = function( owner, config ) {
 					_this.total --;
 					this.destroy();
 				}
-			})
+			});
+			/*
 			.onHit( "Bullet", function() {
 				_this.total --;
 				this.destroy();
 			});
+			*/
 
 	};
 

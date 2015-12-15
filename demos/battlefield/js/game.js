@@ -1,5 +1,6 @@
 // define:
-var CANVAS_WIDTH = window.innerWidth -20 ||  900;
+//var CANVAS_WIDTH = window.innerWidth -20 ||  900;
+var CANVAS_WIDTH = window.innerHeight -20 ||  420;
 var CANVAS_HEIGHT = window.innerHeight -20 || 420;
 //var CANVAS_WIDTH = 900;
 //var CANVAS_HEIGHT = 420;

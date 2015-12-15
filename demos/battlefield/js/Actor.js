@@ -412,7 +412,10 @@ Crafty.c( "ActorBase", {
 	},
 
 	stopTweenMove : function() {
-		this.tween( {x:this.x, y:this.y}, 0 );
+		//this.tween( {x:this.x, y:this.y}, 0 );
+		this.cancelTween( "x" );
+		this.cancelTween( "y" );
+
 		this.moving = false;
 	},
 
@@ -756,7 +759,8 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 	addVisibleFrame : function() {
 		var _this = this;
 
-		var size = this.visibleDistance || this.weapon.config.distance * 0.8;
+		//var size = this.visibleDistance || this.weapon.config.distance * 0.8;
+		var size = this.weapon.config.distance * 0.7;
 
 		//this.visibleFrame = Crafty.e( '2D, Canvas, Collision, WiredHitBox' )
 		this.visibleFrame = Crafty.e( '2D, Canvas, Collision' )

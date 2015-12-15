@@ -113,8 +113,6 @@ Crafty.c( "ActorFsm", {
 				onattack: function( event, from, to, entity ) {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
-					_this.stopTweenMove();
-
 					var count = randInt( 10, 30 );
 
 					var run = function() {
@@ -128,7 +126,7 @@ Crafty.c( "ActorFsm", {
 						}
 
 						if ( count <= 0 ) {
-							if ( entity && _this.visibleFrame.intersect( rect( entity ) ) ) {
+							if ( entity && Math.random() < 0.9 && _this.visibleFrame.intersect( rect( entity ) ) ) {
 								count = randInt( 10, 30 );
 
 							} else {
@@ -137,6 +135,10 @@ Crafty.c( "ActorFsm", {
 							}
 						}
 
+
+						//if ( _this.moving ) {
+							_this.stopTweenMove();
+						//}
 
 						_this.attackTo( entity );
 
@@ -234,7 +236,7 @@ Crafty.c( "ActorFsm", {
 
 					// 普通情况,进行躲避：
 
-					var distance = randInt( 50, 120 );
+					var distance = randInt( 30, 100 );
 
 					var seed = randInt( -1, 1 );
 
