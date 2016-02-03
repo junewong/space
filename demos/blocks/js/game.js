@@ -5,7 +5,7 @@ var CONTROL_HEIGHT = size * h_size;
 var CANVAS_WIDTH = CONTROL_WIDTH;
 var CANVAS_HEIGHT = CONTROL_HEIGHT + INFO_HEIGHT;
 var MIN_BLOCK = 2;
-var BORDER_COLOR = 'black';
+var BORDER_COLOR = 'lightgray';
 
 var colors = [ 'red', 'orange', 'purple', 'green', 'blue' ];
 
@@ -173,7 +173,7 @@ Crafty.e( "Platform" ).attr( {x: 0, y:CANVAS_HEIGHT - 2} );
 var totalScore = 0;
 var info = Crafty.e( '2D,DOM,Text' )
 		.attr( {x:0, y:0, w:CONTROL_WIDTH, h:INFO_HEIGHT} )
-		.css( {"color": "white"} )
+		.css( {"color": "black"} )
 		.css( {"padding-top": "2px", "padding-left": "2px"} )
 		.css( {"font-size": "200%", "font-weight": "bold"} )
 		.css( {"background-color": BORDER_COLOR } )
