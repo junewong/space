@@ -171,6 +171,7 @@ var totalScore = 0;
 var info = Crafty.e( '2D,DOM,Text' )
 		.attr( {x:0, y:0, w:CONTROL_WIDTH, h:INFO_HEIGHT} )
 		.css( {"color": "white"} )
+		.css( {"padding-top": "2px", "padding-left": "2px"} )
 		.css( {"font-size": "200%", "font-weight": "bold"} )
 		.css( {"background-color": BORDER_COLOR } )
 		.text( '分数：' + totalScore );
