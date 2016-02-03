@@ -27,17 +27,16 @@ Crafty.c( "Block", {
 	init: function( config ) {
 		var _this = this;
 
-		this.requires("Ostacle, 2D, DOM, Color, Gravity, Touch, Mouse")
+		this.requires("Ostacle, 2D, DOM, Color, Gravity, Mouse")
 			.color("red")
 			.attr({ w: size, h: size })
 			.css( "border", "1px solid white" )
 			.gravityConst( 1.5 )
 			.gravity( "Ostacle" );
 
-		this.bind('MouseUp', function() {
-				clean( _this );
-				//_this.destroy();
-			});
+		this.bind( 'MouseUp', function() {
+			clean( _this );
+		});
 
 	}
 });
@@ -112,17 +111,21 @@ function findAll( entity, result, last ) {
 function clean( entity ) {
 	var result = [ entity ];
 	findAll( entity, result );
+
 	if  ( result.length >= MIN_BLOCK ) {
 		var columns = [], total = result.length;
 		for ( var j = 0; j < w_size; columns[j] = 0, j++ );
 
+		// 消除方块
 		for ( var i in result ) {
 			columns[ result[i].column ] ++;
 			result[i].destroy();
 		}
 
+		// 分数
 		addScore( total );
 
+		// 补充缺失的方块
 		setTimeout( function() {
 			var offset = 0;
 			while ( total > 0 ) {
