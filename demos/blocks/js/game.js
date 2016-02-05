@@ -165,6 +165,8 @@ var Player = function( options ) {
 				var profix = options.market.getProfix( data );
 				lastProfix = profix;
 				money += profix;
+				var tip = profix < 0 ? '-' + profix : '+' + profix;
+				showTip( tip );
 				if ( money <= 0 ) {
 					death = true;
 				}
@@ -270,6 +272,20 @@ var Player = function( options ) {
 						 '资金：' + money + ' 最近利润：' + lastProfix +  '  分数：' + totalScore + '  最近得分：' + lastScore :
 						 '分数：' + totalScore + '  最近：' + lastScore;
 		 return desc;
+	}
+
+	function showTip( tip ) {
+		var x = OFFSET_X - BORDER_SIZE + PLAY_AREA_WIDTH / 2 - 20;
+		var y = OFFSET_Y - BORDER_SIZE + PLAY_AREA_HEIGHT / 2 - 120;
+		var color = /^\+/.test( tip ) ? 'red' : 'green';
+		Crafty.e( '2D, DOM, Text, Tween' ).attr( {x:x, y:y} )
+			.textFont( { size: '24px', weight: 'bold' } )
+			.textColor( color )
+			.text( tip )
+			.tween( {y : y - 60, alpah: 0}, 500 )
+			.bind( 'TweenEnd', function() {
+				this.destroy();
+			});
 	}
 
 	var background = Crafty.e( "2D, DOM, Color" )
