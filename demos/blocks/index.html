@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>简单三消游戏</title>
+	<title>市场游戏</title>
 	<meta content="width=device-width, initial-scale=1.0, user-scalable=0" name="viewport" />
 	<script src="../libs/crafty-min.js"></script>
 	<style type="text/css" media="screen">
@@ -11,10 +11,17 @@
 			margin: 0 auto; 
 		}
 	</style>
+	<script src="./js/game.js"></script>
+	<script src="./js/market.js"></script>
 </head>
 <body>
-	<div id="stage" class="wrapper">
+	<div class="wrapper">
+		<div id="stage">
+		</div>
+		<br/>
 	</div>
-	<script src="./js/game.js"></script>
+	<script type="text/javascript" charset="utf-8">
+		var market = new Market();
+	</script>
 </body>
 </html>
