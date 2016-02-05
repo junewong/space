@@ -1,5 +1,7 @@
 var Player = function( options ) {
 
+	var death = false;
+
 	var size = 40, w_size = 7, h_size = 7;
 
 	var INFO_HEIGHT = 30;
@@ -163,6 +165,9 @@ var Player = function( options ) {
 				var profix = options.market.getProfix( data );
 				lastProfix = profix;
 				money += profix;
+				if ( money <= 0 ) {
+					death = true;
+				}
 			}
 
 			info.text( descScore() );
@@ -315,6 +320,10 @@ var Player = function( options ) {
 
 	this.unhighlight = function() {
 		background.color( BORDER_COLOR );
+	};
+
+	this.isDead = function() {
+		return death;
 	};
 
 }; //END Player

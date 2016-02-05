@@ -45,6 +45,11 @@ var Market = function() {
 		}
 
 		var player = players[ current ];
+		if ( player.isDead() ) {
+			// 有人破产，游戏结束
+			return;
+		}
+
 		player.highlight();
 		player.unlock();
 
