@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>简单三消游戏</title>
+	<meta content="width=device-width, initial-scale=1.0, user-scalable=0" name="viewport" />
+	<script src="../libs/crafty-min.js"></script>
+	<style type="text/css" media="screen">
+		.wrapper {
+			width: 50%;
+			margin: 0 auto; 
+		}
+	</style>
+	<script src="./js/game.js"></script>
+	<script src="./js/market.js"></script>
+</head>
+<body>
+	<div class="wrapper">
+		<div id="stage">
+		</div>
+		<br/>
+		<button type="button" onclick="player2.next();" style="text-algin:center;">自动执行</button>
+	</div>
+	<script type="text/javascript" charset="utf-8">
+		var player1 = new Player( { id:1, offsetX: 0, offsetY: 0 } );
+		var player2 = new Player( { id:2, offsetX: 320, offsetY: 0 } );
+		var player3 = new Player( { id:3, offsetX: 640, offsetY: 0 } );
+	</script>
+</body>
+</html>
