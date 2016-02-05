@@ -165,7 +165,7 @@ var Player = function( options ) {
 				var profix = options.market.getProfix( data );
 				lastProfix = profix;
 				money += profix;
-				var tip = profix < 0 ? '-' + profix : '+' + profix;
+				var tip = profix < 0 ? profix : '+' + profix;
 				showTip( tip );
 				if ( money <= 0 ) {
 					death = true;
