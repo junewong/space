@@ -116,10 +116,11 @@ var Market = function() {
 
 	var info = Crafty.e( '2D,DOM,Text' )
 			.attr( {x:0, y:0, w:800, h:INFO_HEIGHT} )
-			.css( {"color": "black"} )
+			//.css( {"color": "black"} )
 			//.css( {"background-color": 'gray'} )
-			.css( {"padding-top": "2px", "padding-left": "2px"} )
-			.css( {"fontSize": "18px", "fontWeight": "bold"} );
+			//.css( {"padding-top": "2px", "padding-left": "2px"} )
+			//.css( {"fontSize": "18px", "fontWeight": "bold"} );
+			;
 
 
 

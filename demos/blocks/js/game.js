@@ -1,3 +1,5 @@
+var canvas_is_inited = false;
+
 var Player = function( options ) {
 
 	var death = false;
@@ -19,7 +21,7 @@ var Player = function( options ) {
 	var PLAY_AREA_WIDTH = CONTROL_WIDTH + BORDER_SIZE *2 + ( OFFSET_X - BORDER_SIZE );
 	var PLAY_AREA_HEIGHT = CONTROL_HEIGHT + INFO_HEIGHT + BORDER_SIZE *2;
 
-	var CANVAS_WIDTH = PLAY_AREA_WIDTH;
+	var CANVAS_WIDTH = PLAY_AREA_WIDTH * 3 + BORDER_SIZE * 3 ;
 	var CANVAS_HEIGHT = PLAY_AREA_HEIGHT + OFFSET_Y;
 
 	var MIN_BLOCK = 2;
@@ -32,7 +34,10 @@ var Player = function( options ) {
 
 	var totalScore = 0, lastScore = 0, lastProfix = 0, money = options.moeny || w_size * h_size * 100;
 
-	Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT, document.getElementById( 'stage' ) );
+	if ( ! canvas_is_inited ) {
+		Crafty.init( CANVAS_WIDTH, CANVAS_HEIGHT, document.getElementById( 'stage' ) );
+		canvas_is_inited = true;
+	}
 
 	//Crafty.stage.elem.style.border = "12px solid " + BORDER_COLOR;
 
@@ -40,7 +45,7 @@ var Player = function( options ) {
 
 	Crafty.c( "Platform", {
 		init: function( config ) {
-			this.requires( 'Ostacle, 2D, DOM, Color' );
+			this.requires( 'Ostacle, 2D, Canvas, Color' );
 			this.attr({ w: CONTROL_WIDTH, h: 1 })
 				.color( BORDER_COLOR );
 		}
@@ -50,11 +55,15 @@ var Player = function( options ) {
 		init: function( config ) {
 			var _this = this;
 
-			this.requires("Ostacle, 2D, DOM, Color, Gravity, Mouse")
+			this.requires("Ostacle, 2D, Canvas, Color, Gravity, Mouse")
 				.attr({ w: size, h: size })
-				.css( "border", "1px solid white" )
+				//.css( "border", "1px solid white" )
 				.gravityConst( 1.5 )
 				.gravity( "Ostacle" );
+
+			var bs = 1;
+			//this.block = Crafty.e( '2D, Canvas, Color, Mouse' ).attr( {x:bs, y:bs, w:this.w - bs*2, h: this.h - bs*2 } );
+			//this.attach( this.block );
 
 			this.bind( 'MouseUp', function() {
 				if ( ! LOCKING ) {
@@ -65,7 +74,12 @@ var Player = function( options ) {
 					}
 				}
 			});
+		},
 
+		setColor : function( color ) {
+			//this.block.color( color );
+			this.color( color );
+			return this;
 		}
 	});
 
@@ -200,7 +214,7 @@ var Player = function( options ) {
 		var time = Crafty.math.randomInt( 0, 50 ) + ( offset || 0 );
 		setTimeout( function() {
 			var color = generateColor();
-			var block = Crafty.e( BLOCK_NAME ).attr( {x: OFFSET_X + i * size, y:OFFSET_Y} ).color( color );
+			var block = Crafty.e( BLOCK_NAME ).attr( {x: OFFSET_X + i * size, y:OFFSET_Y} ).setColor( color );
 			block.colorName = color;
 			block.column = i;
 		}, time );
@@ -278,7 +292,7 @@ var Player = function( options ) {
 		var x = OFFSET_X - BORDER_SIZE + PLAY_AREA_WIDTH / 2 - 20;
 		var y = OFFSET_Y - BORDER_SIZE + PLAY_AREA_HEIGHT / 2 - 120;
 		var color = /^\+/.test( tip ) ? 'red' : 'green';
-		Crafty.e( '2D, DOM, Text, Tween' ).attr( {x:x, y:y} )
+		Crafty.e( '2D, Canvas, Text, Tween' ).attr( {x:x, y:y} )
 			.textFont( { size: '24px', weight: 'bold' } )
 			.textColor( color )
 			.text( tip )
@@ -288,22 +302,22 @@ var Player = function( options ) {
 			});
 	}
 
-	var background = Crafty.e( "2D, DOM, Color" )
+	var background = Crafty.e( "2D, Canvas, Color" )
 		.attr({x: OFFSET_X - BORDER_SIZE , y:OFFSET_Y - BORDER_SIZE, w:PLAY_AREA_WIDTH, h:PLAY_AREA_HEIGHT })
 		.color( BORDER_COLOR );
 
-	Crafty.e( "2D, DOM, Color" )
+	Crafty.e( "2D, Canvas, Color" )
 		.attr({x: OFFSET_X , y:OFFSET_Y, w:CONTROL_WIDTH, h:CONTROL_HEIGHT })
 		.color( BORDER_COLOR );
 
 	Crafty.e( "Platform" ).attr( {x: OFFSET_X - BORDER_SIZE, y: OFFSET_Y - BORDER_SIZE + PLAY_AREA_HEIGHT - BORDER_SIZE - 2} );
 
-	var info = Crafty.e( '2D,DOM,Text' )
+	var info = Crafty.e( '2D,Canvas,Text' )
 			.attr( {x:OFFSET_X, y:OFFSET_Y, w:CONTROL_WIDTH, h:INFO_HEIGHT} )
-			.css( {"color": "black"} )
-			.css( {"padding-top": "2px", "padding-left": "2px"} )
-			.css( {"font-size": "200%", "font-weight": "bold"} )
-			.css( {"background-color": BORDER_COLOR } )
+			//.css( {"color": "black"} )
+			//.css( {"padding-top": "2px", "padding-left": "2px"} )
+			//.css( {"font-size": "200%", "font-weight": "bold"} )
+			//.css( {"background-color": BORDER_COLOR } )
 			.text( descScore() );
 
 	for ( var i = 0; i < h_size; i ++ ) {
