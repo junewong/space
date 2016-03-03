@@ -19,8 +19,8 @@ function include(uri, prefix, callback)
 	if (!this._thisScript) {
 		// this script file node:
 		var scripts = 
-			   document.getElementsByTagName('head')[0].getElementsByTagName('script') 
-			|| document.getElementsByTagName('script');
+			   document.getElementsByTagName('head')[0].getElementsByTagName('script') ||
+			   document.getElementsByTagName('script');
 		this._thisScript = scripts[scripts.length-1];
 	}
 
@@ -44,11 +44,11 @@ function include(uri, prefix, callback)
 	if (callback) {
 		dom.onload = dom.onreadystatechange = function() {
 			if (!this.readyState || 'loaded' === this.readyState || 'complete' === this.readyState) {
-				alert("com: " + componentId + " callback:" + callback);///
+				//alert("com: " + componentId + " callback:" + callback);///
 				callback();
 				this.onload = this.onreadystatechange = null;
 			}
-		}
+		};
 		// firefox:
 		dom.addEventListener('load', callback, false);
 	}
@@ -56,18 +56,19 @@ function include(uri, prefix, callback)
 	this._thisScript.parentNode.insertBefore(dom, this._thisScript);
 }
 
-function id(id) 
+function id(sid) 
 {
-	return document.getElementById ? document.getElementById(id) : null;
+	return document.getElementById ? document.getElementById(sid) : null;
 }
 
-function className(className, parentElement){
+function className(aClassName, parentElement){
 	var elems = (id(parentElement)||document.body).getElementsByTagName("*");
 	var result=[];
-	for (i=0; j=elems[i]; i++){
-	  if ((" "+j.className+" ").indexOf(" "+className+" ") != -1){
-	   result.push(j);
-	  }
+	for (i=0; i<elems.length; i++){
+		var j=elems[i];
+		if ((" "+j.className+" ").indexOf(" "+aClassName+" ") != -1){
+			result.push(j);
+		}
 	}
 	return result;
 } 
@@ -99,4 +100,4 @@ function isElementNode(node)
 window.onload = function()
 {
 	include('main.js');
-}
+};

@@ -15,9 +15,11 @@ $(document).ready(function(){
 	});
 
 	// code:
+	/*
 	addIncludeCallBack('highlightjs', function() {
 		$('#contents pre').each(function(i, e) {hljs.highlightBlock(e)});
 	});
+	*/
 
 });
 
