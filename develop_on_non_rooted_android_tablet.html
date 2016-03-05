@@ -1,0 +1,247 @@
+<html>
+	<head>
+		<link rel="Stylesheet" type="text/css" href="css/style.css" />
+		<title>如何在无root的Android平板中搭建开发环境 -- June的学习空间</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Bootstrap -->
+		<link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+		<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+		<!--[if lt IE 9]>
+		<script src="http://cdn.bootcss.com/html5shiv/3.7.0/html5shiv.min.js">
+		</script>
+		<script src="http://cdn.bootcss.com/respond.js/1.3.0/respond.min.js">
+		</script>
+		<![endif]-->
+		<script src="http://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+
+		<script src="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/public.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<div class="navbar navbar-default navbar-inverse"  role="navigation">
+				<div class="row">
+					<div class="col-md-7 col-md-offset-1">
+						<h3><a href="index.html" style="color:white;">June的个人空间</a><small> 编程、读书、感悟</small></h3>
+
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div id="contents" class="col-md-7 col-md-offset-1">
+				
+<div class="toc">
+<ul>
+<li><a href="#toc_1">如何在无root的Android平板中搭建开发环境</a>
+<ul>
+<li><a href="#toc_1.0.1">目前装备</a>
+<li><a href="#toc_1.0.2">遇到问题</a>
+<li><a href="#toc_1.0.3">实现效果</a>
+<li><a href="#toc_1.0.4">实现做法</a>
+<ul>
+<li><a href="#toc_1.0.4.1">一、Temux</a>
+<li><a href="#toc_1.0.4.2">二、LAS返回键</a>
+<li><a href="#toc_1.0.4.3">三、EKH Settings</a>
+<li><a href="#toc_1.0.4.4">四、chrome</a>
+</ul>
+<li><a href="#toc_1.0.5">其他</a>
+<li><a href="#toc_1.0.6">总结</a>
+</ul>
+</ul>
+</ul>
+</div>
+
+<h1 id="toc_1">如何在无root的Android平板中搭建开发环境</h1>
+
+
+<p>
+Android系统本身也是个小Linux，配合蓝牙键盘搭建个开发系统当然不成问题。好处还可以发挥小巧便携、触摸控制的好处。坏处首先就是性能比笔记本低，而且会有少量Linux中能做的这边做不到，再有就是多任务切换会比较烦人。但折腾一下还是很有乐趣的，而且特定场景会比较实用。
+</p>
+
+<p>
+如果是已root的Android平板，比如三星的Galaxy tab平板，实在不用多说。安装一个Terminal IDE，成功后初始已经有不少工具了。但如果是没有root的，一开始发现处处受制，很难实现。幸好，去年选择买Android平板而不是IPad原因，也是看重自由度比较高、方便折腾的原因。
+</p>
+
+
+<h3 id="toc_1.0.1">目前装备</h3>
+<hr />
+
+<p>
+目前的低配装备是：
+</p>
+
+<p>
+1、小米平板2低配版，999元；
+</p>
+
+<p>
+2、蓝牙键盘＋皮套支架，128元；
+</p>
+
+<p>
+3、电容笔（有用，非必要），20元；
+</p>
+
+<p>
+比起Surfaces是不是便宜很多：）
+</p>
+
+
+<h3 id="toc_1.0.2">遇到问题</h3>
+<hr />
+
+<p>
+1、安装Termianl IDE会失败，试过多个另外的终端应用，附带的shell命令太少，而且都没有包管理器。
+</p>
+
+<p>
+2、BusyBox也装不上，所以命令行下能干的事情太少了。
+</p>
+
+<p>
+3、键盘下切换不同的应用没有快捷键，不方便。
+</p>
+
+
+<h3 id="toc_1.0.3">实现效果</h3>
+<hr />
+
+<p>
+目前一番折腾后能实现的开发环境是：
+</p>
+
+<p>
+1、web开发，tmux＋vim＋各种vim插件；
+</p>
+
+<p>
+2、python、php作为脚本语言；
+</p>
+
+<p>
+3、git作为版本控制；
+</p>
+
+<p>
+4、web容器直接用php自带的了，不单独装apache了；
+</p>
+
+<p>
+5、调试还是用原生应用浏览器chrome；
+</p>
+
+
+
+<h3 id="toc_1.0.4">实现做法</h3>
+<hr />
+
+<p>
+试用大量应用之后，介绍最有价值的几个：
+</p>
+
+<h4 id="toc_1.0.4.1">一、Temux</h4>
+
+<p>
+这个太让我惊讶了，感觉是无root环境下最好的终端。界面简洁非常适合物理键盘不说，因为它居然自带apt包管理器！而且速度还很快。
+</p>
+
+<p>
+立刻用apt install了常用的工具，都很顺利：tmux、vim、git、curl、make、python2、php。另外居然还支持zsh！
+</p>
+
+<p>
+其中tmux跟vim都是神器，而vim则是开发主力，需要稍微打造一下才能成为IDE。这些是很个人化的了，看自己爱好跟需求，网上也很多别人分享过经验。每个vimer肯定都有一堆插件功跟配置，我平时用vundle管理这些插件。
+</p>
+
+<p>
+先用git把我平时常用的vim配置文件拿回来，然后从github上clone下vundle插件，然后就是简单执行“:Plugin install"，一切插件安装完毕，在公司熟悉的神器又回来了，so esay！
+</p>
+
+<p>
+当然也不可能这么完美，有一些插件派不上用场，还是需要去掉。有些想用却用不了的，最遗憾的就是YouComepleteMe，在本地没有安装成功。少了它会有点不爽。
+</p>
+
+
+<h4 id="toc_1.0.4.2">二、LAS返回键</h4>
+
+<p>
+小米的系统不支持alt＋tab切换应用，任务管理器也不支持键盘选择应用，非常恼火。
+</p>
+
+<p>
+好不容易找到这个合适的应用，它唯一作用就是用来一键返回上一个应用。虽然是悬浮点看着碍眼，不过支持将尺寸调小、透明度调到10％，吸附到角落等，也就没那么碍眼了。
+</p>
+
+<p>
+但依然不支持键盘alt＋tab按键，幸好小米系统支持自定义win键，这个应用也呼出面板中，设置默认点击win键就触发这个应用就能做到一键返回了。
+</p>
+
+<h4 id="toc_1.0.4.3">三、EKH Settings</h4>
+
+<p>
+可以自定义键盘的按键，我用它来交换大小写锁定键跟Ctrl，vimer们大概都会这么做吧。不过在我键盘上不是很完美，会同时触发ctrl跟大小写交换功能。
+</p>
+
+<p>
+还有其他的一些自定义按键功能，可以调整自己的键盘行为，也是我一直在寻找的好应用。
+</p>
+
+
+<h4 id="toc_1.0.4.4">四、chrome</h4>
+
+<p>
+这个不用多说了，本身就是简洁好用，关键还是因为完美支持键盘，不像其他产商的浏览器。
+</p>
+
+<p>
+另外，chrome还有一个我很喜欢的特性：可以禁用js，而对指定的域名添加白名单。所以虽然它不想firefox一样支持Ad block等插件，但我还是不用担心满屏广告的了。不翻墙时浏览stackflow也能提高速度（少了加载被墙的google cdn的js脚本）。
+</p>
+
+<p>
+不过调试web应用还是个问题，chrome虽然支持远程调试，但那时在PC上连接移动设备调试。倒是有firebug lite的js插件可能可以派上用场。以后再试试。
+</p>
+
+<p>
+<img src="./images/screentshot_termux.png" alt="termux截图" />
+</p>
+
+<h3 id="toc_1.0.5">其他</h3>
+<hr />
+
+<p>
+平时编写的代码用git管理，在家可以连接充当git服务器的树莓派，有一些也会提交到github上。有ssh去管理树莓派也很方便，不用去房间开笔记本了。
+</p>
+
+<h3 id="toc_1.0.6">总结</h3>
+<hr />
+
+<p>
+麻雀虽小五脏俱全。而最大的瓶颈，其实是小米平板2只有坑爹的2G内存（同期的小米4也有3G啊），这是硬伤。如果Temux被kill掉，其中打开的tmux也无法还原，这是跟使用一般的linux环境最糟糕的差别。
+</p>
+
+<p>
+用来写写web小应用，感觉是没问题的。有需要还可以写写python或php，做一些小工具。就是调试的效率不如PC。但还是觉得蛮好玩的～
+</p>
+
+				</div>
+				<div class="col-md-3">
+					<div class="row">
+					</div>
+					<div id="menu" class="menu">
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<!-- Load comments -->
+				<div id="comments" class="col-md-7 col-md-offset-1">
+				</div>
+				<!--// Load comments -->
+			</div>
+			<div id="footer" class="navbar navbar-default">
+					<div class="copyright help text-center text-muted">©copyright by  space.junewong ## gmail.com</div>
+			</div>
+			</div>
+			</body>
+		</html>
