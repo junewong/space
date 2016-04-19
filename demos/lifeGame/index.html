@@ -70,7 +70,7 @@
 			};
 
 			// create game:
-			var game = new LifeGame( 100, 64, 10 );
+			var game = new LifeGame( 90, 64, 10 );
 
 			game.eachStepCallback( function( step, currentScore, maxScore ) {
 				D( 'maxScore' ).innerHTML = maxScore;
@@ -83,8 +83,7 @@
 
 
 			// click events:
-
-			D( 'playButton' ).onclick =  function() {
+			D( 'playButton' ).onclick = function() {
 				if ( game.isPlaying() ) {
 					game.pause();
 
@@ -93,26 +92,26 @@
 				}
 			};
 
-			D( 'nextButton' ).onclick =  function() {
+			D( 'nextButton' ).onclick = function() {
 				if ( false == game.isPlaying() ) {
 					game.next();
 				}
 			};
 
-			D( 'resetButton' ).onclick =  function() {
+			D( 'resetButton' ).onclick = function() {
 				if ( false == game.isPlaying() ) {
 					game.reset();
 				}
 			};
 
-			D( 'generateButton' ).onclick =  function() {
+			D( 'generateButton' ).onclick = function() {
 				if ( false == game.isPlaying() ) {
 					var code = game.getCode();
 					D( 'code' ).value = code;
 				}
 			};
 
-			D( 'redrawButton' ).onclick =  function() {
+			D( 'redrawButton' ).onclick = function() {
 				if ( false == game.isPlaying() ) {
 					var code = D( 'code' ).value;
 					game.initWithCode( code );
