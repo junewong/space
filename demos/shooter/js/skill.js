@@ -195,7 +195,7 @@ var SunShineSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '烈日光辉', owner, group, config );
+	return new Skill( '烈日', owner, group, config );
 };
 
 
@@ -248,7 +248,7 @@ var SheildSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '叹息守护', owner, group, config );
+	return new Skill( '守护', owner, group, config );
 };
 
 /**
@@ -318,7 +318,7 @@ var MarshSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '迟缓沼泽', owner, group, config );
+	return new Skill( '沼泽', owner, group, config );
 };
 
 /**
@@ -395,7 +395,7 @@ var SneakSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '潜行千里', owner, group, config );
+	return new Skill( '潜行', owner, group, config );
 };
 
 /**
@@ -466,7 +466,7 @@ var CuteSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '春风复苏', owner, group, config );
+	return new Skill( '春风', owner, group, config );
 };
 
 
@@ -506,7 +506,7 @@ var PenetrateSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '黎明破甲', owner, group, config );
+	return new Skill( '破甲', owner, group, config );
 };
 
 /**
@@ -575,7 +575,7 @@ var DashSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '蛮牛冲锋', owner, group, config );
+	return new Skill( '冲锋', owner, group, config );
 };
 
 /**
@@ -608,7 +608,7 @@ var SpeedUpSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '身轻如燕', owner, group, config );
+	return new Skill( '飞燕', owner, group, config );
 };
 
 
@@ -652,7 +652,7 @@ var ServantSkill = function( owner, group ) {
 		}
 	};
 
-	return new Skill( '勇士召唤', owner, group, config );
+	return new Skill( '召唤', owner, group, config );
 };
 
 
