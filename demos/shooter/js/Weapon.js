@@ -130,20 +130,25 @@ var ScatterGun = function( owner ) {
  * 鞭枪 
  */
 var WhipGun = function( owner ) {
-	var max = 12;
+	var max = 24;
 	var index = 0;
 	var config = {
 		max : max,
 		distance : 150,
-		time : 150,
-		damage : 8,
+		time : 200,
+		damage : 10,
 		bulletSize : 4,
 		rotationCallback : function( rotation ) {
 			index ++;
 			if ( index >= max ) {
 				index = 0;
 			}
-			return index / max * 360;
+			var degree = index / max * 360;
+			if ( index % 2 === 0 ) {
+				degree += 180;
+			}
+			return degree;
+
 		}
 	};
 	return new Weapon( owner, config );

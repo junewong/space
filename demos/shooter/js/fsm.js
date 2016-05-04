@@ -71,7 +71,7 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					// 医疗技能，掉一半血以下考虑释放治疗技能
-					if ( randInt( 1, 10 ) === 1 ) {
+					if ( Math.random() < 0.2 ) {
 						if ( _this.HP / _this.maxHP <= 0.5 ) {
 							if ( _this.switchSkillWithType( SKILL_TYPE_CURE ) ) {
 								_this.executeSkill();
@@ -80,7 +80,7 @@ Crafty.c( "ActorFsm", {
 					}
 
 					// 可能会释放召唤技能
-					if ( randInt( 1, 10 ) === 1 ) {
+					if ( Math.random() < 0.1 ) {
 						if ( _this.switchSkillWithType( SKILL_TYPE_CALL ) ) {
 							_this.executeSkill();
 						}

@@ -98,6 +98,50 @@ Crafty.c( "Life", {
 
 });
 
+Crafty.c( "Level", {
+	init: function() {
+		var _this = this;
+
+		this.score = 0;
+		this.level = 1;
+
+		Crafty.bind( 'ActorDead', function( entity ) {
+			if ( entity.lastAttakerId && entity.lastAttakerId == _this.getId() ) {
+				//var score = ( entity.level || 1 ) * 100;
+				var score = 100;
+				_this.addScore( score );
+			}
+
+		});
+	},
+
+	levelUp : function() {
+		this.setLevel( this.level + 1 );
+	},
+
+	addScore : function( score ) {
+		this.setScore( this.score + score );
+	},
+
+	setLevel : function( level ) {
+		this.level = level;
+		if ( this.afterLevelUp ) {
+			this.afterLevelUp( this.level );
+		}
+	},
+
+	setScore : function( score ) {
+		this.score = score;
+		var level = Math.floor( this.score / 100 ) + 1;
+		this.setLevel( level );
+	}
+
+	// can ben override
+	//afterLevelUp : function( level ) {
+	//}
+
+});
+
 /**
  * 可被继承的角色
  */
@@ -135,7 +179,7 @@ Crafty.c( "ActorBase", {
 		this._movement = { x: 0, y: 0 };
 		this._targetPosition = { x: 0, y: 0 };
 
-		this.requires( 'Actor, Life, Skill, 2D, Canvas, Color, Tween, Collision, Mouse, Box2D' )
+		this.requires( 'Actor, Life, Skill, 2D, Canvas, Color, Tween, Collision, Mouse, Box2D, Level' )
 			.attr( { x:100, y:100, w:_root.config.w, h:_root.config.h, rotation:0, running:false } )
 			.color('orange');
 
@@ -145,8 +189,6 @@ Crafty.c( "ActorBase", {
 				friction : 1,
 				restitution : 0
 		});
-
-
 
 		this.gunPipe = Crafty.e( '2D, Canvas, Color')
 						.attr( {x: this.x + this.w/2-1, y:this.y-this.h*0.4, w:2, h:this.h*0.7} )
@@ -223,11 +265,32 @@ Crafty.c( "ActorBase", {
 		//this.switchWeapon( 0 );
 		this.switchWeapon( randInt( 0, WEAPON_LIST.length-1 ) );
 
+		this.die = this._die_override;
 	},
 
 	setGroupId : function( groupId ) {
 		this.groupId = groupId;
 		this.taskManager.setGroupId( groupId );
+	},
+
+	resize : function() {
+		var factor = this.getFactor();
+		var rotation = this.rotation;
+
+		this.attr( { w:this.config.w * factor, h:this.config.h * factor, rotation:0 } );
+		this.gunPipe.attr( { x: this.x + this.w/2-1, y:this.y-this.h*0.4, w:2*factor, h:this.h*0.7*factor} );
+		this.hpBar.attr( {x: this.x, y:this.y+this.h-2, w:this.w, h:2} );
+		this.attr( {rotation:rotation} );
+	},
+
+	changeZIndex : function() {
+		this.attr( {z : this._globalZ + 1} );
+		this.gunPipe.attr( {z : this._globalZ + 1} );
+		this.hpBar.attr( {z : this._globalZ + 1} );
+	},
+
+	getFactor : function() {
+		return this.level ? this.level * 0.1 + 1 : 1;
 	},
 
 	switchWeapon : function( index ) {
@@ -277,6 +340,11 @@ Crafty.c( "ActorBase", {
 		} else {
 			this.skill.shootTo( p.x, p.y, this.rotation );
 		}
+	},
+
+	switchTonextSkill : function() {
+		this.nextSkill();
+		this.skill.showSkillName( this.x, this.y );
 	},
 
 	executeSkillTo : function( entity ) {
@@ -430,6 +498,11 @@ Crafty.c( "ActorBase", {
 		*/
 	 },
 
+	// @Override
+	afterLevelUp : function() {
+		this.resize();
+	},
+
 	killServants : function() {
 		var _this = this;
 		Crafty( 'Servant' ).each( function() {
@@ -439,7 +512,7 @@ Crafty.c( "ActorBase", {
 		});
 	},
 
-	die: function() {
+	_die_override: function() {
 		if ( ! this.isDead ) {
 			this.isDead = true;
 			this.killServants();
@@ -524,6 +597,11 @@ Crafty.c( "Player", extend( Crafty.components().ActorBase, {
 					var index = k - 49;
 					_this.switchWeapon( index );
 
+				// change next skill
+				} else if ( k == Crafty.keys.TAB || k == Crafty.keys.Q ) {
+					_this.switchTonextSkill();
+					_this.running = false;
+
 				} else if ( isSkillKey( k ) ) {
 					var i = 0;
 					for ( ; i < skillKeys.length && skillKeys[i] !== k; i ++ );
@@ -602,9 +680,11 @@ Crafty.c( "Player", extend( Crafty.components().ActorBase, {
 			var entity = e[0].obj;
 			this.goBack( 2 * this.speed, true, entity, false );
 		});
+
+		this.die = this._die_override;
 	},
 
-	die: function() {
+	_die_override: function() {
 		this.running = false;
 		this.unbind( 'KeyDown' );
 		this.unbind( 'KeyUp' );
@@ -636,6 +716,9 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 		this.action = null;
 
 		this.lastMeetEntity = null;
+
+		// 最后一个攻击方
+		this.lastAttakerId = null;
 
 		this.debugSearchPathing = true;
 
@@ -722,6 +805,7 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 					this.fsm.beAttacked( data.attackerId );
 				}
 			}
+			_this.lastAttakerId = data.attackerId;
 		});
 
 		this.bind( 'StopMovement', function() {

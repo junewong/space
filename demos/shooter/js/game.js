@@ -252,7 +252,9 @@ var Game = {
 		return player;
 	},
 
-	player : function() {
+	player : function( skillType ) {
+		this.playerHasAllSkills = skillType === 'allSkills';
+
 		// 创建玩家
 		var player = this._createPlayer();
 
@@ -275,7 +277,7 @@ var Game = {
 		actor.attr( {x: x, y: y} );
 
 		if ( this.shouldAddSkill ) {
-			this.skill( 3, actor.getId() );
+			this.skill( 1, actor.getId() );
 		}
 
 		this._addTask( actor );
@@ -309,6 +311,8 @@ var Game = {
 	},
 
 	skill : function( i, compName ) {
+		var _this = this;
+
 		i = i || 3;
 		i = i > SKILL_LIST.length ? SKILL_LIST.length : i;
 		compName = compName || 'Player';
@@ -322,7 +326,7 @@ var Game = {
 			Arrays.shuffle( allSkills );
 			Arrays.shuffle( allSkills );
 
-			if ( this.has( 'Player' ) ) {
+			if ( this.has( 'Player' ) && _this.playerHasAllSkills ) {
 				for ( var k in SKILL_LIST ) {
 					this.addSkill( SKILL_LIST[k] ); 
 				}
@@ -348,7 +352,6 @@ var Game = {
 		Crafty.bind( 'ActorDead', function( entity ) {
 			var groupId = entity.groupId;
 			if ( components.indexOf( 'Soldier' ) > -1 && entity.has( 'Soldier' ) ) {
-				var groupId = entity.groupId;
 				setTimeout( function() {
 					if ( _this._getSoldierCount( groupId ) <  _this.soldierCount ) {
 						_this._createSoldier( 1, groupId );
@@ -357,7 +360,6 @@ var Game = {
 			}
 
 			if ( components.indexOf( 'Player' ) > -1 && entity.has( 'Player' ) ) {
-				var groupId = entity.groupId;
 				setTimeout( function() {
 					if ( Crafty( 'Player' ).length <  1 ) {
 						_this._createPlayer( groupId );
@@ -418,7 +420,7 @@ var Game = {
 
 	_changeZIndex : function() {
 		Crafty( 'Actor' ).each( function() {
-			this.attr( {z : this._globalZ + 1} );
+			this.changeZIndex();
 		});
 	},
 

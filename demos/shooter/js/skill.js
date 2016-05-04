@@ -115,8 +115,9 @@ var Skill = function( name, owner, group, config ) {
 
 	var _this = this;
 
-	this.showSkillName = function( x, y ) {
+	this.showSkillName = function( x, y, color ) {
 		var width = 100, height = 40, offsetX = x - width /2;
+		color = color || 'black';
 
 		Crafty.e( '2D, Canvas, Color, Tween, Text' )
 			.text( _this.name )
@@ -411,8 +412,8 @@ var CuteSkill = function( owner, group ) {
 		damage: 0,
 		time : 1000,
 		value : 1,
-		effectTime : 5,
-		frozenTime : 10000,
+		effectTime : 4,
+		frozenTime : 30000,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;
@@ -622,7 +623,7 @@ var ServantSkill = function( owner, group ) {
 		type : SKILL_TYPE_CALL,
 		description: '召唤一个士兵',
 		frozenTime : 3000,
-		maxCount : 3,
+		maxCount : 1,
 
 		check : function( x, y, rotation, callback ) {
 			var count = 0;
@@ -698,6 +699,7 @@ Crafty.c( "Skill", {
 		// 技能
 		this.skills = [];
 		this.skill = null;
+		this.index = 0;
 	},
 
 	/**
@@ -718,6 +720,12 @@ Crafty.c( "Skill", {
 			var skill = index;
 			this.skill = skill;
 		}
+		this.index = index;
+	},
+
+	nextSkill : function() {
+		var index = this.index < this.skills.length -1 ? this.index + 1 : 0;
+		this.switchSkill( index );
 	},
 
 	addSkill : function( skillClass ) {
