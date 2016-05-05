@@ -333,7 +333,7 @@ var Game = {
 				log( 'Player: ' + this.getSkillString() );
 
 			} else {
-				for ( var j = 0; j < i; j++ ) {
+				for ( var j = randInt(0, SKILL_LIST.length -1 - i), len = j + i; j < len; j++ ) {
 					this.addSkill( allSkills[j] ); 
 				}
 				log( 'Soldier: ' + this.getSkillString() );
