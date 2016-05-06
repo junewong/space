@@ -171,7 +171,7 @@ Crafty.c( "ActorFsm", {
 							if ( hasSkill ) {
 								_this.executeSkillTo( entity );
 
-							} else if ( ! hasSkill && ! isDefensing ) {
+							} else if ( ! hasSkill && isDefensing ) {
 								// 如果对方在防御但却没有穿透技能可以对付，则取消攻击
 								fsm.attackNotEffect( entity.getId() );
 								return;
