@@ -647,8 +647,61 @@ var ServantSkill = function( owner, group ) {
 	return new Skill( '召唤', owner, group, config );
 };
 
+/**
+ * 召唤多个炮灰型士兵, 血量少，没有技能，攻击力弱，一段时间后消失。
+ */
+var WeakServantSkill = function( owner, group ) {
 
-var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill, PenetrateSkill, DashSkill, SpeedUpSkill, ServantSkill ];
+	var config = {
+
+		type : SKILL_TYPE_CALL,
+		description: '召唤多个炮灰型士兵',
+		effectTime : 30000,
+		frozenTime : 10000,
+		max : 3,
+		maxCount : 9,
+
+		check : function( x, y, rotation, callback ) {
+			var count = 0;
+			Crafty( 'WeakServant' ).each( function() {
+				if ( this.leader === owner ) {
+					count ++;
+				}
+			});
+
+			return  count < this.maxCount;
+		},
+
+		shoot : function( x, y, rotation, callback ) {
+			var _this = this;
+
+			var actor = Crafty( owner );
+			if ( ! actor || ! actor.length ) {
+				callback();
+				return;
+			}
+			var destroy = function( actor ) {
+				setTimeout( function() {
+					if ( actor ) {
+						die( actor );
+					}
+				}, _this.effectTime);
+			};
+
+			for ( var i = 0; i < this.max; i ++ ) {
+				var servant = Game._createServant( actor, 'WeakServant' );
+				destroy( servant );
+			}
+
+			callback();
+		}
+	};
+
+	return new Skill( '群狼', owner, group, config );
+};
+
+
+var SKILL_LIST = [ SunShineSkill, SheildSkill, MarshSkill, SneakSkill, CuteSkill, PenetrateSkill, DashSkill, SpeedUpSkill, ServantSkill, WeakServantSkill ];
 
 
 /**

@@ -299,8 +299,10 @@ var Game = {
 
 	},
 
-	_createServant : function( leader ) {
-		var actor = Crafty.e("Servant")
+	_createServant : function( leader, type ) {
+		type = type || 'Servant';
+
+		var actor = Crafty.e( type )
 						.color( leader.color() );
 		actor.leader = leader.getId();
 		actor.groupId = leader.groupId;
@@ -312,11 +314,14 @@ var Game = {
 
 		actor.attr( {x: x, y: y} );
 
-		if ( this.shouldAddSkill ) {
-			this.skill( 1, actor.getId() );
+		var skillCount = type == 'Servant' ? 1 : 0;
+		if ( this.shouldAddSkill && skillCount > 0 ) {
+			this.skill( skillCount, actor.getId() );
 		}
 
 		this._addTask( actor );
+
+		return actor;
 	},
 
 	base : function( count ) {

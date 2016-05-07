@@ -177,6 +177,7 @@ Crafty.c( "ActorBase", {
 			speed : 4,
 			maxHP : 100,
 			leader: 0,
+			damageFactor : 1,
 			groupId : 0
 
 		}, config || {} );
@@ -325,6 +326,9 @@ Crafty.c( "ActorBase", {
 		}
 
 		this.weapon = new weaponClass( this.getId() );
+		if ( this.config.damageFactor ) {
+			this.weapon.setFactor( this.config.damageFactor );
+		}
 
 		this.trigger( 'SwitchWeapon', this.weapon );
 	},
@@ -852,6 +856,33 @@ Crafty.c( "Servant", extend( Crafty.components().AIBase, {
 }) );
 
 /**
+ *  AI控制的召唤出来的更为弱小的战斗单位
+ */
+Crafty.c( "WeakServant", extend( Crafty.components().AIBase, {
+	init: function() {
+		var _this = this;
+
+		var config = {
+			w : 8,
+			h : 8,
+			maxHP : 6,
+			damageFactor : 0.5
+		};
+
+		this.initAIBase( config );
+
+		this.valueScore = 10;
+
+		this.timeout( function() {
+			if ( ! _this.waiting ) {
+				_this.startAI();
+			}
+		}, 300 );
+	}
+
+}) );
+
+/**
  * 玩家控制的战士
  */
 Crafty.c( "Player", extend( Crafty.components().AIBase, {
@@ -870,7 +901,8 @@ Crafty.c( "Player", extend( Crafty.components().AIBase, {
 			Crafty.keys.K,
 			Crafty.keys.J,
 			Crafty.keys.H,
-			Crafty.keys.G
+			Crafty.keys.G,
+			Crafty.keys.F
 		];
 
 		var isSkillKey = function( k ) {
