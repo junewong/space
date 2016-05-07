@@ -394,6 +394,7 @@ var Game = {
 				setTimeout( function() {
 					if ( _this._getSoldierCount( groupId ) <  _this.soldierCount ) {
 						_this._createSoldier( 1, groupId, null, {name: name, score: score, initScore: score});
+						Crafty.trigger( 'ScoreChange' );
 					}
 				}, 1000 );
 			}
@@ -402,6 +403,7 @@ var Game = {
 				setTimeout( function() {
 					if ( Crafty( 'Player' ).length <  1 ) {
 						_this._createPlayer( groupId, {score: score, initScore: score} );
+						Crafty.trigger( 'ScoreChange' );
 					}
 				}, 1000 );
 			}

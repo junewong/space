@@ -106,12 +106,13 @@ Crafty.c( "Level", {
 		this.initScore = 0;
 		this.score = 0;
 		this.level = 1;
+		this.valueScore = 100;
 
 		Crafty.bind( 'ActorDead', function( entity ) {
 			if ( entity.lastAttakerId &&
 				( entity.lastAttakerId == _this.getId() || Crafty( entity.lastAttakerId ).leader == _this.getId() ) ) {
 				//var score = ( entity.level || 1 ) * 100;
-				var score = 100;
+				var score = entity.valueScore;
 				_this.addScore( score );
 			}
 
@@ -534,18 +535,328 @@ Crafty.c( "ActorBase", {
 			this.isDead = true;
 			this.killServants();
 			delete this.taskManager;
-			die( this );
+			die( this, null, 1.5 );
 		}
 	}
 });
 
 
 /**
+ *  AI控制的战士
+ */
+Crafty.c( "AIBase", extend( Crafty.components().ActorBase, {
+	initAIBase : function( config ) {
+		this._init( config );
+
+		var _this = this;
+
+		this.waiting = false;
+		this.moving = false;
+		this.searchingPath = false;
+
+		this.visibleDistance = 300;
+		this.addVisibleFrame();
+
+		this.action = null;
+
+		this.lastMeetEntity = null;
+
+		// 最后一个攻击方
+		this.lastAttakerId = null;
+
+		this.debugSearchPathing = true;
+
+		// 添加有限状态机
+		this.requires( 'ActorFsm' );
+
+
+		this.bind( 'SwitchWeapon', function( weapon ) {
+			//this.updateVisibleFrame();
+		});
+
+		this.bind( 'HitMaterial', function( e ) {
+			if ( this.searchingPath ) {
+				return;
+			}
+			var _this = this;
+			this.stopMoving();
+
+			var entity = e[0].obj;
+
+			this.searchingPath = true;
+			this.goBack( 4 * this.speed, true, entity, function() {
+				var obj = e[0].obj;
+				_this.searchingPath = false;
+				if ( _this.isRunningAI() ) {
+					_this.roundAction( obj );
+				}
+			}, false );
+		});
+		
+		this.bind( 'MeetEnemy', function( hitData ) {
+			var entity = hitData.shift().obj;
+			if ( entity == this ) {
+				if ( hitData.length === 0 ) {
+					return;
+
+				} else {
+					entity = hitData.shift().obj;
+				}
+			}
+
+			if  ( this.hasObstacle( entity ) ) {
+				return;
+			}
+
+			if ( this.groupId && entity.groupId && entity.groupId === this.groupId ) {
+				return;
+			}
+
+			this.lastMeetEntity = entity;
+
+			log( this.getId() + ' meet enemy, attackerId:' + entity.getId() );
+
+			if ( this.fsm ) {
+				this.fsm.meetEnemy( entity );
+			}
+		});
+
+		this.bind( 'LostEnemy', function( name ) {
+			if ( name === 'Actor' || name === 'Soldier' || name === 'Player' ) {
+				if ( this.fsm ) {
+					this.fsm.enemyTryEscape( this.lastMeetEntity );
+				}
+			}
+
+		});
+
+		this.bind( 'BeAttacked', function( data ) {
+			if ( data.attackerId === this.getId() ) {
+				return;
+			}
+
+			if ( data.targetId !== this.getId() ) {
+				return;
+			}
+
+			if ( Crafty( data.attackerId ).groupId === this.groupId ) {
+				return;
+			}
+
+			if ( Crafty( data.attackerId ).leader === this.groupId ) {
+				return;
+			}
+
+			var damage = data.damage;
+			if ( this.damageEnough( damage, this.maxHP / 10 ) ) {
+				log( this.getId() + ' be attacked, need to shun, attackerId:' + data.attackerId );
+				if ( this.fsm ) {
+					this.fsm.beAttacked( data.attackerId );
+				}
+			}
+			_this.lastAttakerId = data.attackerId;
+		});
+
+		this.bind( 'StopMovement', function() {
+			//log( 'event StopMovement ...' );///
+			//this.fsm.beStopMovement();
+		});
+
+		this.bind( 'StopMove', function() {
+			log( 'event StopMove ...' );///
+			if ( this.fsm ) {
+				this.fsm.beStopMovement();
+			}
+		});
+
+		this.bind( 'Unpause', function() {
+		});
+
+	},
+
+	startAI : function() {
+		if ( ! this.fsm ) {
+			this.initFsm();
+		} else {
+			this.fsm.nothingToDo();
+		}
+	},
+
+	stopAI : function() {
+		if ( this.fsm ) {
+			this.fsm.terminal();
+		}
+	},
+
+	isRunningAI : function() {
+		return this.fsm && ( ! this.fsm.isFinished() );
+	},
+
+	addVisibleFrame : function() {
+		if ( this.visibleFrame ) {
+			return;
+		}
+
+		var _this = this;
+
+		var size = this.visibleDistance || this.weapon.config.distance * 0.8;
+
+		//this.visibleFrame = Crafty.e( '2D, Canvas, Collision, WiredHitBox' )
+		this.visibleFrame = Crafty.e( '2D, Canvas, Collision' )
+								.origin( 'center' )
+								.attr( {w: size, h: size} );
+
+		var checkComponet = 'Actor, Soldier, Rock, BaseBuilding';
+		this.visibleFrame.checkHits( checkComponet )
+				.bind( 'HitOn', function( hitData ) {
+					_this.trigger( 'MeetEnemy', hitData );
+					setTimeout( function() {
+						_this.visibleFrame.resetHitChecks( checkComponet );
+					}, 300 );
+				})
+				.bind( 'HitOff', function( name ) {
+					_this.trigger( 'LostEnemy', name );
+					setTimeout( function() {
+						_this.visibleFrame.resetHitChecks( checkComponet );
+					}, 300 );
+				});
+
+		this.attach( this.visibleFrame );
+
+		this.updateVisibleFrame();
+	},
+
+	updateVisibleFrame : function() {
+		//var size = this.weapon.config.distance;
+		var size = this.visibleDistance > this.weapon.config.distance * 0.8 ? this.visibleDistance : this.weapon.config.distance * 0.8;
+
+		var x = this.x + this.w/2 - size/2;
+		var y = this.y + this.h/2 - size/2;
+		this.visibleFrame.attr( {x: x, y: y, w: size, h: size} );
+
+		this.visibleDistance = size;
+	},
+
+	roundAction: function( obj ) {
+		var _this = this;
+
+		var targetX = this._targetPosition.x;
+		var targetY = this._targetPosition.y;
+
+		this.roundTo( targetX, targetY );
+	},
+
+	roundTo : function( targetX, targetY ) {
+		if ( this.searchingPath ) {
+			return;
+		}
+		this.searchingPath = true;
+
+		this.stopTweenMove();
+
+		var callback = this.debugSearchPathing ? function( pos ) {
+			var block = Crafty.e( '2D, Canvas, Color' )
+				.attr( {x: pos.x, y: pos.y, w:20, h:20, alpha: 0.6} )
+				.color( 'green' );
+
+			setTimeout( function() {
+				block.destroy();
+			}, 10000 );
+
+		} : null;
+
+		var paths = Game.battleMap.findPath( this, targetX, targetY, callback );
+		log( 'create path length: ' + paths.length );///
+
+		if ( ! paths ) {
+			this.searchingPath = false;
+			return;
+		}
+
+		if ( this.fsm ) {
+			this.fsm.beBlocked( paths );
+
+		} else {
+			var _this = this;
+			setTimeout( function() {
+				if ( _this.fsm ) {
+					_this.fsm.beBlocked( paths );
+				}
+			}, 300 );
+		}
+	},
+
+
+	randPositionByAngle : function( angle1, angle2, maxDistance ) {
+		var angle = randInt( angle1, angle2 + 180 );
+		var distance = randInt( 10, maxDistance );
+
+		var pos = toAngle( this.x, this.y, angle, distance );
+		pos = fixPos( pos, this.w, this.y );
+		return pos;
+	},
+
+	// 跟目标之间是否存在障碍
+	hasObstacle: function( obj ) {
+		var exist = Game.battleMap.checkObstacal( this.x, this.y, obj.x, obj.y );
+		return exist;
+	}
+
+
+}) );
+
+
+/**
+ *  AI控制的战士
+ */
+Crafty.c( "Soldier", extend( Crafty.components().AIBase, {
+	init: function( config ) {
+		var _this = this;
+
+		this.initAIBase( config );
+
+		this.timeout( function() {
+			if ( ! _this.waiting ) {
+				_this.startAI();
+			}
+		}, 300 );
+	}
+
+}) );
+
+/**
+ *  AI控制的召唤出来的仆人
+ */
+Crafty.c( "Servant", extend( Crafty.components().AIBase, {
+	init: function() {
+		var _this = this;
+
+		var config = {
+			w : 10,
+			h : 10,
+			maxHP : 50
+		};
+
+		//this.superInit( config );
+		this.initAIBase( config );
+
+		this.valueScore = 50;
+
+		this.timeout( function() {
+			if ( ! _this.waiting ) {
+				_this.startAI();
+			}
+		}, 300 );
+	}
+
+}) );
+
+/**
  * 玩家控制的战士
  */
-Crafty.c( "Player", extend( Crafty.components().ActorBase, {
+Crafty.c( "Player", extend( Crafty.components().AIBase, {
 	init: function( config ) {
-		this._init( config );
+		this.initAIBase( config );
 
 		var skillKeys = [
 			Crafty.keys.Z,
@@ -617,6 +928,11 @@ Crafty.c( "Player", extend( Crafty.components().ActorBase, {
 				// change next skill
 				} else if ( k == Crafty.keys.TAB || k == Crafty.keys.Q ) {
 					_this.switchTonextSkill();
+					_this.running = false;
+
+				// switch AI mode
+				} else if ( k == Crafty.keys.E ) {
+					_this.switchAI();
 					_this.running = false;
 
 				} else if ( isSkillKey( k ) ) {
@@ -701,6 +1017,19 @@ Crafty.c( "Player", extend( Crafty.components().ActorBase, {
 		this.die = this._die_override;
 	},
 
+	switchAI : function() {
+		if ( ! this.isRunningAI() ) {
+			this.startAI();
+			showTip( "自动模式", this );
+		} else {
+			this.stopAI();
+			showTip( "手动模式", this );
+		}
+		if ( this.fsm ) {
+			this.autoUseSkill = false;
+		}
+	},
+
 	_die_override: function() {
 		this.running = false;
 		this.unbind( 'KeyDown' );
@@ -708,268 +1037,8 @@ Crafty.c( "Player", extend( Crafty.components().ActorBase, {
 		if ( ! this.isDead ) {
 			this.isDead = true;
 			this.killServants();
-			die( this );
+			die( this, null, 1.5 );
 		}
-	}
-
-}) );
-
-/**
- *  AI控制的战士
- */
-Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
-	init: function( config ) {
-		this._init( config );
-
-		var _this = this;
-
-		this.waiting = false;
-		this.moving = false;
-		this.searchingPath = false;
-
-		this.visibleDistance = 300;
-		this.addVisibleFrame();
-
-		this.action = null;
-
-		this.lastMeetEntity = null;
-
-		// 最后一个攻击方
-		this.lastAttakerId = null;
-
-		this.debugSearchPathing = true;
-
-		// 添加有限状态机
-		this.requires( 'ActorFsm' );
-
-
-		this.bind( 'SwitchWeapon', function( weapon ) {
-			//this.updateVisibleFrame();
-		});
-
-		this.bind( 'HitMaterial', function( e ) {
-			if ( this.searchingPath ) {
-				return;
-			}
-			var _this = this;
-			this.stopMoving();
-
-			var entity = e[0].obj;
-
-			this.searchingPath = true;
-			this.goBack( 4 * this.speed, true, entity, function() {
-				var obj = e[0].obj;
-				_this.searchingPath = false;
-				_this.roundAction( obj );
-
-			}, false );
-		});
-		
-		this.bind( 'MeetEnemy', function( hitData ) {
-			var entity = hitData.shift().obj;
-			if ( entity == this ) {
-				if ( hitData.length === 0 ) {
-					return;
-
-				} else {
-					entity = hitData.shift().obj;
-				}
-			}
-
-			if  ( this.hasObstacle( entity ) ) {
-				return;
-			}
-
-			if ( this.groupId && entity.groupId && entity.groupId === this.groupId ) {
-				return;
-			}
-
-			this.lastMeetEntity = entity;
-
-			log( this.getId() + ' meet enemy, attackerId:' + entity.getId() );
-
-			if ( this.fsm ) {
-				this.fsm.meetEnemy( entity );
-			}
-		});
-
-		this.bind( 'LostEnemy', function( name ) {
-			if ( name === 'Actor' || name === 'Soldier' || name === 'Player' ) {
-				if ( this.fsm ) {
-					this.fsm.enemyTryEscape( this.lastMeetEntity );
-				}
-			}
-
-		});
-
-		this.bind( 'BeAttacked', function( data ) {
-			if ( data.attackerId === this.getId() ) {
-				return;
-			}
-
-			if ( data.targetId !== this.getId() ) {
-				return;
-			}
-
-			if ( Crafty( data.attackerId ).groupId === this.groupId ) {
-				return;
-			}
-
-			if ( Crafty( data.attackerId ).leader === this.groupId ) {
-				return;
-			}
-
-			var damage = data.damage;
-			if ( this.damageEnough( damage, this.maxHP / 10 ) ) {
-				log( this.getId() + ' be attacked, need to shun, attackerId:' + data.attackerId );
-				if ( this.fsm ) {
-					this.fsm.beAttacked( data.attackerId );
-				}
-			}
-			_this.lastAttakerId = data.attackerId;
-		});
-
-		this.bind( 'StopMovement', function() {
-			//log( 'event StopMovement ...' );///
-			//this.fsm.beStopMovement();
-		});
-
-		this.bind( 'StopMove', function() {
-			log( 'event StopMove ...' );///
-			if ( this.fsm ) {
-				this.fsm.beStopMovement();
-			}
-		});
-
-		this.bind( 'Unpause', function() {
-		});
-
-
-		this.timeout( function() {
-			if ( ! _this.waiting ) {
-				this.initFsm();
-			}
-		}, 300 );
-	},
-
-	addVisibleFrame : function() {
-		var _this = this;
-
-		var size = this.visibleDistance || this.weapon.config.distance * 0.8;
-
-		//this.visibleFrame = Crafty.e( '2D, Canvas, Collision, WiredHitBox' )
-		this.visibleFrame = Crafty.e( '2D, Canvas, Collision' )
-								.origin( 'center' )
-								.attr( {w: size, h: size} );
-
-		var checkComponet = 'Actor, Soldier, Rock, BaseBuilding';
-		this.visibleFrame.checkHits( checkComponet )
-				.bind( 'HitOn', function( hitData ) {
-					_this.trigger( 'MeetEnemy', hitData );
-					setTimeout( function() {
-						_this.visibleFrame.resetHitChecks( checkComponet );
-					}, 300 );
-				})
-				.bind( 'HitOff', function( name ) {
-					_this.trigger( 'LostEnemy', name );
-					setTimeout( function() {
-						_this.visibleFrame.resetHitChecks( checkComponet );
-					}, 300 );
-				});
-
-		this.attach( this.visibleFrame );
-
-		this.updateVisibleFrame();
-	},
-
-	updateVisibleFrame : function() {
-		//var size = this.weapon.config.distance;
-		var size = this.visibleDistance > this.weapon.config.distance * 0.8 ? this.visibleDistance : this.weapon.config.distance * 0.8;
-
-		var x = this.x + this.w/2 - size/2;
-		var y = this.y + this.h/2 - size/2;
-		this.visibleFrame.attr( {x: x, y: y, w: size, h: size} );
-
-		this.visibleDistance = size;
-	},
-
-	roundAction: function( obj ) {
-		var _this = this;
-
-		var targetX = this._targetPosition.x;
-		var targetY = this._targetPosition.y;
-
-		this.roundTo( targetX, targetY );
-	},
-
-	roundTo : function( targetX, targetY ) {
-		if ( this.searchingPath ) {
-			return;
-		}
-		this.searchingPath = true;
-
-		this.stopTweenMove();
-
-		var callback = this.debugSearchPathing ? function( pos ) {
-			var block = Crafty.e( '2D, Canvas, Color' )
-				.attr( {x: pos.x, y: pos.y, w:20, h:20, alpha: 0.6} )
-				.color( 'green' );
-
-			setTimeout( function() {
-				block.destroy();
-			}, 10000 );
-
-		} : null;
-
-		var paths = Game.battleMap.findPath( this, targetX, targetY, callback );
-		log( 'create path length: ' + paths.length );///
-
-		if ( ! paths ) {
-			this.searchingPath = false;
-			return;
-		}
-
-		if ( this.fsm ) {
-			this.fsm.beBlocked( paths );
-
-		} else {
-			var _this = this;
-			setTimeout( function() {
-				_this.fsm.beBlocked( paths );
-			}, 300 );
-		}
-	},
-
-
-	randPositionByAngle : function( angle1, angle2, maxDistance ) {
-		var angle = randInt( angle1, angle2 + 180 );
-		var distance = randInt( 10, maxDistance );
-
-		var pos = toAngle( this.x, this.y, angle, distance );
-		pos = fixPos( pos, this.w, this.y );
-		return pos;
-	},
-
-	// 跟目标之间是否存在障碍
-	hasObstacle: function( obj ) {
-		var exist = Game.battleMap.checkObstacal( this.x, this.y, obj.x, obj.y );
-		return exist;
-	}
-
-
-}) );
-
-/**
- *  AI控制的召唤出来的仆人
- */
-Crafty.c( "Servant", extend( Crafty.components().Soldier, {
-	init: function() {
-		var config = {
-			w : 10,
-			h : 10,
-			maxHP : 50
-		};
-		this.superInit( config );
 	}
 
 }) );

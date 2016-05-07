@@ -7,16 +7,21 @@ Crafty.c( "ActorFsm", {
 	initFsm: function() {
 		var _this = this;
 
+
+		this.autoUseSkill = true;
+
 		var fsm = StateMachine.create({
 
 			initial: 'free',
+
+			terminal : 'terminal',
 
 			error: function(eventName, from, to, args, errorCode, errorMessage) {
 			  return 'event ' + eventName + ' was naughty :- ' + errorMessage;
 			},
 
 			events: [
-				{ name: 'nothingToDo', from: 'free', to: 'wand' },
+				{ name: 'nothingToDo', from: ['free', 'terminal'], to: 'wand' },
 				{ name: 'meetEnemy', from: ['wand', 'free', 'seek'], to: 'attack' },
 				{ name: 'killEnemy', from: ['attack', 'seek'], to: 'free' },
 				{ name: 'enemyTryEscape', from: ['attack', 'seek'], to: 'seek' },
@@ -28,7 +33,9 @@ Crafty.c( "ActorFsm", {
 				{ name: 'wandOver', from: ['wand', 'alongPath'], to: 'free' },
 				{ name: 'attackOver', from: 'attack', to: 'free' },
 				{ name: 'shunOver', from: 'shun', to: 'free' },
-				{ name: 'pathOver', from: 'alongPath', to: 'free' }
+				{ name: 'pathOver', from: 'alongPath', to: 'free' },
+				// 打断
+				{ name: 'terminal', from: ['free', 'wand', 'attack', 'seed', 'alongPath', 'shun'], to: 'terminal' },
 			],
 
 			callbacks: {
@@ -71,7 +78,7 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					// 医疗技能，掉一半血以下考虑释放治疗技能
-					if ( Math.random() < 0.2 ) {
+					if ( _this.autoUseSkill &&  Math.random() < 0.2 ) {
 						if ( _this.HP / _this.maxHP <= 0.5 ) {
 							if ( _this.switchSkillWithType( SKILL_TYPE_CURE ) ) {
 								_this.executeSkill();
@@ -80,7 +87,7 @@ Crafty.c( "ActorFsm", {
 					}
 
 					// 可能会释放召唤技能
-					if ( Math.random() < 0.1 ) {
+					if ( _this.autoUseSkill &&  Math.random() < 0.1 ) {
 						if ( _this.switchSkillWithType( SKILL_TYPE_CALL ) ) {
 							_this.executeSkill();
 						}
@@ -162,7 +169,7 @@ Crafty.c( "ActorFsm", {
 
 						// 一定几率释放攻击技能
 						var hasSkill = false;
-						if ( randInt( 0, 40 ) === 10 ) {
+						if ( _this.autoUseSkill &&  randInt( 0, 40 ) === 10 ) {
 							// 对方属于防御技能状态，使用穿透技能，否则普通的攻击技能
 							var isDefensing =  entity.has( 'Actor' ) && entity.isRunningWithType( SKILL_TYPE_DEFENSE );
 							hasSkill = isDefensing ? _this.switchSkillWithType( SKILL_TYPE_PENETRATE ) :
@@ -201,7 +208,7 @@ Crafty.c( "ActorFsm", {
 					}
 
 					// 可能会释放控制技能
-					if ( randInt( 1, 5 ) === 1 ) {
+					if ( _this.autoUseSkill && randInt( 1, 5 ) === 1 ) {
 						if ( _this.switchSkillWithType( SKILL_TYPE_CONTROL ) ) {
 							_this.executeSkill();
 						}
@@ -209,7 +216,7 @@ Crafty.c( "ActorFsm", {
 
 					// 一定几率释放移动技能
 					var hasSkill = false;
-					if ( randInt( 1, 4 ) === 1 ) {
+					if (  _this.autoUseSkill &&  randInt( 1, 4 ) === 1 ) {
 						hasSkill = _this.switchSkillWithType( SKILL_TYPE_MOVE );
 						if ( hasSkill ) {
 							_this.executeSkillTo( entity );
@@ -246,7 +253,7 @@ Crafty.c( "ActorFsm", {
 					log( 'id:' + _this.getId() + ' event:' + event + ', from:' + from + ', to:' + to );
 
 					// 医疗技能，掉一半血以下考虑释放治疗技能
-					if ( randInt( 1, 4 ) === 1 ) {
+					if ( _this.autoUseSkill &&  randInt( 1, 4 ) === 1 ) {
 						if ( _this.HP / _this.maxHP <= 0.5 ) {
 							if ( _this.switchSkillWithType( SKILL_TYPE_CURE ) ) {
 								_this.executeSkill();
@@ -255,7 +262,7 @@ Crafty.c( "ActorFsm", {
 					}
 
 					// 可能会释放控制技能阻挡对手，有利于逃跑
-					if ( randInt( 1, 10 ) === 1 ) {
+					if ( _this.autoUseSkill &&  randInt( 1, 10 ) === 1 ) {
 						if ( _this.switchSkillWithType( SKILL_TYPE_CONTROL ) ) {
 							_this.executeSkill();
 						}
@@ -263,7 +270,7 @@ Crafty.c( "ActorFsm", {
 
 					// 一定几率释放防御技能
 					var hasSkill = false;
-					if ( Math.random() < 0.33 ) {
+					if ( _this.autoUseSkill &&  Math.random() < 0.33 ) {
 						hasSkill = _this.switchSkillWithType( SKILL_TYPE_DEFENSE );
 						if ( hasSkill ) {
 							_this.executeSkill();
@@ -345,7 +352,7 @@ Crafty.c( "ActorFsm", {
 
 					_this.searchingPath = true;
 
-					if ( randInt( 1, 20 ) === 1 ) {
+					if ( _this.autoUseSkill &&  randInt( 1, 20 ) === 1 ) {
 						hasSkill = _this.switchSkillWithType( SKILL_TYPE_MOVE );
 						_this.executeSkillTo( entity );
 					}
@@ -392,6 +399,12 @@ Crafty.c( "ActorFsm", {
 
 				onleavealongPath: function( event, from, to, paths ) {
 					_this.searchingPath = false;
+				},
+
+				// 打断
+				onterminal : function( event, from, to, paths ) {
+					log( 'id:' + _this.getId() + ' on event:' + event + ', from:' + from + ', to:' + to );
+					_this.stopTweenMove();
 				}
 			}
 

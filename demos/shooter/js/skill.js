@@ -116,17 +116,8 @@ var Skill = function( name, owner, group, config ) {
 	var _this = this;
 
 	this.showSkillName = function( x, y, color ) {
-		var width = 100, height = 40, offsetX = x - width /2;
 		color = color || 'black';
-
-		Crafty.e( '2D, Canvas, Color, Tween, Text' )
-			.text( _this.name )
-			.textFont( { size: '24px', weight: 'bold' } )
-			.attr( { x: offsetX, y: y - 10, w:width, h:height, alpha:1 } )
-			.tween( {x: offsetX, y: y - 90, alpha:0.4}, 900 )
-			.one( 'TweenEnd', function() {
-				this.destroy();
-			});
+		showTip( _this.name, x, y );
 
 	};
 };

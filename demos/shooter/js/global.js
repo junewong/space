@@ -51,10 +51,11 @@ function fixPos( pos, w, h ) {
 	return pos;
 }
 
-function die( entity, callback ) {
-	var w = entity.w * 1.2;
-	var h = entity.h * 1.2;
-	entity.tween( {w: w, h:h, alpha:0.2}, 300 )
+function die( entity, callback, rate ) {
+	rate = rate || 1.2;
+	var w = entity.w * rate;
+	var h = entity.h * rate;
+	entity.tween( {w: w, h:h, alpha:0.2}, 400 )
 		.bind( 'TweenEnd', function() {
 			if ( Game.battleMap ) {
 				Game.battleMap.removeBlock( entity.x, entity.y, entity.w, entity.h );
@@ -153,6 +154,31 @@ function randomCreateEntity( count, map, callback ) {
 			i++;
 		}
 	}
+}
+
+/**
+ * 显示小提示，然后消失隐藏
+ * e.g.:
+ * 	showTip( 'ABC', 100, 100 );
+ * 	showTip( 'ABC', actor );
+ */
+function showTip( text, x, y ) {
+	if ( x && y === undefined ) {
+		var entity = x;
+		x = entity.x + entity.w/2;
+		y = entity.y;
+	}
+
+	var width = 100, height = 40, offsetX = x - width /2;
+
+	Crafty.e( '2D, Canvas, Color, Tween, Text' )
+		.text( text )
+		.textFont( { size: '24px', weight: 'bold' } )
+		.attr( { x: offsetX, y: y - 10, w:width, h:height, alpha:1 } )
+		.tween( {x: offsetX, y: y - 90, alpha:0.4}, 900 )
+		.one( 'TweenEnd', function() {
+			this.destroy();
+		});
 }
 
 function Flash( entity, config ) {
