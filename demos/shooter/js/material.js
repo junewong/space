@@ -94,23 +94,11 @@ Crafty.c( 'WeaponPill', {
 	init: function() {
 		var _this = this;
 		this.weaponClass = null;
-		
-		var flashDirection = 1;
 
 		this.requires( '2D, Canvas, Color, Tween, Collision' )
 			.attr({ w: 12, h: 12 });
 
-		function flash() {
-			var alpha = flashDirection === 1 ? 0.1 : 0.8;
-			_this.tween( {alpha: alpha}, 1300 );
-		}
-
-		this.bind( 'TweenEnd', function() {
-			flashDirection *= -1;
-			flash();
-		});
-
-		flash();
+		new Flash( this, {maxAlpha:0.8} );
 
 		this.onHit('Player', function() {
 			die( _this );
@@ -131,5 +119,26 @@ Crafty.c( 'WeaponPill', {
 	setWeaponColor : function( color ) {
 		this.color( color );
 	},
+
+});
+
+Crafty.c( 'HpPill', {
+	init: function() {
+		var _this = this;
+
+		var hpValue = 20;
+
+		this.requires( '2D, Canvas, Color, Tween, Collision' )
+			.attr({ w: 12, h: 12 })
+			.color( 'SpringGreen' );
+
+		new Flash( this, {maxAlpha:0.8} );
+
+		this.onHit('Life', function( e ) {
+			var entity  = e[0].obj;
+			entity.changeHP( hpValue );
+			die( _this );
+		});
+	}
 
 });

@@ -480,10 +480,10 @@ var PenetrateSkill = function( owner, group ) {
 
 		type : [ SKILL_TYPE_ATTACK, SKILL_TYPE_PENETRATE ],
 		description: '无视对方防御，造成穿透攻击',
-		distance : 500,
+		distance : 600,
 		damage: 25,
-		time : 400,
-		frozenTime : 2000,
+		time : 450,
+		frozenTime : 1500,
 
 		shoot : function( x, y, rotation, callback ) {
 			var _this = this;

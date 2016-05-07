@@ -155,6 +155,38 @@ function randomCreateEntity( count, map, callback ) {
 	}
 }
 
+function Flash( entity, config ) {
+		var _this = this;
+
+		this.count = undefined;
+		this.time = 1300;
+		this.minAlpha = 0.1;
+		this.maxAlpha = 1;
+
+		if ( config ) {
+			for ( var k in config ) {
+				this[k] = config[k];
+			}
+		}
+
+		var flashDirection = 1;
+		function once() {
+			var alpha = flashDirection === 1 ? _this.minAlpha : _this.maxAlpha;
+			entity.tween( {alpha: alpha}, _this.time);
+		}
+
+		entity.bind( 'TweenEnd', function() {
+			flashDirection *= -1;
+			if ( _this.count === undefined ) {
+				once();
+			} else if ( _this.count > 0 ) {
+				once();
+				_this.count --;
+			}
+		});
+		once();
+}
+
 
 var Arrays = {
 	shuffle : function( array ) {

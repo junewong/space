@@ -179,30 +179,24 @@ var Game = {
 		});
 	},
 
-	_createSoldier : function( count, groupId, color ) {
-		var _this = this;
+	hpPill: function( max ) {
+		max = max || 3;
 
-		randomCreateEntity( count, null, function( i ) {
-			var actor = Crafty.e("Soldier");
+		var next = function() {
 
-			var index = 1;
-			if ( groupId ) {
-				index = groupId > _this._groupColors.length ? 1 : groupId;
-			}
+			var time = randInt( 30 * 1000, 2 * 60 * 1000 );
+			setTimeout( function(){
 
-			color = color || _this._groupColors[ index ];
-			actor.color( color );
+				var count = randInt( 1, max );
+				randomCreateEntity( count, this.battleMap, function( i ) {
+					var pill = Crafty.e("HpPill");
+					return pill;
+				});
+			}, time );
 
-			actor.setGroupId( groupId || actor.getId() );
+		};
+		next();
 
-			_this._addTask( actor );
-
-			return actor;
-		});
-
-		if ( this.shouldAddSkill ) {
-			this.skill( 3, 'Soldier' );
-		}
 	},
 
 	soldier: function( count ) {
@@ -235,16 +229,57 @@ var Game = {
 		}
 	},
 
-	_createPlayer : function ( groupId ) {
+	_createSoldier : function( count, groupId, color, config ) {
+		var _this = this;
+
+		randomCreateEntity( count, null, function( i ) {
+			var actor = Crafty.e("Soldier");
+
+			var index = 1;
+			if ( groupId ) {
+				index = groupId > _this._groupColors.length ? 1 : groupId;
+			}
+
+			actor.name = '战士' + i;
+
+			color = color || _this._groupColors[ index ];
+			actor.color( color );
+
+			actor.setGroupId( groupId || actor.getId() );
+
+			if ( _this.shouldAddSkill ) {
+				_this.skill( 3, actor.getId() );
+			}
+
+			_this._addTask( actor );
+
+			if ( config ) {
+				for ( var k in config ) {
+					actor[k] = config[k];
+				}
+			}
+
+			return actor;
+		});
+	},
+
+	_createPlayer : function ( groupId, config ) {
 		var pos = randPosition();
 		var player = Crafty.e("Player")
 				.attr({ x: pos.x, y: pos.y } );
 
+		player.name = '玩家';
 		player.groupId = groupId || PLAYER_DEFAULT_GROUP_ID;
 		player.color( this._playerColor );
 
 		if ( this.shouldAddSkill ) {
 			this.skill( 3, 'Player' );
+		}
+
+		if ( config ) {
+			for ( var k in config ) {
+				player[k] = config[k];
+			}
 		}
 
 		this._addTask( player );
@@ -269,6 +304,7 @@ var Game = {
 						.color( leader.color() );
 		actor.leader = leader.getId();
 		actor.groupId = leader.groupId;
+		actor.name = leader.name + '仆从';
 
 		var x = leader.x, y = leader.y;
 		x += randInt( -100, 100 );
@@ -351,10 +387,13 @@ var Game = {
 		// 复活 
 		Crafty.bind( 'ActorDead', function( entity ) {
 			var groupId = entity.groupId;
+			var name = entity.name;
+			var score = entity.getScore();
+
 			if ( components.indexOf( 'Soldier' ) > -1 && entity.has( 'Soldier' ) ) {
 				setTimeout( function() {
 					if ( _this._getSoldierCount( groupId ) <  _this.soldierCount ) {
-						_this._createSoldier( 1, groupId );
+						_this._createSoldier( 1, groupId, null, {name: name, score: score, initScore: score});
 					}
 				}, 1000 );
 			}
@@ -362,7 +401,7 @@ var Game = {
 			if ( components.indexOf( 'Player' ) > -1 && entity.has( 'Player' ) ) {
 				setTimeout( function() {
 					if ( Crafty( 'Player' ).length <  1 ) {
-						_this._createPlayer( groupId );
+						_this._createPlayer( groupId, {score: score, initScore: score} );
 					}
 				}, 1000 );
 			}
@@ -408,6 +447,15 @@ var Game = {
 		actor.taskManager.add( task );
 	},
 
+	scoreBar : function() {
+		InfoBar.init();
+
+		Crafty.bind( 'ScoreChange', function() {
+			InfoBar.updateScores();
+		});
+		InfoBar.updateScores();
+	},
+
 	lowFPS : function() {
 		Crafty.timer.FPS( 15 );
 	},
@@ -426,7 +474,13 @@ var Game = {
 
 	_printFsmStates : function() {
 		Crafty( 'Soldier' ).each( function( i ) {
-			console.log( 'index:' + i + ' id:' + this.getId() + ' x:' + this.x + ' y:' + this.y + ' current state:' + this.fsm.current  );
+			console.log( 'index:' + i + ' id:' + this.getId() + ' level:' +  this.level +' x:' + this.x + ' y:' + this.y + ' current state:' + this.fsm.current  );
+		});
+	},
+
+	_printSkills : function() {
+		Crafty( 'Actor' ).each( function( i ) {
+			console.log( 'index:' + i + ' id:' + this.getId() + ' level:' + this.level + ' x:' + this.x + ' y:' + this.y + ' skills' + this.getSkillString()  );
 		});
 	}
 };

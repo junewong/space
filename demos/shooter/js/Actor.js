@@ -3,6 +3,7 @@ Crafty.c( "Actor", {
 	init: function() {
 		this.groupId = 0;
 		this.leader = 0;
+		this.name = '';
 	}
 
 });
@@ -102,11 +103,13 @@ Crafty.c( "Level", {
 	init: function() {
 		var _this = this;
 
+		this.initScore = 0;
 		this.score = 0;
 		this.level = 1;
 
 		Crafty.bind( 'ActorDead', function( entity ) {
-			if ( entity.lastAttakerId && entity.lastAttakerId == _this.getId() ) {
+			if ( entity.lastAttakerId &&
+				( entity.lastAttakerId == _this.getId() || Crafty( entity.lastAttakerId ).leader == _this.getId() ) ) {
 				//var score = ( entity.level || 1 ) * 100;
 				var score = 100;
 				_this.addScore( score );
@@ -131,10 +134,24 @@ Crafty.c( "Level", {
 	},
 
 	setScore : function( score ) {
+		var _this = this;
+
 		this.score = score;
-		var level = Math.floor( this.score / 100 ) + 1;
+		var level = Math.floor( (this.score - this.initScore) / 100 ) + 1;
 		this.setLevel( level );
+		setTimeout( function() {
+			Crafty.trigger( 'ScoreChange', _this, score );
+		}, 600 );
+	},
+
+	getScore : function() {
+		return this.score;
+	},
+
+	getLevel : function() {
+		return this.level;
 	}
+
 
 	// can ben override
 	//afterLevelUp : function( level ) {
@@ -798,6 +815,10 @@ Crafty.c( "Soldier", extend( Crafty.components().ActorBase, {
 				return;
 			}
 
+			if ( Crafty( data.attackerId ).leader === this.groupId ) {
+				return;
+			}
+
 			var damage = data.damage;
 			if ( this.damageEnough( damage, this.maxHP / 10 ) ) {
 				log( this.getId() + ' be attacked, need to shun, attackerId:' + data.attackerId );
@@ -1005,6 +1026,10 @@ Crafty.c( "BaseBuilding",  {
 			}
 
 			if ( Crafty( data.attackerId ).groupId === this.groupId ) {
+				return;
+			}
+
+			if ( Crafty( data.attackerId ).leader === this.getId() ) {
 				return;
 			}
 
