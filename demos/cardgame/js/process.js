@@ -8,6 +8,11 @@ var process;
 	var stack = [];
 
 	ps = {
+
+		isEnd: function() {
+			return stack.length === 0;
+		},
+
 		then : function( callback ) {
 			stack.push( callback );
 			return ps;
