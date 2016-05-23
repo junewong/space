@@ -7,6 +7,14 @@
 	<script src="../js/main.js"></script>
 </head>
 <body>
-
+	<h1>Test process</h1>
+	<div id="content"></div>
+	<script>
+       process.then( function() {
+		   id('content').innerHTML += 'callback 1<br/>';
+	   });
+	   process.done();
+	</script>
+	
 </body>
 </html>

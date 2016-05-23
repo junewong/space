@@ -1,4 +1,4 @@
-var Class = function() {  
+var Class = function() {
 	var parent,
 		methods,              
 		klass = function() { 
@@ -377,3 +377,9 @@ function removeClass(ele,cls) {
 		ele.className=ele.className.replace(reg,' ');
 	}
 }
+
+
+if ( exports ) {
+	exports.Class = Class;
+}
+
