@@ -2,6 +2,8 @@ process.stdin.resume();
 process.stdin.setEncoding('utf8');
 var singleLog = require('single-line-log').stdout;
 
+global.log = console.log;
+
 /**
  * log like a printer.
  */

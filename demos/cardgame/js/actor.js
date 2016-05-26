@@ -1,5 +1,12 @@
+if ( ! global ) {
+	global = this;
+}
 
-var Actor = Class({
+ps = global.ps;
+
+global.Actor = Class({
+
+	name : '',
 
 	init : function() {
 		this.maxLife = 30;
@@ -7,10 +14,26 @@ var Actor = Class({
 		this.life = this.initLife;
 
 		this.id = null;
-		this.name = "";
+		//this.name = "";
 		this.weapon = null;
 
+	},
+
+	run : function() {
+		var message = "{0} is playing ... ".format( this.name );
+		printer( message, function() {
+			ps.done();
+		});
 	}
 
 });
+
+global.AIPlayer = Class( Actor, {
+	name : 'AI',
+});
+
+global.Player = Class( Actor, {
+	name : 'Player'
+});
+
 
