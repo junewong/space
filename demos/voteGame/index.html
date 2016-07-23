@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Vote Game</title>
+	<script src="./js/Grids.js"></script>
+	<script src="./js/Cell.js"></script>
+	<script src="./js/LifeGame.js"></script>
+	<style>
+		.grid-row  {
+			display: block;
+			clear: both;
+		}
+		.grid-cell {
+			float: left;
+			background-color: white;
+			border: 1px solid rgb(225, 225, 225);
+		}
+
+		.grid-cell.alive {
+			background-color: green;
+		}
+
+	</style>
+</head>
+<body>
+
+<table>
+	<tr>
+		<td>
+			<div id="container"></div>
+		</td>
+		<td>
+			<div>
+				<h4>最高：<span id="maxScore">0</span></h4>
+				<h4>当前：<span id="currentScore">0</span></h4>
+				<h4>第<span id="step">0</span>步</h4>
+			</div>
+			<div>
+				<button id="nextButton">下一步</button>
+			</div>
+			<div>
+				<button id="playButton">开始/暂停</button>
+			</div>
+			<div>
+				<br/></br/>
+				<button id="resetButton">清空</button>
+			</div>
+			<div>
+				<br/>
+				<br/>
+				<input type="text" id="code" name="code" size="10"/>
+				<br/>
+				<button id="generateButton">生成代码</button>
+				<br/>
+				<button id="redrawButton">复盘</button>
+			</div>
+		</td>
+	</tr>
+</table>
+
+
+	<script>
+
+		window.onload = function() {
+
+			// get DOM
+			function D( id ) {
+				return document.getElementById( id );
+			};
+
+			// create game:
+			var game = new LifeGame( 64, 48, 10 );
+
+			game.eachStepCallback( function( step, currentScore, maxScore ) {
+				D( 'maxScore' ).innerHTML = maxScore;
+				D( 'currentScore' ).innerHTML = currentScore;
+				D( 'step' ).innerHTML = step;
+			});
+
+			// start:
+			game.createAt( D( 'container' ) );
+
+
+			// click events:
+			D( 'playButton' ).onclick = function() {
+				if ( game.isPlaying() ) {
+					game.pause();
+
+				} else {
+					game.play();
+				}
+			};
+
+			D( 'nextButton' ).onclick = function() {
+				if ( false == game.isPlaying() ) {
+					game.next();
+				}
+			};
+
+			D( 'resetButton' ).onclick = function() {
+				if ( false == game.isPlaying() ) {
+					game.reset();
+				}
+			};
+
+			D( 'generateButton' ).onclick = function() {
+				if ( false == game.isPlaying() ) {
+					var code = game.getCode();
+					D( 'code' ).value = code;
+				}
+			};
+
+			D( 'redrawButton' ).onclick = function() {
+				if ( false == game.isPlaying() ) {
+					var code = D( 'code' ).value;
+					game.initWithCode( code );
+				}
+			};
+
+
+		};
+	</script>
+</body>
+</html>
