@@ -1,5 +1,10 @@
 #!/bin/bash
 
+dir=$(dirname "$0")
+path=$(realpath $dir)
+echo "cd $path"
+cd $path
+
 echo "try to publish ..."
 echo "pulling ..."
 git pull ;
