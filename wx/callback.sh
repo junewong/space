@@ -6,4 +6,4 @@ path=$(realpath $dir)
 cd $path
 
 ./mklist.sh;
-./publish.sh
+./publish.sh > list.html
