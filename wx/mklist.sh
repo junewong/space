@@ -11,7 +11,7 @@ echo '
 <head>
 	<meta charset="UTF-8">
 	<meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-	<title>i历史文章列表</title>
+	<title>历史文章列表</title>
 	<style>
 	a {
 		color:dodgerblue;
