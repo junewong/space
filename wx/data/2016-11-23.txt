@@ -1,3 +1,9 @@
+http://chuansong.me/n/1147171351370^学习学习再学习^ 十分钟读完《少有人走的路&nbsp;2：勇敢地面对谎言》 ^2016-11-23
+http://chuansong.me/n/1147170851055^边走边看^ 边走边看&nbsp;|走进智利首都——圣地亚哥 ^2016-11-23
+http://chuansong.me/n/1146911742873^机器之心^ 学界&nbsp;|&nbsp;过去一周，值得关注的四篇神经科学论文 ^2016-11-23
+http://chuansong.me/n/1146911642859^机器之心^ MXNet专栏&nbsp;|&nbsp;李沐：深度学习·炼丹入门 ^2016-11-23
+http://chuansong.me/n/1146911542897^机器之心^ 业界&nbsp;|&nbsp;DeepMind与NHS再度合作：5年内建成全新人工智能临床信息系统 ^2016-11-23
+http://chuansong.me/n/1146911442881^机器之心^ 重磅&nbsp;|&nbsp;巨头之间的深度学习框架战争：亚马逊选中MXNet ^2016-11-23
 http://chuansong.me/n/1146081725360^虎嗅网^ 格力人事变动频繁，这对董明珠意味着什么？ ^2016-11-23
 http://chuansong.me/n/1146081625357^虎嗅网^ 征信行业黑市数据泛滥，是解不了的死结？ ^2016-11-23
 http://chuansong.me/n/1146081525383^虎嗅网^ 早报丨传Facebook为进入中国市场正在开发专用工具……也是拼了 ^2016-11-23
@@ -7,8 +13,6 @@ http://chuansong.me/n/1146081225620^36氪^ 【专访】永久自行车陈闪：�
 http://chuansong.me/n/1146081125698^36氪^ 做了20年综艺，前光线高管苏铭和他的“十一号传媒”准备如何降维攻击？ ^2016-11-23
 http://chuansong.me/n/1146081025654^36氪^ 凛冬已至，爱屋吉屋能过好这个冬天吗？ ^2016-11-23
 http://chuansong.me/n/1146080925637^36氪^ 8点1氪：iOS再现漏洞，恶意视频链接导致设备死机；NASA选择SpaceX探测全球地表水；美图估值或达50亿美元 ^2016-11-23
-http://chuansong.me/n/1146024343530^科学公园^ 寒冷会导致关节炎吗？ ^2016-11-23
-http://chuansong.me/n/1146024243542^科学公园^ 脑中风治疗，时间就是脑功能？ ^2016-11-23
 http://chuansong.me/n/1146016635457^Science^ 新发现的古细菌或能解答真核生物起源之谜 ^2016-11-23
 http://chuansong.me/n/1146012332757^雷锋网^ 深度｜Google神经网络机器翻译上线历程回顾 ^2016-11-23
 http://chuansong.me/n/1146012232747^雷锋网^ iOS&nbsp;曝奇葩漏洞，播放特定视频将死机；亚欧&nbsp;14&nbsp;国&nbsp;ATM&nbsp;机被攻击，自动吐钱&nbsp;|&nbsp;雷锋早报 ^2016-11-23
@@ -21,11 +25,5 @@ http://chuansong.me/n/1146010625457^PingWest品玩^ 爆炸门后遗症，三星�
 http://chuansong.me/n/1146010525466^PingWest品玩^ 乐视资金链阴影下的易到，究竟有没有拖欠费用？ ^2016-11-23
 http://chuansong.me/n/1146010425407^PingWest品玩^ 钱方好近获日本&nbsp;Whiz&nbsp;基金及昭文社&nbsp;2&nbsp;亿人民币投资，进军日本市场 ^2016-11-23
 http://chuansong.me/n/1146010325480^PingWest品玩^ 华为拿下的&nbsp;5G&nbsp;编码方案是什么，又有什么可骄傲的？ ^2016-11-23
-http://chuansong.me/n/1146010224077^InfoQ^ 免费报名！11.26百度技术沙龙：移动端输入法性能优化实战 ^2016-11-23
-http://chuansong.me/n/1146010124065^InfoQ^ 10篇不可错过的技术长文，起底知名公司业务架构 ^2016-11-23
-http://chuansong.me/n/1146010024072^InfoQ^ Hadoop、Spark等5种大数据框架对比，你的项目该用哪种？ ^2016-11-23
-http://chuansong.me/n/1146009921258^爱范儿^ QQ&nbsp;快要&nbsp;18&nbsp;岁了，它将何去何从？ ^2016-11-23
-http://chuansong.me/n/1146009821215^爱范儿^ 能运行&nbsp;Android&nbsp;甚至&nbsp;iOS&nbsp;应用？传说中的&nbsp;Surface&nbsp;Phone&nbsp;有这些惊喜 ^2016-11-23
-http://chuansong.me/n/1146009721297^爱范儿^ 【早报】高通推出赏金计划，最高奖&nbsp;1.5&nbsp;万美金&nbsp;/&nbsp;扎克伯格再售&nbsp;9500&nbsp;万美元股票&nbsp;/&nbsp;工信部：中国手机用户超&nbsp;13&nbsp;亿 ^2016-11-23
 http://chuansong.me/n/1145882845049^李叫兽^ 14天改变计划Ⅱ复盘&amp;合作企业招募 ^2016-11-23
 http://chuansong.me/n/1145882745066^李叫兽^ 【李叫兽】正常人为什么无法站在用户角度思考？ ^2016-11-23
