@@ -6,4 +6,4 @@ path=$(realpath $dir)
 cd $path
 
 ./mklist.sh > ./list.html;
-./publish.sh 
+./publish.sh  2>&1 |tee -a /tmp/wx_git.log
