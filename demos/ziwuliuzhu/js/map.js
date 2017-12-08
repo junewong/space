@@ -51,7 +51,7 @@ var LunarMap = {
     '壬辰' : { point: '昆仑穴', phase: '火', channel: '膀胱经' },
     '壬午' : { point: '通谷穴委中穴', phase: '水', channel: '膀胱经' },
     '壬申' : { point: '委中穴', phase: '土', channel: '膀胱经' },
-    '壬戌' : { point: '束骨穴', '冲阳穴', phase: '木', channel: '膀胱经' },
+    '壬戌' : { point: '束骨穴冲阳穴', phase: '木', channel: '膀胱经' },
     '壬子' : { point: '关冲穴', phase: '水', channel: '膀胱经' },
     '癸亥' : { point: '涌泉穴', phase: '木', channel: '肾经' },
     '癸丑' : { point: '复溜穴', phase: '金', channel: '肾经' },

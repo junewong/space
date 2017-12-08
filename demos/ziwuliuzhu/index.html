@@ -7,13 +7,70 @@
 	<link rel="stylesheet" href="./css/libs/datepicker.min.css" type="text/css" media="screen" charset="utf-8">
 	<script src="./js/libs/zepto.min.js"></script>
 	<script src="./js/libs/datepicker.min.js"></script>
+	<script src="./js/libs/g.date.js"></script>
 	<script src="./js/map.js"></script>
 	<script src="./js/main.js"></script>
+	<style type="text/css" media="screen">
+		input {
+			border : 0.125rem solid #CCCCCC;
+			border-radius : 0.5rem;
+			height: 1.75rem;
+			width: 8rem;
+			background-color:white;
+		}
+		.btn-submit {
+			background-color: lightblue;
+			height: 2rem;
+			width: 3rem;
+			color: #555555;
+			border-radius : 0.25rem;
+		}
+		.result {
+			width:100%;
+			margin-top: 1rem;
+		}
+		.desc {
+			width:100%;
+			margin-top: 1rem;
+			text-size: 1.5rem;
+		}
+		.lunar {
+			display: inline-block;
+			width: 7rem;
+			height: 6rem;
+			line-height: 6rem;
+			border: 1px solid #CCCCCC;
+			border-radius : 0.25rem;
+			text-align: center;
+			text-size: 1.5rem;
+		}
+		.point {
+			background-color:lightyellow;
+		}
+		.phase {
+			background-color:lightyellow;
+		}
+		.channel {
+			background-color:lightyellow;
+		}
+	</style>
+	<script src='http://127.0.0.1:9001/js/socket.js'></script><!-- ///TEST -->
 </head>
 <body>
-	<div>
-		<input type="date" name="date" value="" />
-		<input type="time" name="time" value="" />
+	<div class="toolbar">
+		<input id="date" type="date" name="date" value="" />
+		<input id="time" type="time" name="time" value="" />
+		<button id="submitButton" class="btn-submit">查询</button>
+	</div>
+
+	<div class="desc">
+		当前日期为：<span id="dateDesc"></span>
+	</div>
+
+	<div class="result">
+		<span class="lunar point"></span>
+		<span class="lunar phase"></span>
+		<span class="lunar channel"></span>
 	</div>
 
 </body>
