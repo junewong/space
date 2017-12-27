@@ -172,7 +172,7 @@ let actorList = [];
 actorList.push( actor( 'ChengMou'   , cardlist( [15, 4, 7, 5 ] ) ) );
 actorList.push( actor( 'Wangjian'   , cardlist( [16, 2, 0, 10 ] ) ) );
 actorList.push( actor( 'King'       , cardlist( [10, 5, 0, 10 ] ) ) );
-actorList.push( actor( 'Kaven'      , cardlist( [12, 8, 12, 4 ] ) ) );
+actorList.push( actor( 'Kaven'      , cardlist( [12, 6, 12, 2 ] ) ) );
 actorList.push( actor( 'Jhon Keeper', cardlist( [10, 5, 10, 5 ] ) ) );
 actorList.push( actor( 'Mary Jet'   , cardlist( [15, 7, 9, 2 ] ) ) );
 actorList.push( actor( 'EightShen'  , cardlist( [20, 10, 0, 0 ] ) ) );
